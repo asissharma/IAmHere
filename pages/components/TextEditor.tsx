@@ -1,7 +1,9 @@
 // components/TextEditor.tsx
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import 'react-quill/dist/quill.snow.css'; // Import Quill CSS
 
+// Dynamically import QuillEditor
 const QuillEditor = dynamic(() => import('react-quill'), { ssr: false });
 
 const TextEditor: React.FC = () => {
