@@ -1,13 +1,12 @@
 // pages/index.tsx
 import { NextPage } from 'next';
-import TextEditor from './components/TextEditor';
+import TipTapEditor from './components/TextEditor';
 
 const Home: NextPage = () => {
   return (
-    <div>
+    <div className="page-container">
       <h1>Space-Themed Text Editor</h1>
-      <TextEditor />
-      <a href="/saved-content.txt" download>Download Saved Content</a>
+      <TipTapEditor />
     </div>
   );
 };
