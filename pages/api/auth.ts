@@ -1,9 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { generateValidationCode } from '../utils/generateCode';
+import { generateValidationCode } from '../lib/generateCode';
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
     const { code } = req.body;
-console.log(generateValidationCode(0));
     // Allow a grace period of 1 minute before and after the current minute
     const validCodes = [
         generateValidationCode(0),  // Current minute
