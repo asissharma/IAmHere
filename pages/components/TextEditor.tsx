@@ -1,37 +1,69 @@
-// components/TextEditor.tsx
-import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import 'react-quill/dist/quill.snow.css'; // Import Quill CSS
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import 'react-quill/dist/quill.snow.css';
 
-// Dynamically import QuillEditor
-const QuillEditor = dynamic(() => import('react-quill'), { ssr: false });
+// Dynamically import ReactQuill to prevent SSR
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
 const TextEditor: React.FC = () => {
-  const [content, setContent] = useState<string>('');
+  const [content, setContent] = useState<string>('This is the initial content of the editor.');
 
-  // Load content from localStorage on component mount
   useEffect(() => {
-    const savedContent = localStorage.getItem('savedContent');
-    if (savedContent) {
-      setContent(savedContent);
-    }
+    const fetchContent = async () => {
+      const response = await fetch('/api/getText');
+      const data = await response.json();
+      setContent(data.content || 'This is the initial content of the editor.');
+    };
+    fetchContent();
   }, []);
 
-  // Save content to localStorage on change
-  const handleChange = (newContent: string) => {
-    setContent(newContent);
-    localStorage.setItem('savedContent', newContent);
+  const handleSave = async () => {
+    const editorContent = content;
+    await fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: editorContent }),
+    });
+    console.log('Content saved:', editorContent);
   };
 
   return (
-    <div>
-      <QuillEditor
-        value={content}
-        onChange={handleChange}
+    <motion.div 
+      className="mt-10 p-6 bg-white rounded-lg shadow-lg"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 1.2 }}
+    >
+      <ReactQuill
         theme="snow"
+        value={content}
+        onChange={setContent}
+        modules={{
+          toolbar: [
+            [{ 'header': '1' }, { 'header': '2' }, { 'font': [] }],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+            ['bold', 'italic', 'underline'],
+            ['link', 'image'],
+            [{ 'align': [] }],
+            ['clean'],
+          ],
+        }}
+        formats={[
+          'header', 'font',
+          'bold', 'italic', 'underline',
+          'list', 'bullet',
+          'link', 'image', 'align',
+        ]}
+        style={{ height: '300px' }}
       />
-      <button onClick={() => localStorage.setItem('savedContent', content)}>Save</button>
-    </div>
+      <button 
+        onClick={handleSave}
+        className="mt-4 px-6 py-2 bg-green-500 hover:bg-green-700 text-white rounded-md"
+      >
+        Save
+      </button>
+    </motion.div>
   );
 };
 

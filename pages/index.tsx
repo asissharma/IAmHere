@@ -1,14 +1,25 @@
-// pages/index.tsx
-import { NextPage } from 'next';
-import TipTapEditor from './components/TextEditor';
+import { useState } from 'react';
+import type { NextPage } from 'next';
+import Auth from './components/auth'; // Adjust path as needed
+import Home from './Home'; // Adjust path as needed
 
-const Home: NextPage = () => {
+const Index: NextPage = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+
+  // Handle successful authentication
+  const handleAuthenticationSuccess = () => {
+    setIsAuthenticated(true);
+  };
+
   return (
-    <div className="page-container">
-      <h1>Space-Themed Text Editor</h1>
-      <TipTapEditor />
+    <div>
+      {!isAuthenticated ? (
+        <Auth onSuccess={handleAuthenticationSuccess} />
+      ) : (
+        <Home />
+      )}
     </div>
   );
 };
 
-export default Home;
+export default Index;
