@@ -2,8 +2,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Dropbox } from 'dropbox'; // Import necessary types
 import fetch from 'isomorphic-fetch';
-import File from '../lib/fileUpload'; // Import the File model
-import connectToDatabase from '../lib/mongodb'; // MongoDB connection function
+import File from './lib/fileUpload'; // Import the File model
+import connectToDatabase from './lib/mongodb'; // MongoDB connection function
 
 const dbx = new Dropbox({
   accessToken: process.env.DROPBOX_ACCESS_TOKEN!,

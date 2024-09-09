@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import connectToDatabase from '../lib/mongodb'; // MongoDB connection
-import File from '../lib/fileUpload'; // File model
+import connectToDatabase from './lib/mongodb'; // MongoDB connection
+import File from './lib/fileUpload'; // File model
 
 const filesHandler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === 'GET') {

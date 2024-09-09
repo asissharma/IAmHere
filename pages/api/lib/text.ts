@@ -1,5 +1,4 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
-
 interface IText extends Document {
   textId: string;  // Ensure textId is part of the schema
   content: string;

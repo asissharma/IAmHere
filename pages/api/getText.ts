@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import connectToDatabase from '../lib/mongodb';
-import Text from '../lib/text';
+import connectToDatabase from './lib/mongodb';
+import Text from './lib/text';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {

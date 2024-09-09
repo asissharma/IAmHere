@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import connectToDatabase from '../lib/mongodb';
-import Text from '../lib/text';
+import connectToDatabase from './lib/mongodb';
+import Text from './lib/text';
 
 interface SaveRequestBody {
   content: string;
