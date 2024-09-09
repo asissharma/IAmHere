@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import moment from 'moment-timezone';
 
 // Handler function
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -22,14 +23,13 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
 // Function to generate validation code
 function generateValidationCode(offset: number = 0): string {
-  const now = new Date();
-  now.setMinutes(now.getMinutes() + offset); // Adjust for offset
+    const nowIST = moment().tz('Asia/Kolkata').add(offset, 'minutes');
 
-  const minutes = now.getMinutes();
-  const dayOfMonth = now.getDate();
-  const lastDigitOfDay = dayOfMonth % 10;
-  const hour = now.getHours();
-  const sumOfHourAndMinute = (hour + minutes);
-
-  return `${minutes}-${lastDigitOfDay}-${sumOfHourAndMinute}`;
+    const minutes = nowIST.minutes();
+    const dayOfMonth = nowIST.date();
+    const lastDigitOfDay = dayOfMonth % 10;
+    const hour = nowIST.hours();
+    const sumOfHourAndMinute = hour + minutes;
+  
+    return `${minutes}-${lastDigitOfDay}-${sumOfHourAndMinute}`;
 }
