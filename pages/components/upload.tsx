@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { FiUpload, FiFileText } from 'react-icons/fi';  // Added icons
 
 const FileUpload: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [files, setFiles] = useState<any[]>([]);
 
-  // Fetch uploaded files from the server
   useEffect(() => {
     const fetchFiles = async () => {
       try {
@@ -17,7 +17,6 @@ const FileUpload: React.FC = () => {
         console.error('Error fetching files:', error);
       }
     };
-
     fetchFiles();
   }, []);
 
@@ -45,9 +44,7 @@ const FileUpload: React.FC = () => {
                 mimetype: file.type,
               }),
             });
-            console.log('1');
             const data = await response.json();
-            console.log(data);
             if (response.ok) {
               const updatedResponse = await fetch('/api/getUpload');
               const updatedData = await updatedResponse.json();
@@ -67,20 +64,28 @@ const FileUpload: React.FC = () => {
 
   return (
     <motion.div
-      className="bg-white shadow-lg rounded-lg p-8"
+      className="bg-white shadow-lg rounded-lg p-8 max-w-2xl mx-auto"
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.8 }}
     >
-      <input 
-        type="file" 
-        onChange={handleFileChange} 
-        className="mb-4 border p-2 rounded-md"
-      />
+      <div className="flex flex-col items-center">
+        <label htmlFor="file-upload" className="cursor-pointer flex items-center justify-center w-64 h-32 border-2 border-dashed border-gray-300 rounded-lg text-gray-400 hover:border-blue-500 hover:text-blue-500 transition-all">
+          <FiUpload className="text-4xl" />
+          <span className="ml-3">Choose a file</span>
+        </label>
+        <input 
+          id="file-upload" 
+          type="file" 
+          onChange={handleFileChange} 
+          className="hidden"
+        />
+      </div>
+
       <button 
         onClick={handleUpload} 
         disabled={loading}
-        className={`px-6 py-2 rounded-md text-white ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-700'}`}
+        className={`mt-4 px-6 py-2 w-full rounded-md text-white ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-700'}`}
       >
         {loading ? 'Uploading...' : 'Upload'}
       </button>
@@ -93,26 +98,24 @@ const FileUpload: React.FC = () => {
       >
         <h3 className="text-xl font-semibold mb-4">Uploaded Files</h3>
         {files.length > 0 ? (
-          <ul>
-            <div className="grid grid-cols-3 gap-4 md:grid-cols-4 lg:grid-cols-6">
-              {files.map((file) => (
-                <div key={file._id} className="relative overflow-hidden rounded-lg shadow-md transition-transform duration-300 hover:scale-105">
-                  {file.mimetype && file.mimetype.startsWith('image/') ? (
-                    <a href={file.url} target="_blank" rel="noopener noreferrer">
-                      <img 
-                        src={file.url} 
-                        alt={file.filename} 
-                        className="w-full h-32 object-cover rounded-lg" 
-                      />
-                    </a>
-                  ) : (
-                    <a href={file.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-full h-32 bg-gray-100 text-blue-600 hover:text-blue-800 text-center p-2">
-                      {file.filename}
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
+          <ul className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-6">
+            {files.map((file) => (
+              <div key={file._id} className="relative overflow-hidden rounded-lg shadow-md transition-transform duration-300 hover:scale-105">
+                {file.mimetype && file.mimetype.startsWith('image/') ? (
+                  <a href={file.url} target="_blank" rel="noopener noreferrer">
+                    <img 
+                      src={file.url} 
+                      alt={file.filename} 
+                      className="w-full h-32 object-cover rounded-lg" 
+                    />
+                  </a>
+                ) : (
+                  <a href={file.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center w-full h-32 bg-gray-100 text-blue-600 hover:text-blue-800 text-center p-2">
+                    <FiFileText className="mr-2" /> {file.filename}
+                  </a>
+                )}
+              </div>
+            ))}
           </ul>
         ) : (
           <p className="text-gray-500">No files uploaded yet.</p>
