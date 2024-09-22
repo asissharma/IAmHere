@@ -13,11 +13,11 @@ const Index: NextPage = () => {
 
   return (
     <div>
-      {/* {!isAuthenticated ? (
+      {!isAuthenticated ? (
         <Auth onSuccess={handleAuthenticationSuccess} />
-      ) : ( */}
+      ) : (
         <Home />
-      {/* )} */}
+      )} 
     </div>
   );
 };
