@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import connectToDatabase from './lib/mongodb';
 import DocumentModel from './lib/documentation';
+import Topic from './lib/topic';
 
 const getDocumentsByTopic = async (req: NextApiRequest, res: NextApiResponse) => {
     await connectToDatabase();

@@ -3,23 +3,62 @@ import Editor from '@monaco-editor/react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+interface IDocument {
+  topicId: string;
+  type: 'ai' | 'note';
+  content: string;
+}
+
+interface ITopic {
+  _id: string;
+  title: string;
+  isCompleted: boolean;
+  resourceUrl?: string;
+  resourceUrls?: string[];
+  documents?: IDocument[];
+}
+
+const Modal: React.FC<{ isOpen: boolean; onClose: () => void; content: string | null }> = ({ isOpen, onClose, content }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+      <div className="bg-white p-4 rounded-lg shadow-md">
+        <button onClick={onClose} className="absolute top-2 right-2 text-red-500">✖</button>
+        <pre className="whitespace-pre-wrap">{content}</pre>
+      </div>
+    </div>
+  );
+};
+
 const AIAssistant = () => {
   return <div>Please integrate the AI assistant here.</div>;
 };
 
 const LearningPaths: React.FC = () => {
-  const [topics, setTopics] = useState<any[]>([]);
+  const [topics, setTopics] = useState<ITopic[]>([]);
   const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
   const [notes, setNotes] = useState<string>('');
   const [resourceUrls, setResourceUrls] = useState<string>('');
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTopics = async () => {
       try {
         const response = await fetch('/api/getTopicData');
-        const data = await response.json();
+        const data: ITopic[] = await response.json();
+        console.log('sdsdsd');
+        console.log(data[0]['resourceUrls']);
         setTopics(data);
+        if (data.length > 0) {
+          const firstTopic = data[0];
+          setSelectedTopicId(firstTopic._id);
+          setSelectedDoc(firstTopic.resourceUrl || '');
+          setResourceUrls(firstTopic.resourceUrls?.join('\n') || '');
+          await fetchDocumentation(firstTopic._id);
+        }
       } catch (error) {
         console.error('Error fetching topics:', error);
       }
@@ -28,17 +67,20 @@ const LearningPaths: React.FC = () => {
     fetchTopics();
   }, []);
 
-  const handleTopicClick = async (topicId: string) => {
-    setSelectedTopicId(topicId);
-
+  const fetchDocumentation = async (topicId: string) => {
     try {
       const response = await fetch(`/api/getCustomDocumentation?topicId=${topicId}`);
       const data = await response.json();
       setSelectedDoc(data.content);
-      setResourceUrls(data.resourceUrl || '');
+      setResourceUrls(data.resourceUrls.join('\n') || '');
     } catch (error) {
       console.error('Error fetching documentation:', error);
     }
+  };
+
+  const handleTopicClick = async (topicId: string) => {
+    setSelectedTopicId(topicId);
+    await fetchDocumentation(topicId); // Fetch documentation for the clicked topic
   };
 
   const markAsCompleted = async (topicId: string) => {
@@ -56,6 +98,13 @@ const LearningPaths: React.FC = () => {
       toast.success('Topic marked as completed!');
       const updatedTopics = topics.filter(topic => topic._id !== topicId);
       setTopics(updatedTopics);
+      if (updatedTopics.length > 0) {
+        handleTopicClick(updatedTopics[0]._id);
+      } else {
+        setSelectedDoc(null);
+        setResourceUrls('');
+        setSelectedTopicId(null);
+      }
     } catch (error) {
       console.error('Error marking topic as completed:', error);
       toast.error('Failed to mark topic as completed.');
@@ -63,9 +112,11 @@ const LearningPaths: React.FC = () => {
   };
 
   const saveUrls = async () => {
-    if (!selectedTopicId) return;
+    if (!selectedTopicId) return false;
 
     try {
+      const urlsArray = resourceUrls.split('\n').map(url => url.trim()).filter(url => url.length > 0);
+
       const response = await fetch('/api/saveResourceUrls', {
         method: 'PATCH',
         headers: {
@@ -73,12 +124,11 @@ const LearningPaths: React.FC = () => {
         },
         body: JSON.stringify({
           topicId: selectedTopicId,
-          resourceUrl: resourceUrls,
+          resourceUrls: urlsArray,
         }),
       });
 
       if (!response.ok) throw new Error('Failed to save URLs');
-
       toast.success('Resource URLs saved successfully!');
     } catch (error) {
       console.error('Error saving URLs:', error);
@@ -87,7 +137,7 @@ const LearningPaths: React.FC = () => {
   };
 
   const handleNoteSave = async () => {
-    if (!selectedTopicId) return;
+    if (!selectedTopicId) return false;
 
     try {
       const response = await fetch('/api/customDocumentation', {
@@ -108,6 +158,16 @@ const LearningPaths: React.FC = () => {
       console.error('Error saving notes:', error);
       toast.error('Failed to save notes.');
     }
+  };
+
+  const handleOpenModal = (content: string) => {
+    setModalContent(content);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setModalContent(null);
   };
 
   return (
@@ -145,6 +205,22 @@ const LearningPaths: React.FC = () => {
           {selectedDoc ? (
             <div className="prose max-w-full">
               <pre className="bg-gray-200 p-4 rounded">{selectedDoc}</pre>
+              <h3 className="text-lg font-semibold mb-2 mt-4">Resource URLs</h3>
+              {topics.find(topic => topic._id === selectedTopicId)?.resourceUrls?.map((url, index) => (
+                <div key={index} className="flex justify-between mb-2">
+                  <span className="text-blue-700 cursor-pointer hover:underline" onClick={() => handleOpenModal(url)}>
+                    {url}
+                  </span>
+                </div>
+              ))}
+              <h3 className="text-lg font-semibold mb-2">Custom Documentation</h3>
+              {topics.find(topic => topic._id === selectedTopicId)?.documents?.map((doc, index) => (
+                <div key={index} className="flex justify-between mb-2">
+                  <span className="text-blue-700 cursor-pointer hover:underline" onClick={() => handleOpenModal(doc.content)}>
+                    {doc.type === 'ai' ? 'AI Response' : 'User Note'}: {doc.content.substring(0, 30)}...
+                  </span>
+                </div>
+              ))}
             </div>
           ) : (
             <p className="text-gray-600">Select a topic to view its documentation.</p>
@@ -164,38 +240,32 @@ const LearningPaths: React.FC = () => {
           />
           <button
             onClick={saveUrls}
-            className="mt-4 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition-colors duration-300"
+            className="mt-4 bg-blue-500 text-white rounded px-4 py-2 hover:bg-blue-600 transition-colors duration-300"
           >
             Save URLs
           </button>
         </div>
 
-        <div className="bg-purple-200 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800">Notes</h2>
+        <div className="bg-gray-200 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">Add Note</h2>
           <Editor
-            height="400px"
+            height="200px"
             defaultLanguage="markdown"
             value={notes}
-            onChange={(value) => setNotes(value || '')}
-            theme="vs-dark"
-            options={{
-              automaticLayout: true,
-              formatOnPaste: true,
-              formatOnType: true,
-            }}
+            onChange={(e) => setNotes}
+            options={{ minimap: { enabled: false }, automaticLayout: true }}
           />
           <button
             onClick={handleNoteSave}
-            className="mt-4 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition-colors duration-300"
+            className="mt-4 bg-blue-500 text-white rounded px-4 py-2 hover:bg-blue-600 transition-colors duration-300"
           >
-            Save Notes
+            Save Note
           </button>
         </div>
       </div>
 
-      <div className="mt-8">
-        <AIAssistant />
-      </div>
+      {/* Modal for displaying URLs or documentation */}
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal} content={modalContent} />
     </div>
   );
 };

@@ -5,7 +5,7 @@ interface ITopic extends Document {
   mainTopic: string;
   difficulty: string;
   category: string;
-  resourceUrl?: string;
+  resourceUrls?: string[];
   isCompleted: boolean; // Add this field
 }
 
@@ -16,6 +16,7 @@ const topicSchema: Schema = new Schema({
   category: { type: String, required: true },
   resourceUrl: { type: String, default: '' },
   isCompleted: { type: Boolean, default: false }, // Default to false
+  resourceUrls:{type: [String], default: []}
 }, {
   timestamps: true,
   collection: 'topics',

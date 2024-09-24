@@ -7,8 +7,7 @@ const getTopicData = async (req: NextApiRequest, res: NextApiResponse) => {
   await connectToDatabase();
 
   try {
-    const topics = await Topic.find({ isCompleted: false }).limit(2); // Fetch only first two incomplete topics
-    console.log(topics);
+    const topics = await Topic.find({ isCompleted: false }).limit(1); // Fetch only first two incomplete topics
     res.status(200).json(topics);
   } catch (error) {
     console.error('Error fetching topics:', error);
