@@ -56,6 +56,7 @@ const LearningPaths: React.FC = () => {
       const data = await response.json();
       setSelectedDoc(data.content);
       setResourceUrls(data.resourceUrls.join('\n') || '');
+      console.log()
     } catch (error) {
       console.error('Error fetching documentation:', error);
     }
@@ -131,6 +132,7 @@ const LearningPaths: React.FC = () => {
         body: JSON.stringify({
           topicId: selectedTopicId,
           content: notes,
+          type:'note'
         }),
       });
 
