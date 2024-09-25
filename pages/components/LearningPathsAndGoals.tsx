@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Modal from './docModal'; // Import the Modal component
 
 interface IDocument {
   topicId: string;
@@ -18,23 +19,6 @@ interface ITopic {
   documents?: IDocument[];
 }
 
-const Modal: React.FC<{ isOpen: boolean; onClose: () => void; content: string | null }> = ({ isOpen, onClose, content }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-      <div className="bg-white p-4 rounded-lg shadow-md">
-        <button onClick={onClose} className="absolute top-2 right-2 text-red-500">✖</button>
-        <pre className="whitespace-pre-wrap">{content}</pre>
-      </div>
-    </div>
-  );
-};
-
-const AIAssistant = () => {
-  return <div>Please integrate the AI assistant here.</div>;
-};
-
 const LearningPaths: React.FC = () => {
   const [topics, setTopics] = useState<ITopic[]>([]);
   const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
@@ -43,14 +27,13 @@ const LearningPaths: React.FC = () => {
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState<string | null>(null);
+  const [isUrl, setIsUrl] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchTopics = async () => {
       try {
         const response = await fetch('/api/getTopicData');
         const data: ITopic[] = await response.json();
-        console.log('sdsdsd');
-        console.log(data[0]['resourceUrls']);
         setTopics(data);
         if (data.length > 0) {
           const firstTopic = data[0];
@@ -160,15 +143,19 @@ const LearningPaths: React.FC = () => {
     }
   };
 
-  const handleOpenModal = (content: string) => {
-    setModalContent(content);
+  const handleOpenModal = (urlOrContent: string) => {
+    const isUrl = urlOrContent.startsWith('http');
+    setModalContent(urlOrContent);
     setIsModalOpen(true);
+    setIsUrl(isUrl); // Set the isUrl state
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setModalContent(null);
   };
+
+  const selectedTopic = topics.find(topic => topic._id === selectedTopicId); // Get the currently selected topic
 
   return (
     <div className="min-h-screen bg-gray-100 p-10">
@@ -202,11 +189,10 @@ const LearningPaths: React.FC = () => {
 
         <div className="col-span-3 bg-green-200 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
           <h2 className="text-lg font-semibold mb-4 text-gray-800">Documentation</h2>
-          {selectedDoc ? (
             <div className="prose max-w-full">
               <pre className="bg-gray-200 p-4 rounded">{selectedDoc}</pre>
               <h3 className="text-lg font-semibold mb-2 mt-4">Resource URLs</h3>
-              {topics.find(topic => topic._id === selectedTopicId)?.resourceUrls?.map((url, index) => (
+              {resourceUrls.split('\n').map((url, index) => ( // Updated to split resourceUrls into array
                 <div key={index} className="flex justify-between mb-2">
                   <span className="text-blue-700 cursor-pointer hover:underline" onClick={() => handleOpenModal(url)}>
                     {url}
@@ -214,7 +200,7 @@ const LearningPaths: React.FC = () => {
                 </div>
               ))}
               <h3 className="text-lg font-semibold mb-2">Custom Documentation</h3>
-              {topics.find(topic => topic._id === selectedTopicId)?.documents?.map((doc, index) => (
+              {selectedTopic?.documents?.map((doc, index) => (
                 <div key={index} className="flex justify-between mb-2">
                   <span className="text-blue-700 cursor-pointer hover:underline" onClick={() => handleOpenModal(doc.content)}>
                     {doc.type === 'ai' ? 'AI Response' : 'User Note'}: {doc.content.substring(0, 30)}...
@@ -222,9 +208,6 @@ const LearningPaths: React.FC = () => {
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-gray-600">Select a topic to view its documentation.</p>
-          )}
         </div>
       </div>
 
@@ -252,7 +235,7 @@ const LearningPaths: React.FC = () => {
             height="200px"
             defaultLanguage="markdown"
             value={notes}
-            onChange={(e) => setNotes}
+            onChange={(value) => setNotes(value || '')} // Fixing the onChange handler
             options={{ minimap: { enabled: false }, automaticLayout: true }}
           />
           <button
@@ -265,7 +248,14 @@ const LearningPaths: React.FC = () => {
       </div>
 
       {/* Modal for displaying URLs or documentation */}
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal} content={modalContent} />
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={handleCloseModal} 
+        content={modalContent} 
+        isUrl={isUrl} // Pass the isUrl state
+      />
+
+
     </div>
   );
 };
