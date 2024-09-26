@@ -16,7 +16,7 @@ const questionSchema: Schema = new Schema({
   sno: { type: Number, required: true },         
   topic: { type: String, required: true },       
   problem: { type: String, required: true },     
-  difficulty: { type: String, default: 'Easy' }, 
+  difficulty: { type: String, enum: ['Easy', 'Medium', 'Hard'], default: 'Easy' },
   tags: { type: [String], default: [] },         
   createdAt: { type: Date, default: Date.now },  
   isSolved: { type: Boolean, default: false },   
@@ -26,6 +26,7 @@ const questionSchema: Schema = new Schema({
   timestamps: true,
   collection: 'dsa-question'
 });
+
 
 const Question: Model<IQuestion> = mongoose.models.Question || mongoose.model<IQuestion>('Question', questionSchema);
 

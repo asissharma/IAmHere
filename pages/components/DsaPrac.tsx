@@ -3,6 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import MonacoEditor from '@monaco-editor/react';
 import { FiPlayCircle, FiSave } from 'react-icons/fi';
 import axios from 'axios';
+import { Bar } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 interface Question {
   _id: string;
@@ -23,6 +27,7 @@ const DSAPlayground: React.FC = () => {
   const [recentlySolved, setRecentlySolved] = useState<Question[]>([]); // Solved questions list
   const [language, setLanguage] = useState<string>('javascript'); // Language selection
   const [loading, setLoading] = useState<boolean>(false); // Loading state
+  const [progress, setProgress] = useState<{ easy: number; medium: number; hard: number }>({ easy: 0, medium: 0, hard: 0 });
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -31,7 +36,13 @@ const DSAPlayground: React.FC = () => {
       setDailyQuestions(data);
     };
 
+    const fetchProgress = async () => {
+      const { data } = await axios.get('/api/dsaProgressBar');
+      setProgress(data);
+    };
+
     fetchQuestions();
+    fetchProgress();
   }, []);
 
   const runJavaScriptCode = async (code: string) => {
@@ -83,7 +94,6 @@ const DSAPlayground: React.FC = () => {
     }
   };
   
-
   const flipToNextQuestion = () => {
     setCurrentQuestionIndex(prev => (prev === 0 ? 1 : 0));
   };
@@ -95,6 +105,28 @@ const DSAPlayground: React.FC = () => {
     setRecentlySolved(prev => [...prev, ...data]);
   };
 
+  // Progress bar component
+  const ProgressBar = ({ value, label }: { value: number; label: string }) => (
+    <div className="">
+      <label className="block text-gray-600">{label}:</label>
+      <div className="relative pt-1">
+        <div className="flex mb-2 items-center justify-between">
+          <div>
+            <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-teal-600 bg-teal-200 mr-2">
+              {value}%
+            </span>
+          </div>
+        </div>
+        <div className="flex h-4 bg-gray-200 rounded">
+          <div
+            className="bg-teal-500 h-4 rounded"
+            style={{ width: `${value}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <motion.div className="flex flex-col bg-white max-w-6xl mx-auto">
       <div className="text-center">
@@ -104,6 +136,14 @@ const DSAPlayground: React.FC = () => {
       <div className="flex flex-row flex-grow">
         {/* Left: Daily Questions and Editor */}
         <div className="w-2/3 p-4">
+          {/* Progress Tracker */}
+          <div className="progress-tracker mb-6">
+            <h3 className="text-xl font-semibold mb-2">Progress Tracker:</h3>
+            <ProgressBar value={progress.easy} label="Easy" />
+            <ProgressBar value={progress.medium} label="Medium" />
+            <ProgressBar value={progress.hard} label="Hard" />
+          </div>
+
           {/* Daily Questions Section */}
           <div className="mb-6 p-4 bg-gray-100 rounded-md shadow relative">
             <h3 className="text-xl font-semibold mb-2">Today's Questions:</h3>
@@ -122,6 +162,9 @@ const DSAPlayground: React.FC = () => {
                   </p>
                   <p className="text-gray-600">
                     <strong>Topic:</strong> {dailyQuestions[currentQuestionIndex].topic}
+                  </p>
+                  <p className="text-gray-600">
+                    <strong>Difficulty:</strong> {dailyQuestions[currentQuestionIndex].difficulty}
                   </p>
                   {!dailyQuestions[currentQuestionIndex].isSolved && (
                     <button
