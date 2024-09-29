@@ -89,8 +89,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         
         const responseText = result.response.text();
         const formattedResponse = await marked(responseText);
+        const styledResponse = formattedResponse.replace(/<pre><code class="/g, `<pre style="border: 0.5px solid #555;background-color: #1E1E1E;color: #D4D4D4;border-radius: 30px;padding: 25px;margin-bottom: 16px;box-shadow: 0 4px 12px rgb(255 255 255);"><code style="color: inherit; overflow-y: auto;" class="`);
         
-        res.status(200).json({ response: formattedResponse });
+        res.status(200).json({ response: styledResponse });
       } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to process the request' });

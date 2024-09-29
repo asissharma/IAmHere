@@ -90,3 +90,43 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+
+/* styles.css or a similar CSS file */
+.scrollabler{
+  /* Custom Scrollbar for Webkit browsers (Chrome, Safari) */
+  &::-webkit-scrollbar {
+    width: 2px; /* width of the scrollbar */
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.4); /* color of the scrollbar thumb */
+    border-radius: 10px; /* roundness of the scrollbar thumb */
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.6); /* hover effect for the scrollbar thumb */
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1); /* color of the scrollbar track */
+    border-radius: 10px; /* roundness of the scrollbar track */
+  }
+}
+&::-webkit-scrollbar {
+  width: 4px; /* width of the scrollbar */
+}
+
+&::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.4); /* color of the scrollbar thumb */
+  border-radius: 10px; /* roundness of the scrollbar thumb */
+}
+
+&::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.6); /* hover effect for the scrollbar thumb */
+}
+
+&::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1); /* color of the scrollbar track */
+  border-radius: 10px; /* roundness of the scrollbar track */
+}

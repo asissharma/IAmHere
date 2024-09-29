@@ -9,7 +9,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     // Connect to the database
-    console.log('dada');
     await connectToDatabase();
 
     // Retrieve content from MongoDB
