@@ -6,7 +6,7 @@ import DSAPlayground from './components/DsaPrac';
 import LearningPathsAndGoals from './components/LearningPathsAndGoals';
 import { motion } from 'framer-motion';
 import { FiFileText, FiCode, FiUpload, FiCalendar, FiArrowRight, FiMic } from 'react-icons/fi';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FaIceCream } from 'react-icons/fa';
 
 const sections = {
@@ -21,6 +21,19 @@ type SectionKeys = keyof typeof sections;
 
 const Home: NextPage = () => {
   const [activeSection, setActiveSection] = useState<SectionKeys>('dashboard');
+  const [currentDate, setCurrentDate] = useState<string>(''); // State to hold the current date
+
+  useEffect(() => {
+    const updateDate = () => {
+      const date = new Date();
+      setCurrentDate(date.toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' }));
+    };
+
+    updateDate(); // Initial call to set the date
+    const intervalId = setInterval(updateDate, 1000); // Update date every second
+
+    return () => clearInterval(intervalId); // Cleanup interval on component unmount
+  }, []);
 
   return (
     <motion.div
@@ -42,7 +55,7 @@ const Home: NextPage = () => {
           >
             {key === 'dashboard' && <FiFileText />}
             {key === 'playground' && <FiCode />}
-            {key === 'LearningPathsAndGoals' && <FaIceCream />}
+            {key === 'learningpathsandgoals' && <FaIceCream />}
             {key === 'upload' && <FiUpload />}
             {key === 'editor' && <FiCode />}
           </button>
@@ -64,13 +77,9 @@ const Home: NextPage = () => {
           <div className="flex items-center justify-between space-x-4 w-full">
             <div className="flex items-center space-x-4">
               <h1 className="text-2xl font-bold">
-                <span className='p-4 w-16 h-16 bg-white-400 text-black rounded-full shadow transition-transform transform hover:scale-110'>19</span> Tue, December
+                {/* <span className='p-4 w-16 h-16 bg-white-400 text-black rounded-full shadow transition-transform transform hover:scale-110'>19</span>  */}
+                <span className='flex items-center px-4 py-2 bg-orange-500 text-white rounded-full'>{currentDate}</span>
               </h1>
-              <p>|</p>
-              <button className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-full">
-                Show my Tasks <FiArrowRight className="ml-2" />
-              </button>
-              <FiCalendar className="text-2xl" />
             </div>
 
             {/* AI Assistant */}

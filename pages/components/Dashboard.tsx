@@ -1,9 +1,7 @@
 import { NextPage } from 'next';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { FaLock } from 'react-icons/fa';
-import { useState } from 'react';
-
-// Import Chart.js components
+import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -27,50 +25,79 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  ArcElement // For Doughnut chart
+  ArcElement
 );
 
-import { Line, Bar, Doughnut } from 'react-chartjs-2';
+interface Metric {
+  title: string;
+  value: number;
+}
+
+interface Insight {
+  message: string;
+}
+
+interface Notification {
+  id: string;
+  message: string;
+  timestamp: string;
+}
 
 const Dashboard: NextPage = () => {
-  const [activeSection, setActiveSection] = useState<string>('dashboard');
+  const [data, setData] = useState<{
+    metrics: Metric[];
+    insights: Insight[];
+    notifications: Notification[];
+  } | null>(null);
 
-  // Sample chart data
-  const progressData = {
-    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/api/dashboard');
+        const result = await response.json();
+        setData(result);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (!data) return <div>Loading...</div>;
+
+  // Prepare chart data
+  const lineChartData = {
+    labels: data.metrics.map((metric) => metric.title),
     datasets: [
       {
-        label: 'Progress',
-        data: [20, 40, 22, 55, 100, 36, 0],
-        borderColor: 'rgba(76, 175, 80, 1)',
-        backgroundColor: 'rgba(76, 175, 80, 0.3)',
+        label: 'Metric Values',
+        data: data.metrics.map((metric) => metric.value),
         fill: true,
+        backgroundColor: 'rgba(76, 175, 80, 0.3)',
+        borderColor: 'rgba(76, 175, 80, 1)',
         tension: 0.4,
       },
     ],
   };
 
-  const barData = {
-    labels: ['Leetcode DP Handbook', 'DP Cheat Sheet', 'DP Patterns Video'],
+  const barChartData = {
+    labels: data.metrics.map((metric) => metric.title),
     datasets: [
       {
-        label: 'Usage',
-        data: [4.5, 5, 4],
-        backgroundColor: [
-          'rgba(255, 99, 132, 0.6)',
-          'rgba(54, 162, 235, 0.6)',
-          'rgba(255, 206, 86, 0.6)',
-        ],
+        label: 'Metric Values',
+        data: data.metrics.map((metric) => metric.value),
+        backgroundColor: 'rgba(255, 99, 132, 0.6)',
       },
     ],
   };
 
-  const doughnutData = {
+  const doughnutChartData = {
     labels: ['Completed', 'Remaining'],
     datasets: [
       {
         label: 'Overall Completion',
-        data: [55, 45],
+        data: [55, 45], // You can replace this with actual data
         backgroundColor: ['rgba(76, 175, 80, 0.8)', 'rgba(244, 67, 54, 0.8)'],
       },
     ],
@@ -78,64 +105,75 @@ const Dashboard: NextPage = () => {
 
   return (
     <motion.div
-      className="flex flex-col"
+      className="flex flex-col p-6 space-y-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 1.5 }}
+      exit={{ opacity: 0 }}
     >
+      <h1 className="text-2xl font-bold">Dashboard</h1>
+
       {/* Main Section */}
-      <div className="flex flex-1 flex-col md:flex-row p-6 space-y-6 md:space-y-0 md:space-x-6">
+      <div className="flex flex-col md:flex-row md:space-x-6">
         {/* Left Column */}
         <div className="flex flex-col space-y-6 md:w-1/4">
-          {/* Productivity Tracker */}
+          {/* Insights */}
           <div className="p-6 bg-white rounded-lg shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Productivity Tracker</h2>
-            <p>Tasks Completed Today: 5</p>
-            <p>Weekly Trend: +15%</p>
+            <h2 className="text-lg font-semibold mb-4">Insights</h2>
+            <ul>
+              {data.insights.map((insight, index) => (
+                <li key={index} className="mb-2 text-gray-700">
+                  {insight.message}
+                </li>
+              ))}
+            </ul>
           </div>
 
-          {/* Total Time Spent */}
+          {/* Notifications */}
           <div className="p-6 bg-white rounded-lg shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Total Time Spent</h2>
-            <p>Today: 3 hrs</p>
-            <p>This Week: 20 hrs</p>
+            <h2 className="text-lg font-semibold mb-4">Notifications</h2>
+            <ul>
+              {data.notifications.map((notification) => (
+                <li key={notification.id} className="mb-2 text-gray-700">
+                  {notification.message}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
         {/* Middle Section */}
         <div className="flex flex-col space-y-6 md:w-2/4">
-          {/* System Lock */}
-          <div className="p-6 bg-white rounded-lg shadow-lg flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Focused Mode Active</h2>
-            <FaLock className="text-2xl text-green-500" />
-          </div>
-
           {/* Weekly Progress Line Chart */}
           <div className="p-6 bg-white rounded-lg shadow-lg">
             <h2 className="text-lg font-semibold mb-4">Weekly Progress</h2>
-            <Line data={progressData} />
+            <Line data={lineChartData} />
           </div>
 
           {/* Resource Usage Bar Chart */}
           <div className="p-6 bg-white rounded-lg shadow-lg">
             <h2 className="text-lg font-semibold mb-4">Resource Usage</h2>
-            <Bar data={barData} />
+            <Bar data={barChartData} />
           </div>
         </div>
 
-        {/* Bottom Section */}
+        {/* Right Column */}
         <div className="flex flex-col space-y-6 md:w-1/4">
-          {/* Annual Goals */}
+          {/* Overall Completion Doughnut Chart */}
           <div className="p-6 bg-white rounded-lg shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Annual Goals</h2>
-            <Doughnut data={doughnutData} />
+            <h2 className="text-lg font-semibold mb-4">Overall Completion</h2>
+            <Doughnut data={doughnutChartData} />
           </div>
 
-          {/* Completed Projects */}
+          {/* Additional Metrics Display */}
           <div className="p-6 bg-white rounded-lg shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Completed Projects</h2>
-            <p>Total: 8</p>
-            <p>This Month: 2</p>
+            <h2 className="text-lg font-semibold mb-4">Metrics</h2>
+            <ul>
+              {data.metrics.map((metric) => (
+                <li key={metric.title} className="mb-2 text-gray-700">
+                  {metric.title}: {metric.value}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
