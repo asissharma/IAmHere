@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { FiFileText, FiCode, FiUpload, FiCalendar, FiArrowRight, FiMic } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import { FaIceCream } from 'react-icons/fa';
+import PomodoroTimer from './components/PomodoroTimer';
 
 const sections = {
   dashboard: <Dashboard />,
@@ -77,7 +78,6 @@ const Home: NextPage = () => {
           <div className="flex items-center justify-between space-x-4 w-full">
             <div className="flex items-center space-x-4">
               <h1 className="text-2xl font-bold">
-                {/* <span className='p-4 w-16 h-16 bg-white-400 text-black rounded-full shadow transition-transform transform hover:scale-110'>19</span>  */}
                 <span className='flex items-center px-4 py-2 bg-orange-500 text-white rounded-full'>{currentDate}</span>
               </h1>
             </div>
@@ -111,6 +111,9 @@ const Home: NextPage = () => {
           {sections[activeSection]}
         </motion.main>
       </motion.div>
+
+      {/* Draggable Pomodoro Timer */}
+      <PomodoroTimer />
     </motion.div>
   );
 };

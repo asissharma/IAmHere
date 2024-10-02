@@ -3,6 +3,8 @@ import MonacoEditor from '@monaco-editor/react';
 import { FiPlayCircle, FiSave } from 'react-icons/fi';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import ResizableCard from './ResizableCard';
+import {Doughnut} from 'react-chartjs-2';
 
 interface Question {
   _id: string;
@@ -118,7 +120,7 @@ const DSAPlayground: React.FC = () => {
   const fetchAiSolution = async () => {
     if (!tag || !dailyQuestions[currentQuestionIndex]) return;
 
-    const prompt = `${tag}: ${dailyQuestions[currentQuestionIndex].problem} ${code} ${userPrompt}`;
+    const prompt = `${tag}: ${dailyQuestions[currentQuestionIndex].problem} ${code} ${userPrompt} in js`;
 
     try {
       const { data } = await axios.post('/api/chat', {
@@ -153,24 +155,36 @@ const DSAPlayground: React.FC = () => {
     }
   };
 
+  const doughnutData = {
+    labels: ['Easy', 'Medium', 'Hard'],
+    datasets: [
+      {
+        data: [progress.easy, progress.medium, progress.hard],
+        backgroundColor: ['#36A2EB', '#FF6384', '#FFCE56'],
+        hoverBackgroundColor: ['#36A2EB', '#FF6384', '#FFCE56'],
+      },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-100 via-white to-gray-200">
       <div className="max-w-7xl mx-auto p-4">
         <div className="flex space-x-6">
           <div className="flex-1">
+          <div className='flex flex-row w-full space-x-4 p-2'> {/* Use space-x-4 for spacing between cards */}
             <motion.div
               key={currentQuestionIndex}
               initial={{ opacity: 0, rotateY: 90 }}
               animate={{ opacity: 1, rotateY: 0 }}
               exit={{ opacity: 0, rotateY: -90 }}
               transition={{ duration: 0.5 }}
-              className="mb-6 p-4 bg-white shadow-lg rounded-md"
+              className="flex-1 mb-6 p-6 bg-white shadow-lg rounded-md" // Use flex-1 to make the question card larger
             >
               <h2 className="text-xl font-semibold text-gray-800 mb-2">Today's Question</h2>
               <div className="mb-3">
                 <label className="block text-sm font-medium text-gray-700">Question</label>
                 <input
-                  className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={dailyQuestions[currentQuestionIndex]?.problem || 'Loading...'}
                   readOnly
                 />
@@ -180,7 +194,7 @@ const DSAPlayground: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700">Topic</label>
                   <input
                     type="text"
-                    className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={dailyQuestions[currentQuestionIndex]?.topic || 'Loading...'}
                     readOnly
                   />
@@ -189,7 +203,7 @@ const DSAPlayground: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700">Difficulty</label>
                   <input
                     type="text"
-                    className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={dailyQuestions[currentQuestionIndex]?.difficulty || 'Loading...'}
                     readOnly
                   />
@@ -197,41 +211,51 @@ const DSAPlayground: React.FC = () => {
               </div>
               <button
                 onClick={flipToNextQuestion}
-                className="w-full py-1.5 px-4 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full py-2 px-4 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 Next Question
               </button>
             </motion.div>
-
-            <div className="mb-6 p-6 bg-white shadow-lg rounded-md">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Code Editor</h2>
-              <MonacoEditor
-                height="300px"
-                language={language}
-                theme="vs-dark"
-                value={code}
-                onChange={(newValue) => setCode(newValue || '')}
-                options={{ minimap: { enabled: false } }}
-              />
-              <div className="mt-4 flex space-x-4">
-                <button
-                  onClick={runCode}
-                  disabled={loading}
-                  className={`flex-1 py-2 px-4 bg-green-600 text-white rounded-md flex items-center justify-center space-x-2 hover:bg-green-700 transition ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  <FiPlayCircle />
-                  <span>{loading ? 'Running...' : 'Run Code'}</span>
-                </button>
-                <button
-                  onClick={() => saveSolution(dailyQuestions[currentQuestionIndex]._id)}
-                  disabled={saving}
-                  className={`flex-1 py-2 px-4 bg-blue-600 text-white rounded-md flex items-center justify-center space-x-2 hover:bg-blue-700 transition ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  <FiSave />
-                  <span>{saving ? 'Saving...' : 'Save Solution'}</span>
-                </button>
+            
+            <div className="mb-6 p-4 bg-white shadow-lg rounded-md flex-none w-1/4"> {/* Adjusted size for progress card */}
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Progress Tracker</h2>
+              <div className="grid grid-cols-1 gap-4 mb-4"> {/* Single column layout */}
+                <Doughnut data={doughnutData} />
               </div>
             </div>
+          </div>
+
+            <ResizableCard>
+              <div className="mb-6 p-6 bg-white shadow-lg rounded-md">
+                <h2 className="text-2xl font-semibold text-gray-800 mb-4">Code Editor</h2>
+                <MonacoEditor
+                  height="300px"
+                  language={language}
+                  theme="vs-dark"
+                  value={code}
+                  onChange={(newValue) => setCode(newValue || '')}
+                  options={{ minimap: { enabled: false } }}
+                />
+                <div className="mt-4 flex space-x-4">
+                  <button
+                    onClick={runCode}
+                    disabled={loading}
+                    className={`flex-1 py-2 px-4 bg-green-600 text-white rounded-md flex items-center justify-center space-x-2 hover:bg-green-700 transition ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <FiPlayCircle />
+                    <span>{loading ? 'Running...' : 'Run Code'}</span>
+                  </button>
+                  <button
+                    onClick={() => saveSolution(dailyQuestions[currentQuestionIndex]._id)}
+                    disabled={saving}
+                    className={`flex-1 py-2 px-4 bg-blue-600 text-white rounded-md flex items-center justify-center space-x-2 hover:bg-blue-700 transition ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <FiSave />
+                    <span>{saving ? 'Saving...' : 'Save Solution'}</span>
+                  </button>
+                </div>
+              </div>
+            </ResizableCard>
 
             <motion.div
               key={output}
@@ -249,58 +273,46 @@ const DSAPlayground: React.FC = () => {
           </div>
 
           <div className="w-1/3 space-y-6">
-            <div className="p-6 bg-white shadow-lg rounded-md">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Progress Tracker</h2>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <ProgressBar value={progress.easy} label="Easy Problems" />
-                <ProgressBar value={progress.medium} label="Medium Problems" />
+            <ResizableCard>
+              <div className="mb-1 p-2 bg-white shadow-lg rounded-md">
+                <h2 className="text-center border border-black rounded-md text-xl font-semibold text-gray-800 mb-1">AI Suggested Solution</h2>
+                <div className="mt-4 p-4 border rounded-md max-h-64  overflow-y-auto bg-gray-100">
+                  <h3 className="font-semibold text-gray-800">Suggested Solution:</h3>
+                  <div
+                    className="whitespace-pre-wrap overflow-hidden break-words" // Added break-words to prevent overflow
+                    dangerouslySetInnerHTML={{ __html: aiSolution || 'AI solution will appear here...' }}
+                  />
+                </div>
+                <div className="m-4">
+                  <select
+                    value={tag}
+                    onChange={(e) => setTag(e.target.value)}
+                    className="block w-full mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="solution">Solution</option>
+                    <option value="hint">Hint</option>
+                    <option value="check">Check</option>
+                    <option value="optimize">Optimization</option>
+                    <option value="solve">Solve</option>
+                  </select>
+                </div>
+                {/* Textarea for User Input */}
+                <div className='flex items-center justify-center mb-4'> {/* Add margin-bottom for spacing */}
+                  <input
+                    className="flex-grow p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mr-2" // Add right margin for spacing
+                    placeholder="Enter your prompt here..."
+                    value={userPrompt}
+                    onChange={(e) => setUserPrompt(e.target.value)}
+                  />
+                  <button
+                    onClick={fetchAiSolution}
+                    className="py-2 px-4 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition"
+                  >
+                    {loading ? <span>Loading...</span> : <FiPlayCircle className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
-              <ProgressBar value={progress.hard} label="Hard Problems" />
-            </div>
-
-            <div className="mb-6 p-6 bg-white shadow-lg rounded-md">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">AI Suggested Solution</h2>
-
-              {/* Textarea for User Input */}
-              <textarea
-                className="w-full p-3 border rounded-md h-24 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-                placeholder="Enter your prompt here..."
-                value={userPrompt}
-                onChange={(e) => setUserPrompt(e.target.value)}
-              />
-
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700">Select a Tag:</label>
-                <select
-                  value={tag}
-                  onChange={(e) => setTag(e.target.value)}
-                  className="block w-full mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="solution">Solution</option>
-                  <option value="hint">Hint</option>
-                  <option value="check">Check</option>
-                  <option value="optimize">Optimization</option>
-                  <option value="solve">Solve</option>
-                </select>
-              </div>
-
-              <button
-                onClick={fetchAiSolution}
-                className="mt-4 w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
-              >
-                Get AI Solution
-              </button>
-
-              {/* AI Suggested Solution Display */}
-              <div className="mt-4 p-4 border rounded-md h-32 overflow-y-auto bg-gray-100">
-                <h3 className="font-semibold text-gray-800">Suggested Solution:</h3>
-                <div
-                  className="whitespace-pre-wrap"
-                  dangerouslySetInnerHTML={{ __html: aiSolution || 'AI solution will appear here...' }}
-                />
-              </div>
-            </div>
-
+            </ResizableCard>
 
             <div className="p-6 bg-white shadow-lg rounded-md">
               <h3 className="text-2xl font-semibold text-gray-800 mb-4">Recently Solved</h3>
