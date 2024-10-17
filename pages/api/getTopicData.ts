@@ -22,7 +22,7 @@ const getTopicData = async (req: NextApiRequest, res: NextApiResponse) => {
     // Fetch documents related to each topic
     const topicsWithDocuments = await Promise.all(
       topics.map(async (topic) => {
-        const documents = await DocumentModel.find({ topicId: topic._id }).select('name content type');
+        const documents = await DocumentModel.find({ topicId: topic._id });
         return {
           ...topic.toObject(), // Convert the Mongoose model to a plain JS object
           documents,

@@ -4,7 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import ResizableCard from './ResizableCard';
-
+import axios from 'axios';
 // Define the interfaces for Document and Topic
 interface IDocument {
   _id: string;
@@ -20,6 +20,16 @@ interface ITopic {
   resourceUrl?: string;
   resourceUrls?: string[];
   documents?: IDocument[];
+}
+
+interface IMetadata {
+  level: string;
+}
+
+interface IContentItem {
+  _id: string;
+  content: string;
+  metadata: IMetadata;
 }
 
 const TAGS = [
@@ -43,6 +53,7 @@ const LearningPaths: React.FC = () => {
   const [aiHistoryArray, setAiHistoryArray] = useState<IDocument[]>([]);
   const [documentName, setDocumentName] = useState<string>('');
   const [docType, setDocType] = useState<string>('');
+  const [theExerciseLevel, setTheExerciseLevel] = useState<any[]>([]);
   const [selectedTag, setSelectedTag] = useState<{ label: string; prompt: string } | null>(null);
 
 
@@ -56,6 +67,25 @@ const LearningPaths: React.FC = () => {
     return txt.value;
 };
 
+const handleGenerateData = async (topicId: string) => {
+  if (!topic) {
+    toast.error('Topic is required');
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const titles = topic.title;
+    const response = await axios.post('/api/generateTheData', { titles, topicId });
+    toast.success('generate the data');
+  } catch (error) {
+    toast.error('Failed to generate data. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
+
   // Load content based on the provided content or URL
   const loadOnTheCard = (content: string, type?: string) => {
     const isContentUrl = (content: string) => {
@@ -63,7 +93,6 @@ const LearningPaths: React.FC = () => {
       return urlRegex.test(content);
     };
     const urlCheck = isContentUrl(content);
-    
     setIsUrl(urlCheck);
     setSelectedDoc(content);
     
@@ -90,23 +119,63 @@ const LearningPaths: React.FC = () => {
 };
 
 
-
-  
-   
-
-  // Fetch the topic data from the server
 // Fetch the topic data from the server
 const fetchTopic = async () => {
   setLoading(true);
   try {
     const response = await fetch(`/api/getTopicData?page=${currentPage}`);
     const data: ITopic[] = await response.json();
-
+    
     if (data.length > 0) {
       const firstTopic = data[0];
       setTopic(firstTopic);
-      setSelectedDoc(firstTopic.resourceUrl || '');
+      setSelectedDoc(firstTopic.resourceUrls?.[0] || ''); // Use the first resource URL if available
       setResourceUrls(firstTopic.resourceUrls?.join('\n') || '');
+      // Ensure the topic has documents and at least one valid document
+      if (firstTopic.documents && firstTopic.documents.length > 0) {
+        const firstDocument = firstTopic.documents[0];
+
+        // Ensure 'content' exists in the document
+        if (firstDocument.content) {
+          // Convert content to an array if it's not already
+          const documentContent = Array.isArray(firstDocument.content)
+            ? firstDocument.content
+            : [firstDocument.content];
+
+          // Filter out invalid entries (ensures items have metadata and level)
+          const filteredContent = documentContent.filter((item: any) => {
+            return typeof item === 'object' && item.metadata && item.metadata.level;
+          });
+
+          if (filteredContent.length > 0) {
+            // Sort by level
+            const levels = ["Beginner", "Intermediate", "Advanced"];
+            const sortedContent = [...filteredContent].sort((a, b) => {
+              return levels.indexOf(a.metadata.level) - levels.indexOf(b.metadata.level);
+            });
+
+            // Group content by level
+            const groupedContent = sortedContent.reduce((acc, item) => {
+              const level = item.metadata.level;
+              if (!acc[level]) {
+                acc[level] = [];
+              }
+              acc[level].push(item);
+              return acc;
+            }, {});
+
+            // Set state with grouped content
+            setTheExerciseLevel(groupedContent);
+            console.log("Grouped content:", groupedContent);
+          } else {
+            console.log('No valid content with metadata and level found.');
+          }
+        } else {
+          console.log('No content available in the first document.');
+        }
+      } else {
+        toast.info('No documents available for the topic.');
+      }
     } else {
       toast.info('No more topics available.');
     }
@@ -116,20 +185,6 @@ const fetchTopic = async () => {
   } finally {
     setLoading(false);
   }
-};
-
-
-  // Fetch documentation based on the topic ID
-  const fetchDocumentation = async (documentId: string) => {
-    try {
-      const response = await fetch(`/api/getDocumentsById?documentId=${documentId}`);
-      const data: IDocument = await response.json(); // Expecting a single document
-      if (!response.ok) throw new Error('Failed to fetch document');
-      setSelectedDoc(data.content); // Set the selected document content
-    } catch (error) {
-      console.error('Error fetching documentation:', error);
-      toast.error('Failed to fetch documentation.');
-    }
 };
 
 
@@ -355,6 +410,25 @@ const fetchTopic = async () => {
                     ))}
                   </div>
                 )}
+                <h3 className="text-lg font-semibold mb-2">The AI Content</h3>
+                <div className='bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300'>
+                  {Object.keys(theExerciseLevel).length > 0 && (
+                    <ul>
+                      {Object.entries(theExerciseLevel).map(([level, items]) => (
+                        <li key={level}>
+                          <strong>{level}</strong>
+                          <ul>
+                            {items.map((item: any) => (
+                              <li key={item._id} onClick={() => loadOnTheCard(item.content, 'aiGenerated')}>
+                                {item.type} {/* Display any other item metadata if needed */}
+                              </li>
+                            ))}
+                          </ul>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
             </div>
           <ResizableCard>
@@ -378,33 +452,35 @@ const fetchTopic = async () => {
         </div>
         <div className='col-span-2 max-h-96 overflow-y-scroll scrollabler scrollable-hover bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300'>
           <ResizableCard>
-            <div className="bg-white rounded-lg p-4 w-full relative overflow-hidden">
-              <div className="overflow-auto">
-                <h2 className="text-xl mb-4">Content</h2>
-                {isUrl && selectedDoc ? (
-                  <iframe
-                    src={selectedDoc}
-                    title="Webview"
-                    className="w-full h-96 border-0 rounded"
-                    sandbox="allow-same-origin allow-scripts allow-popups"
-                  />
-                ) : (
-                  docType === "ai" ? (
-                    <div className="ai-doc-rendering">
-                      {aiHistoryArray.map((chat: any, index: any) => (
-                        <div
-                          key={index}
-                          className={`p-2 rounded-lg mb-2 ${chat.role === 'user' ? 'bg-blue-100 self-end' : 'bg-gray-100 self-start'}`}
-                          dangerouslySetInnerHTML={{ __html: chat.text || 'AI solution will appear here...' }}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <pre className="whitespace-pre-wrap">{selectedDoc}</pre> // Render the content directly if it's not a URL
-                  )
-                )}
-              </div>
+          <div className="bg-white rounded-lg p-4 w-full relative overflow-hidden">
+            <div className="overflow-auto">
+              <h2 className="text-xl mb-4">Content</h2>
+              {isUrl && selectedDoc ? (
+                <iframe
+                  src={selectedDoc}
+                  title="Webview"
+                  className="w-full h-96 border-0 rounded"
+                  sandbox="allow-same-origin allow-scripts allow-popups"
+                />
+              ) : docType === "ai" ? (
+                <div className="ai-doc-rendering">
+                  {aiHistoryArray.map((chat: any, index: any) => (
+                    <div
+                      key={index}
+                      className={`p-2 rounded-lg mb-2 ${chat.role === 'user' ? 'bg-blue-100 self-end' : 'bg-gray-100 self-start'}`}
+                      dangerouslySetInnerHTML={{ __html: chat.text || 'AI solution will appear here...' }}
+                    />
+                  ))}
+                </div>
+              ) : docType === "aiGenerated" ? (
+                <div
+                  dangerouslySetInnerHTML={{ __html: JSON.parse(selectedDoc || 'AI solution will appear here...') }}
+                />
+              ) : (
+                <pre className="whitespace-pre-wrap">{selectedDoc}</pre> // Render the content directly if it's not a URL
+              )}
             </div>
+          </div>
           </ResizableCard>
         </div>
         <div className='col-span-1'>
@@ -507,6 +583,15 @@ const fetchTopic = async () => {
           >
             <img src="/completedTask.svg" alt="Completed Task" width={40} height={40}/>
           </button>
+          {!theExerciseLevel || Object.keys(theExerciseLevel).length === 0 && (
+            <button
+              onClick={() => handleGenerateData(topic._id)}
+              className="bg-red-500 text-white p-1 rounded-full shadow-lg hover:bg-red-600 transition-colors duration-300"
+            >
+              <img src="/completedTask.svg" alt="Completed Task" width={40} height={40} />
+            </button>
+          )}
+
         </div>
       )}
     </div>

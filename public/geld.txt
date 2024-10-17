@@ -1,0 +1,269 @@
+import { NextApiRequest, NextApiResponse } from 'next';
+import connectToDatabase from './lib/mongodb';
+import DocumentModel from './lib/documentation';
+import { Types } from 'mongoose';
+import axios from 'axios';
+
+// Interfaces for various data sources
+interface WikipediaItem {
+  snippet: string;
+}
+
+interface GitHubItem {
+  description: string;
+}
+
+interface OERItem {
+  title: string;
+}
+
+interface GoogleBookItem {
+  volumeInfo: {
+    title: string;
+  };
+}
+
+interface ArxivItem {
+  title: string;
+}
+
+interface CoreItem {
+  title: string;
+}
+
+interface SemanticScholarItem {
+  title: string;
+}
+
+interface DBLPItem {
+  title: string;
+}
+
+interface CommonCrawlItem {
+  url: string;
+  title: string;
+  snippet: string;
+}
+
+interface PubMedItem {
+  title: string;
+  abstract: string;
+}
+
+// Material interface
+type Level = 'Beginner' | 'Intermediate' | 'Advanced';
+
+// Update the Material interface to use the Level type
+interface Material {
+  source: string;
+  content: string;
+  level: Level;
+  type?: string;
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  await connectToDatabase();
+
+  const { topic }: { topic: string } = req.body; // No level here
+
+  if (!topic) {
+    return res.status(400).json({ error: 'Topic is required' });
+  }
+
+  try {
+    // Fetch data from various sources concurrently
+    const [
+      wikipediaData, githubData, oerData, commonCrawlData, pubMedData, googleBooks, arxivPapers, corePapers, semanticScholar, dblp
+    ] = await Promise.all([
+      fetchFromWikipedia(topic),
+      fetchFromGitHub(topic),
+      fetchFromOER(topic),
+      fetchFromCommonCrawl(topic),
+      fetchFromPubMed(topic),
+      fetchFromGoogleBooks(topic),
+      fetchFromArxiv(topic),
+      fetchFromCore(topic),
+      fetchFromSemanticScholar(topic),
+      fetchFromDblp(topic),
+    ]);
+
+    // Levels you want to generate data for
+    const levels = ['Beginner', 'Intermediate', 'Advanced'];
+
+    // AI Prompts
+    const prompts = {
+      exercises: `Generate a list of at least 5 different {level}-level exercises for ${topic}.`,
+      quizzes: `Create at least 10 {level}-level quiz questions for ${topic}.`,
+      interviewQuestions: `Generate 10 {level}-level interview questions for ${topic}.`,
+      explanations: `Provide multiple {level}-level explanations for ${topic}.`,
+      summaries: `Summarize ${topic} in multiple ways: 1) A high-level {level}-level overview.`,
+      tutorials: `Write a step-by-step {level}-level tutorial on how to implement ${topic}.`,
+      useCases: `Provide at least 5 real-world use cases for ${topic}.`,
+      prosCons: `List at least 5 pros and 5 cons of using ${topic}.`,
+      projectIdeas: `Suggest at least 5 different project ideas related to ${topic}.`,
+      mindMap: `Break down ${topic} into a detailed hierarchical structure.`,
+      cheatSheet: `Create a comprehensive cheat sheet for ${topic}.`,
+      infographic: `Suggest at least 3 different ways to visualize the key points of ${topic}.`,
+      simulation: `Create at least 3 different interactive role-play scenarios related to ${topic}.`,
+    };
+
+    // Generate AI content concurrently
+    const aiGeneratedContent = await Promise.all(
+      levels.flatMap(level =>
+        Object.values(prompts).map(async (prompt) => {
+          const levelPrompt = prompt.replace('{level}', level);
+          const response = await dataAI(req,levelPrompt);
+          return Array.isArray(response) && response.length > 0 ? response.join('\n') : 'No content generated';
+        })
+      )
+    );
+
+    // Prepare materials
+    const materials: Material[] = [
+      ...wikipediaData.map(item => ({ source: 'Wikipedia', content: item.snippet, level: 'Beginner' as Level })),
+      ...githubData.map(item => ({ source: 'GitHub', content: item.description, level: 'Intermediate' as Level })),
+      ...oerData.map(item => ({ source: 'OER', content: item.title, level: 'Advanced' as Level })),
+      ...googleBooks.items.map(item => ({ source: 'Google Books', content: item.volumeInfo.title, level: 'Beginner' as Level })),
+      ...arxivPapers.map(item => ({ source: 'arXiv', content: item.title, level: 'Intermediate' as Level })),
+      ...corePapers.map(item => ({ source: 'Core', content: item.title, level: 'Advanced' as Level })),
+      ...semanticScholar.map(item => ({ source: 'Semantic Scholar', content: item.title, level: 'Intermediate' as Level })),
+      ...dblp.map(item => ({ source: 'DBLP', content: item.title, level: 'Advanced' as Level })),
+    ];
+
+    // Structure AI-generated content
+    const generatedMaterials = aiGeneratedContent.map((result, index) => ({
+      type: Object.keys(prompts)[Math.floor(index / levels.length)],
+      content: result,
+      metadata: {
+        generatedAt: new Date(),
+        level: levels[index % levels.length],
+      },
+    }));
+
+    // Insert into MongoDB
+    const topicId = new Types.ObjectId();
+    const documentData = {
+      topicId: topicId,
+      content: [
+        ...materials.map((material) => ({
+          type: 'scraped',
+          content: material.content,
+          metadata: { level: material.level, source: material.source },
+        })),
+        ...generatedMaterials,
+      ],
+    };
+
+    await DocumentModel.create(documentData);
+    res.status(201).json({ message: 'Data successfully stored in the database', topicId });
+  } catch (error) {
+    console.error('Error saving data:', error);
+    res.status(500).json({ error: error });
+  }
+}
+
+// Actual Fetch Functions
+
+async function fetchFromWikipedia(topic: string): Promise<WikipediaItem[]> {
+  const url = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(topic)}&format=json`;
+  const response = await axios.get(url);
+  const data = response.data?.query?.search ?? [];
+  return data.map((item: any) => ({
+    snippet: item.snippet.replace(/<[^>]*>/g, ''), // Remove HTML tags
+  }));
+}
+
+async function fetchFromGitHub(topic: string): Promise<GitHubItem[]> {
+  const url = `https://api.github.com/search/repositories?q=${encodeURIComponent(topic)}&per_page=5`;
+  const response = await axios.get(url);
+  return response.data.items.map((item: any) => ({
+    description: item.description || 'No description available',
+  }));
+}
+
+async function fetchFromOER(topic: string): Promise<OERItem[]> {
+  const url = `https://api.oercommons.org/v2/search/?query=${encodeURIComponent(topic)}`;
+  const response = await axios.get(url);
+  return response.data.results.map((item: any) => ({
+    title: item.name,
+  }));
+}
+
+async function fetchFromCommonCrawl(topic: string): Promise<CommonCrawlItem[]> {
+  const url = `https://api.commoncrawl.org/search?q=${encodeURIComponent(topic)}&output=json`;
+  const response = await axios.get(url);
+  return response.data.results.map((item: any) => ({
+    url: item.url,
+    title: item.title,
+    snippet: item.excerpt || '',
+  }));
+}
+
+async function fetchFromPubMed(topic: string): Promise<PubMedItem[]> {
+  const url = `https://api.ncbi.nlm.nih.gov/lit/ctxp/v1/pubmed/?term=${encodeURIComponent(topic)}`;
+  const response = await axios.get(url);
+  return response.data.map((item: any) => ({
+    title: item.title,
+    abstract: item.abstract,
+  }));
+}
+
+async function fetchFromGoogleBooks(topic: string): Promise<{ items: GoogleBookItem[] }> {
+  const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(topic)}&maxResults=5`;
+  const response = await axios.get(url);
+  return response.data;
+}
+
+async function fetchFromArxiv(topic: string): Promise<ArxivItem[]> {
+  const url = `http://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(topic)}&start=0&max_results=5`;
+  const response = await axios.get(url);
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(response.data, "text/xml");
+  const entries = xmlDoc.getElementsByTagName("entry");
+  return Array.from(entries).map((entry) => ({
+    title: entry.getElementsByTagName("title")[0].textContent || '',
+  }));
+}
+
+async function fetchFromCore(topic: string): Promise<CoreItem[]> {
+  const url = `https://core.ac.uk:443/api-v2/search/${encodeURIComponent(topic)}?page=1&pageSize=5&apiKey=your_api_key`;
+  const response = await axios.get(url);
+  return response.data.data.map((item: any) => ({
+    title: item.title,
+  }));
+}
+
+async function fetchFromSemanticScholar(topic: string): Promise<SemanticScholarItem[]> {
+  const url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURIComponent(topic)}&limit=5`;
+  const response = await axios.get(url);
+  return response.data.data.map((item: any) => ({
+    title: item.title,
+  }));
+}
+
+async function fetchFromDblp(topic: string): Promise<DBLPItem[]> {
+  const url = `https://dblp.org/search/publ/api?q=${encodeURIComponent(topic)}&format=json`;
+  const response = await axios.get(url);
+  return response.data.result.hits.hit.map((item: any) => ({
+    title: item.info.title,
+  }));
+}
+
+async function dataAI(req: NextApiRequest, topic: string): Promise<string[]> {
+  // Determine the protocol based on the request headers
+  const protocol = req.headers['x-forwarded-proto'] || 'http';
+  const baseUrl = `${protocol}://${req.headers.host}`;
+  
+  try {
+    const response = await axios.post(`${baseUrl}/api/chat`, {
+      message: topic,
+      history: [],
+      systemInstruction: `Provide a detailed overview for the following: ${topic}`,
+    });
+    return response.data.length > 0 ? response.data : ['No AI content generated'];
+  } catch (error) {
+    console.error('Error fetching from AI:', error);
+    return ['No AI content generated due to error'];
+  }
+}
+

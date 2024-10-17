@@ -177,3 +177,62 @@ body {
     max-height: 70vh; /* Reduce height on smaller screens */
   }
 }
+
+
+article {
+  font-family: 'Merriweather', serif;
+  line-height: 1.8;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h1, h2 {
+  font-family: 'Playfair Display', serif;
+  color: #2c3e50;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+p {
+  font-size: 18px;
+  color: #34495e;
+  text-align: justify;
+  margin-bottom: 15px;
+}
+
+.toc ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
+
+.toc ul li {
+  margin: 5px;
+}
+
+.toc ul li a {
+  font-size: 16px;
+  color: #2980b9;
+  text-decoration: none;
+}
+
+.toc ul li a:hover {
+  text-decoration: underline;
+}
+
+.epub-book h2 {
+  font-size: 24px;
+  color: #8e44ad;
+  margin-top: 30px;
+  border-bottom: 1px solid #dcdcdc;
+  padding-bottom: 10px;
+}
+
+.pdf-book, .docx-book {
+  font-family: 'Georgia', serif;
+  color: #333;
+}

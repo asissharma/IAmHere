@@ -1,22 +1,43 @@
-import mongoose, { Schema, Document, Model } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 
-interface IDocument extends Document {
-  topicId: string;      // Reference to the related topic
-  type: 'ai' | 'note';  // Type of document (AI response or user note)
-  content: string;      // The actual content (markdown or text)
-  name?: string;        // Optional name field for the document
+// Define the content interface
+export interface IContent {
+  type: string;  // Removed the enum and made it a string
+  content: string;
+  metadata?: {
+    level?: string;
+    source?: string;
+    generatedAt?: Date;
+  };
 }
 
-const documentSchema: Schema = new Schema({
-  topicId: { type: Schema.Types.ObjectId, ref: 'Topic', required: true },
-  type: { type: String, enum: ['ai', 'note'], required: true },
+// Define the main document interface
+export interface IDocument extends Document {
+  topicId: mongoose.Types.ObjectId;
+  content: IContent[];
+}
+
+// Create the schema for the document
+const ContentSchema: Schema<IContent> = new Schema({
+  type: { 
+    type: String,  // Now it's a normal string without enum
+    required: true 
+  },
   content: { type: String, required: true },
-  name: { type: String, default: '' }, 
-}, {
-  timestamps: true,
-  collection: 'documents'
+  metadata: {
+    level: { type: String },
+    source: { type: String },
+    generatedAt: { type: Date },
+  },
 });
 
-const DocumentModel: Model<IDocument> = mongoose.models.Document || mongoose.model<IDocument>('Document', documentSchema);
+// Update this line to use Schema.Types.ObjectId
+const DocumentSchema: Schema<IDocument> = new Schema({
+  topicId: { type: Schema.Types.ObjectId, required: true },
+  content: { type: [ContentSchema], required: true },
+});
+
+// Create the model
+const DocumentModel = mongoose.models.Document || mongoose.model<IDocument>('Document', DocumentSchema);
 
 export default DocumentModel;
