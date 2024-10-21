@@ -135,47 +135,73 @@ body {
   border: 1px solid #ddd;
   border-radius: 8px;
   overflow: hidden;
-  padding: 0.3rem;
+  padding: 1rem; /* Adjust padding to ensure space for buttons */
   background-color: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease; /* Smooth box-shadow transition */
+  margin: auto; /* Center the card by default */
 }
 
 .resizable-card--scaled {
-  transform: scale(0.8);
+  transform: scale(1.2); /* Adjust scale as needed */
   z-index: 100;
-  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.15); /* Adds more depth */
-  position: absolute; 
-  overflow-y: scroll; 
-  overflow-x: hidden; 
-  max-height: 80vh; 
-  max-width: 100vw; 
-  left: 0; 
-  right: 0; 
-  margin: 0 auto; 
+  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.15);
+  position: fixed; /* Keep the card fixed when scaled */
+  top: 50%; /* Center vertically */
+  left: 50%; /* Center horizontally */
+  transform: translate(-50%, -50%) scale(1.2); /* Center the card with scaling */
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  max-height: 80vh; /* Keep within the viewport */
+  max-width: 90vw; /* Keep within the viewport */
 }
-
 
 .resizable-card--fullsize {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
+  height: 100%; /* Change this to 100% */
   padding: 2rem;
-  z-index: 100; 
+  z-index: 100;
   background-color: white;
-  overflow-y: auto; 
+  overflow-y: auto;
+  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.3); /* Deeper shadow for full size */
+  display: flex; /* Use flexbox to center content */
+  align-items: center; /* Center vertically */
+  justify-content: center; /* Center horizontally */
 }
 
 .resizable-card__buttons {
-  margin-top: 0.5rem;
+  position: absolute; /* Make buttons float on top */
+  top: 1rem; /* Adjust positioning */
+  right: 1rem; /* Adjust positioning */
+  z-index: 2; /* Ensure buttons are above other elements */
 }
 
-@media (max-width: 768px) {
-  .resizable-card--scaled {
-    transform: scale(1.1); /* Slightly smaller scale for mobile */
-    max-height: 70vh; /* Reduce height on smaller screens */
-  }
+.resizable-card__button {
+  display: flex;
+  align-items: center;
+  transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transition for hover effect */
+}
+
+.resizable-card__button:hover {
+  transform: scale(1.05); /* Scale effect on hover */
+}
+
+.resizable-card__content {
+  height: 100%; /* Ensure the content takes full height */
+  display: flex;
+  flex-direction: column; /* Enable vertical stacking of children */
+}
+
+.resizable-card--fullsize .resizable-card__content {
+  height: auto; /* Allow content to define height */
+  max-height: calc(100% - 4rem); /* Leave space for buttons */
+  width: auto; /* Allow content to define width */
+}
+
+.resizable-card--scaled .resizable-card__content {
+  height: 100%; /* Keep the full height in scaled mode */
 }
 
 

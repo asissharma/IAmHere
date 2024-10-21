@@ -5,10 +5,11 @@ import Dashboard from './components/Dashboard';
 import DSAPlayground from './components/DsaPrac';
 import LearningPathsAndGoals from './components/LearningPathsAndGoals';
 import { motion } from 'framer-motion';
-import { FiFileText, FiCode, FiUpload, FiCalendar, FiArrowRight, FiMic } from 'react-icons/fi';
+import { FiFileText, FiCode, FiUpload, FiCalendar, FiArrowRight, FiMic, FiBook } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import { FaIceCream } from 'react-icons/fa';
 import PomodoroTimer from './components/PomodoroTimer';
+import Books from './components/books';
 
 const sections = {
   dashboard: <Dashboard />,
@@ -16,6 +17,7 @@ const sections = {
   upload: <FileUpload />,
   editor: <TextEditor />,
   learningpathsandgoals: <LearningPathsAndGoals />,
+  books: <Books/>,
 };
 
 type SectionKeys = keyof typeof sections;
@@ -59,6 +61,7 @@ const Home: NextPage = () => {
             {key === 'learningpathsandgoals' && <FaIceCream />}
             {key === 'upload' && <FiUpload />}
             {key === 'editor' && <FiCode />}
+            {key === 'books' && <FiBook />}
           </button>
         ))}
       </div>

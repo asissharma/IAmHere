@@ -5,6 +5,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import ResizableCard from './ResizableCard';
 import axios from 'axios';
+import { FiCopy, FiPlayCircle } from 'react-icons/fi';
+import MonacoEditor from '@monaco-editor/react';
 // Define the interfaces for Document and Topic
 interface IDocument {
   _id: string;
@@ -76,8 +78,7 @@ const handleGenerateData = async (topicId: string) => {
   setLoading(true);
 
   try {
-    const titles = topic.title;
-    const response = await axios.post('/api/generateTheData', { titles, topicId });
+    const response = await axios.post('/api/generateTheData', { topic, topicId });
     toast.success('generate the data');
   } catch (error) {
     toast.error('Failed to generate data. Please try again.');
@@ -302,7 +303,7 @@ const fetchTopic = async () => {
       if (response.ok) {
         const aiResponse = data.response;
         setChatHistory((prev) => [...prev, { role: 'model', text: aiResponse }]);
-        saveChatToBackend([...newHistory, { role: 'model', text: aiResponse }]);
+        // saveChatToBackend([...newHistory, { role: 'model', text: aiResponse }]);
         setSelectedTag(null); // Reset the selected tag
       } else {
         toast.error(data.error || 'Failed to get AI response.');
@@ -341,6 +342,18 @@ const fetchTopic = async () => {
     }
   };
 
+  const copyChatHistory = () => {
+    const chatContent = chatHistory.map(chat => chat.text || 'AI solution will appear here...').join('\n');
+    
+    navigator.clipboard.writeText(chatContent)
+      .then(() => {
+        toast.success('Chat copied to clipboard!');
+      })
+      .catch(err => {
+        console.error('Failed to copy: ', err);
+      });
+  };
+
   // Main rendering of the component
   return (
     <div className="min-h-screen bg-gray-100 p-3">
@@ -355,7 +368,7 @@ const fetchTopic = async () => {
             <div className="loader" />
           </div>
         ) : topic ? (
-          <div className="flex flex-col md:flex-row justify-between space-y-2 md:space-y-0 md:space-x-2">
+          <div className="flex flex-col md:flex-row justify-between space-y-1 md:space-y-0 md:space-x-2">
             <motion.button
               onClick={() => loadMoreTopics('prev')}
               disabled={currentPage === 0}
@@ -382,57 +395,80 @@ const fetchTopic = async () => {
       <div className="grid grid-cols-4 gap-6">
         <div className='col-span-1'>
             {/* Documentation, Resource URLs */}
-            <div className="bg-green-200 mb-1 p-6 max-h-96 overflow-y-scroll scrollabler scrollable-hover rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+            <div className="bg-green-200 mb-1 p-1 pt-2 h-96 max-h-96 overflow-y-scroll scrollabler scrollable-hover rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
               <div className="prose max-w-full">
-                <h3 className="text-lg font-semibold mb-2 mt-4">Resource URLs</h3>
-                {resourceUrls.split('\n').map((url, index) => (
-                  <div key={index} className="flex justify-between mb-2">
-                    <span
-                      className="text-blue-700 cursor-pointer hover:underline"
-                      onClick={() => loadOnTheCard(url)}
-                    >
-                      {url}
-                    </span>
-                  </div>
-                ))}
-                <h3 className="text-lg font-semibold mb-2">Custom Documentation</h3>
-                {topic?.documents && topic.documents.length > 0 && (
-                  <div className="space-y-4 mt-6">
-                    {topic.documents.map((doc) => (
-                      <div
-                        key={doc._id}
-                        className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300"
-                        onClick={() => loadOnTheCard(doc.content,doc.type)}
+              {resourceUrls ? (
+                <div>
+                  <h3 className="text-md text-center font-semibold mb-2 border border-black rounded-md">Resource URLs</h3>
+                  {resourceUrls.split('\n').map((url, index) => (
+                    <div key={index} className="flex justify-between mb-2">
+                      <span
+                        className="text-blue-700 cursor-pointer hover:underline transition duration-300"
+                        onClick={() => loadOnTheCard(url)}
+                        role="button" // Improves accessibility
+                        tabIndex={0} // Allows keyboard navigation
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            loadOnTheCard(url); // Allows activation with keyboard
+                          }
+                        }}
                       >
-                        <h3 className="text-lg font-bold">Document Type: {doc.type}</h3>
-                        <p>{doc.name}...</p> {/* Display a snippet of the document */}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <h3 className="text-lg font-semibold mb-2">The AI Content</h3>
-                <div className='bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300'>
-                  {Object.keys(theExerciseLevel).length > 0 && (
-                    <ul>
-                      {Object.entries(theExerciseLevel).map(([level, items]) => (
-                        <li key={level}>
-                          <strong>{level}</strong>
-                          <ul>
-                            {items.map((item: any) => (
-                              <li key={item._id} onClick={() => loadOnTheCard(item.content, 'aiGenerated')}>
-                                {item.type} {/* Display any other item metadata if needed */}
-                              </li>
-                            ))}
-                          </ul>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                        {url}
+                      </span>
+                    </div>
+                  ))}
                 </div>
+              ) : null}
+              {topic ? (
+                <div>
+                    {topic?.documents && topic.documents.length > 0 && (
+                      <div className="space-y-4 bg-white p-2 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+                        <h3 className="text-md text-center font-semibold mb-2 border border-black rounded-md">Custom Documentation</h3>
+                        {topic.documents.map((doc) => (
+                          <div
+                            key={doc._id}
+                            className=""
+                            onClick={() => loadOnTheCard(doc.content,doc.type)}
+                          >
+                            <span className="font-bold">- {doc.type} {doc.name}...</span> {/* Display a snippet of the document */}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+                {theExerciseLevel ? (
+                  <div>
+                    <div className="bg-white p-4 mt-1 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+                      <h3 className="text-md text-center font-semibold mb-2 border border-black rounded-md">The AI Content</h3>
+                      {Object.keys(theExerciseLevel).length > 0 ? (
+                        <ul className="list-disc pl-5">
+                          {Object.entries(theExerciseLevel).map(([level, items]) => (
+                            <li key={level} className="mb-2">
+                              <strong className="text-lg border-b border-black">{level}</strong>
+                              <ul className="list-inside list-decimal pl-4">
+                                {items.map((item: any) => (
+                                  <li
+                                    key={item._id}
+                                    onClick={() => loadOnTheCard(item.content, 'aiGenerated')}
+                                    className="cursor-pointer hover:text-blue-600 transition duration-200"
+                                  >
+                                    {item.type} {/* Display any other item metadata if needed */}
+                                  </li>
+                                ))}
+                              </ul>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-gray-500 text-center">No exercises available.</p>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
-          <ResizableCard>
-            <div className="bg-gray-200 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+            {/* <div className="bg-gray-200 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
               <h2 className="text-lg font-semibold mb-4 text-gray-800">Resource URLs</h2>
               <textarea
                 value={resourceUrls}
@@ -447,12 +483,11 @@ const fetchTopic = async () => {
               >
                 <i className="fas fa-save"></i> Save URLs
               </button>
-            </div>
-          </ResizableCard>
+            </div> */}
         </div>
-        <div className='col-span-2 max-h-96 overflow-y-scroll scrollabler scrollable-hover bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300'>
+        <div className='col-span-2 max-h-min overflow-y-scroll scrollabler scrollable-hover bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300'>
           <ResizableCard>
-          <div className="bg-white rounded-lg p-4 w-full relative overflow-hidden">
+          <div className="bg-white rounded-lg h-96 p-4 w-full overflow-y-scroll scrollabler relative wordwrap">
             <div className="overflow-auto">
               <h2 className="text-xl mb-4">Content</h2>
               {isUrl && selectedDoc ? (
@@ -474,7 +509,9 @@ const fetchTopic = async () => {
                 </div>
               ) : docType === "aiGenerated" ? (
                 <div
-                  dangerouslySetInnerHTML={{ __html: JSON.parse(selectedDoc || 'AI solution will appear here...') }}
+                  dangerouslySetInnerHTML={{
+                    __html: JSON.parse(selectedDoc || JSON.stringify('AI solution will appear here...')),
+                  }}
                 />
               ) : (
                 <pre className="whitespace-pre-wrap">{selectedDoc}</pre> // Render the content directly if it's not a URL
@@ -486,94 +523,151 @@ const fetchTopic = async () => {
         <div className='col-span-1'>
 
           {/* AI Assistant Chat */}
-          <ResizableCard>
-            <div className="mb-1 max-h-96 h-48 overflow-y-scroll scrollabler scrollable-hover bg-white p-4 rounded-lg shadow-md">
-              <h3 className="text-md font-semibold mb-2">Chat with AI</h3>
+          <ResizableCard> {/* Set the parent to relative */}
+            <div className="relative mb-1 max-h-96 h-48 scrollable overflow-y-scroll wordwrap bg-white p-4 rounded-lg shadow-md flex flex-col h-96">
               
-              {/* Tag Selection */}
-              <div className="mb-4">
-            <label htmlFor="tag-select" className="block mb-2 text-gray-700">Choose a tag:</label>
-            <select
-              id="tag-select"
-              value={selectedTag?.label || ''}
-              onChange={(e) => {
-                const selected = TAGS.find(tag => tag.label === e.target.value);
-                setSelectedTag(selected || null);
-              }}
-              className="border rounded-md p-2 w-full"
-            >
-              <option value="">Select a tag</option>
-              {TAGS.map((tag) => (
-                <option key={tag.label} value={tag.label}>
-                  {tag.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-              <div className="flex flex-col">
-                {chatHistory.map((chat, index) => (
-                  <div
-                    key={index}
-                    className={`p-2 rounded-lg mb-2 ${chat.role === 'user' ? 'bg-blue-100 self-end' : 'bg-gray-100 self-start'}`}
-                    dangerouslySetInnerHTML={{ __html: chat.text || 'AI solution will appear here...' }}
-                  />
-                ))}
-                <div className="flex bottom-4 mt-2">
-                  <input
-                    className="flex-1 border border-gray-300 rounded-lg p-2"
-                    type="text"
-                    value={userMessage}
-                    onChange={(e) => setUserMessage(e.target.value)}
-                    placeholder="Type your message..."
-                  />
-                  <button
-                    onClick={handleSendMessage}
-                    className="rounded-full text-white rounded ml-2 transition-colors duration-300 bg-blue-600 hover:bg-blue-700"
-                  >
-                    <svg fill="grey" height="24" width="24" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 495.003 495.003">
-                      <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-                      <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
-                      <g id="SVGRepo_iconCarrier">
-                        <g id="XMLID_51_">
-                          <path id="XMLID_53_" d="M164.711,456.687c0,2.966,1.647,5.686,4.266,7.072c2.617,1.385,5.799,1.207,8.245-0.468l55.09-37.616 l-67.6-32.22V456.687z"></path>
-                          <path id="XMLID_52_" d="M492.431,32.443c-1.513-1.395-3.466-2.125-5.44-2.125c-1.19,0-2.377,0.264-3.5,0.816L7.905,264.422 c-4.861,2.389-7.937,7.353-7.904,12.783c0.033,5.423,3.161,10.353,8.057,12.689l125.342,59.724l250.62-205.99L164.455,364.414 l156.145,74.4c1.918,0.919,4.012,1.376,6.084,1.376c1.768,0,3.519-0.322,5.186-0.977c3.637-1.438,6.527-4.318,7.97-7.956 L494.436,41.257C495.66,38.188,494.862,34.679,492.431,32.443z"></path>
-                        </g>
-                      </g>
-                    </svg>
-                  </button>
-                </div>
+              {/* Chat Header */}
+              <div className="flex items-center text-center border border-black rounded-md font-semibold text-gray-800 pr-1 pl-1 mb-5">
+                <span className="mr-1">Chat with AI</span>
+                <label htmlFor="tag-select" className="sr-only">Select a tag</label>
+                <select
+                  id="tag-select"
+                  value={selectedTag?.label || ''}
+                  onChange={(e) => {
+                    const selected = TAGS.find(tag => tag.label === e.target.value);
+                    setSelectedTag(selected || null);
+                  }}
+                  className="border rounded-md p-2"
+                >
+                  <option value="">Select a tag</option>
+                  {TAGS.map((tag) => (
+                    <option key={tag.label} value={tag.label}>
+                      {tag.label}
+                    </option>
+                  ))}
+                </select>
               </div>
-            </div>
-          </ResizableCard>
 
-          {/* Add Note */}
-          <ResizableCard>
-            <div className="bg-gray-200 p-2 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-              <h2 className="text-lg m-2 text-center font-semibold border border-black text-gray-800">Add Note</h2>
-              <input
-                type="text"
-                value={documentName}
-                onChange={(e) => setDocumentName(e.target.value)} // Handle name input
-                placeholder="Enter a name for your note"
-                className="border rounded p-2 w-full mb-4"
-              />
-              <Editor
-                height="200px"
-                defaultLanguage="markdown"
-                value={notes}
-                onChange={(value) => setNotes(value || '')}
-                options={{ minimap: { enabled: false }, automaticLayout: true }}
-              />
+              {/* Chat History */}
+              <div className="flex-grow word-wrap">
+                {chatHistory.length > 0 ? (
+                  chatHistory.map((chat, index) => (
+                    <div
+                      key={index}
+                      className={`p-2 rounded-lg mb-2 ${chat.role === 'user' ? 'bg-blue-100 self-end' : 'bg-gray-100 self-start'}`}
+                      dangerouslySetInnerHTML={{ __html: chat.text }}
+                    />
+                  ))
+                ) : (
+                  <div className="p-2 text-gray-500 text-center">
+                    AI solution will appear here...
+                  </div>
+                )}
+              </div>
+
+              {/* Input and Send Button */}
+              <div className="flex mt-2">
+                <input
+                  className="flex-1 border border-gray-300 rounded-lg p-2"
+                  type="text"
+                  value={userMessage}
+                  onChange={(e) => setUserMessage(e.target.value)}
+                  placeholder="Type your message..."
+                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()} // Allow sending with Enter key
+                />
+                <button
+                  onClick={handleSendMessage}
+                  aria-label="Send message"
+                  className="py-2 px-4 rounded-full text-white ml-2 transition-colors duration-300 bg-blue-600 hover:bg-blue-700"
+                >
+                  <FiPlayCircle className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Copy Button */}
               <button
-                onClick={handleNoteSave}
-                className="mt-1 bg-blue-500 text-white rounded p-1 hover:bg-blue-600 transition-colors duration-300"
+                onClick={() => copyChatHistory()}
+                aria-label="Copy chat history"
+                className="absolute top-4 right-5" // Position the copy button at the top right
               >
-                Save
+                <FiCopy className="w-8 h-8" />
               </button>
             </div>
           </ResizableCard>
+
+
         </div>
+      </div>
+      <div className='mt-2'>
+        <ResizableCard>
+          <div className="bg-white p-2 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+            <h2 className="text-md text-center font-semibold mb-2 border border-black rounded-md">
+              Add Note
+            </h2>
+
+            {/* Note Name Input */}
+            <div className="mb-2 flex items-center w-full">
+              <label 
+                htmlFor="documentName" 
+                className="block text-sm font-semibold text-gray-700 m-2"
+              >
+                Note Name:
+              </label>
+              <div className="flex items-center border w-full max-w-xs border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-blue-400">
+                <input
+                  id="documentName"
+                  type="text"
+                  value={documentName}
+                  onChange={(e) => setDocumentName(e.target.value)}
+                  placeholder="Type your note name here"
+                  className="flex-grow border-none rounded-l-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  required // Optional: if the input is required
+                />
+                <span className="p-2 text-gray-500">
+                  📝
+                </span>
+              </div>
+            </div>
+
+            {/* Monaco Editor */}
+            <MonacoEditor
+              width="100%"
+              height="250px" // Increased height for better visibility
+              language="markdown"
+              theme="vs-light" // Change this to "vs-dark" for dark theme
+              value={notes}
+              onChange={(value: any) => setNotes(value || '')}
+              options={{
+                selectOnLineNumbers: true,
+                automaticLayout: true,
+                minimap: {
+                  enabled: false,
+                },
+                scrollbar: {
+                  vertical: 'visible',
+                  horizontal: 'visible',
+                },
+              }}
+            />
+
+            {/* Save Button */}
+            <button
+              onClick={handleNoteSave}
+              className="mt-4 bg-blue-600 text-white rounded-lg p-2 w-full hover:bg-blue-700 transition-colors duration-300 flex items-center justify-center shadow-md transform hover:scale-105"
+            >
+              {loading ? (
+                <div className="flex items-center">
+                  <svg className="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <circle className="text-white" fill="none" strokeWidth="2" strokeLinecap="round" cx="12" cy="12" r="10" />
+                  </svg>
+                  Saving...
+                </div>
+              ) : (
+                'Save'
+              )}
+            </button>
+          </div>
+        </ResizableCard>
       </div>
       {topic && (
         <div className="fixed bottom-4 right-4">

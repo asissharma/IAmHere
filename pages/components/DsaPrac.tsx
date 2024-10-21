@@ -276,7 +276,7 @@ const DSAPlayground: React.FC = () => {
             <ResizableCard>
               <div className="mb-1 p-2 bg-white shadow-lg rounded-md">
                 <h2 className="text-center border border-black rounded-md text-xl font-semibold text-gray-800 mb-1">AI Suggested Solution</h2>
-                <div className="mt-4 p-4 border rounded-md max-h-64  overflow-y-auto bg-gray-100">
+                <div className="mt-4 p-4 border rounded-md max-h-96 overflow-y-auto bg-gray-100">
                   <h3 className="font-semibold text-gray-800">Suggested Solution:</h3>
                   <div
                     className="whitespace-pre-wrap overflow-hidden break-words" // Added break-words to prevent overflow

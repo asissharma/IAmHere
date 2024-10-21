@@ -15,9 +15,9 @@ const Index: NextPage = () => {
     <div>
       {!isAuthenticated ? (
         <Auth onSuccess={handleAuthenticationSuccess} />
-      ) : (
+      ) : ( 
         <Home />
-      )}   
+      )}
     </div>
   );
 };
