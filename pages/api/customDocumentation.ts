@@ -15,7 +15,7 @@ const saveDocument = async (req: NextApiRequest, res: NextApiResponse) => {
       const sanitizedContent = validator.escape(content);
 
       // Validate input
-      if (!topicId || !sanitizedContent || !['ai', 'note'].includes(type)) {
+      if (!topicId || !sanitizedContent || !['ai', 'note','dumpYourThought'].includes(type)) {
         return res.status(400).json({ message: 'Invalid input data' });
       }
 
@@ -26,10 +26,15 @@ const saveDocument = async (req: NextApiRequest, res: NextApiResponse) => {
         documentName = topic ? `${topic.title} - ${type}` : `Document - ${type}`;
       }
 
-      const newDocument = await DocumentModel.create({
-        topicId,
+      // Wrap content in the expected format for the array of IContent
+      const contentArray = [{
         type,
         content: sanitizedContent,
+      }];
+
+      const newDocument = await DocumentModel.create({
+        topicId,
+        content: contentArray,
         name: documentName, // Save the name of the document
       });
 

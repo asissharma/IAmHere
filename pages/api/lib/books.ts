@@ -7,7 +7,7 @@ export interface IBook extends Document {
     publishedDate?: Date;  // Published date is optional
     genre?: string;        // Genre is optional
     description?: string;  // Description is optional
-    content: string;       // Content is required
+    content?: string;       // Content is required
     createdAt?: Date;      // Created at is optional
     updatedAt?: Date;      // Updated at is optional
   }
