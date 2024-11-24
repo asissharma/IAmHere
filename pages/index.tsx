@@ -17,7 +17,7 @@ const Index: NextPage = () => {
         <Auth onSuccess={handleAuthenticationSuccess} />
       ) : ( 
         <Home />
-      )} 
+      )}
     </div>
   );
 };

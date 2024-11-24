@@ -68,18 +68,18 @@ const Dashboard: NextPage = () => {
 
   // Prepare chart data
   const lineChartData = {
-    labels: data.metrics.map((metric) => metric.title),
+    labels: data?.metrics?.map((metric) => metric.title) || [], // Ensure data.metrics exists
     datasets: [
       {
         label: 'Metric Values',
-        data: data.metrics.map((metric) => metric.value),
-        fill: true,
-        backgroundColor: 'rgba(76, 175, 80, 0.3)',
-        borderColor: 'rgba(76, 175, 80, 1)',
-        tension: 0.4,
+        data: data?.metrics?.map((metric) => metric.value) || [], // Handle undefined safely
+        backgroundColor: 'rgba(75,192,192,0.2)',
+        borderColor: 'rgba(75,192,192,1)',
+        borderWidth: 2,
       },
     ],
   };
+  
 
   const barChartData = {
     labels: data.metrics.map((metric) => metric.title),

@@ -11,7 +11,7 @@ const PomodoroTimer: React.FC = () => {
   // Set initial position after the component mounts (only runs on the client side)
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setPosition({ top: window.innerHeight - 590, left: window.innerWidth - 170 });
+      setPosition({ top: window.innerHeight - 545, left: window.innerWidth - 170 });
     }
   }, []);
 
@@ -74,7 +74,7 @@ const PomodoroTimer: React.FC = () => {
 
   return (
     <motion.div
-      className="fixed z-50 p-2 bg-white border rounded-lg shadow-lg cursor-move flex items-center justify-between"
+      className="fixed pomodoroTimer p-2 bg-white border rounded-lg shadow-lg cursor-move flex items-center justify-between"
       style={{ top: `${position.top}px`, left: `${position.left}px`}} // Compact design
       onMouseDown={handleDrag}
       initial={{ opacity: 0, scale: 0.5 }} // Initial animation state
