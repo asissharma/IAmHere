@@ -6,30 +6,36 @@ const fetchQuestions = async (req: NextApiRequest, res: NextApiResponse) => {
   await connectToDatabase();
 
   try {
-    const { solved = 'false', numQuestions = 2, topic = '' } = req.query;
+    const { solved = 'false', numQuestions = 2 } = req.query;
 
-    // Building the query based on the solved and topic parameters
-    const query: any = {};
+    const numQuestionsLimit = Number(numQuestions);
     
-    // If 'solved' is 'true', 'false', or 'all' handle accordingly
-    if (solved === 'true') {
-      query.isSolved = true;
-    } else if (solved === 'false') {
-      query.isSolved = false;
+    // Make sure solved is 'false'
+    if (solved !== 'false') {
+      return res.status(400).json({ error: 'Only unsolved questions can be fetched' });
     }
 
-    // If a specific topic is provided, filter questions by topic
-    if (topic) {
-      query.topic = topic;
+    let remainingQuestions = numQuestionsLimit;
+    const allQuestions = [];
+    const difficultyLevels = ['Easy', 'Medium', 'Hard'];
+
+    for (const difficulty of difficultyLevels) {
+      if (remainingQuestions <= 0) break;
+
+      // Fetch unsolved questions for the current difficulty level
+      const questions = await Question.find({
+        isSolved: false,
+        difficulty,
+      }).limit(remainingQuestions);  // Limit to remaining questions
+
+      allQuestions.push(...questions);
+      remainingQuestions -= questions.length;  // Decrease the remaining count
     }
 
-    // Fetch the desired number of questions (convert to number and limit)
-    const questions = await Question.find(query).limit(Number(numQuestions));
-
-    res.status(200).json(questions);
+    return res.status(200).json(allQuestions);
   } catch (error) {
     console.error('Error fetching questions:', error);
-    res.status(500).json({ error: 'Failed to fetch questions' });
+    return res.status(500).json({ error: 'Failed to fetch questions' });
   }
 };
 

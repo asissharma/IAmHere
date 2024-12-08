@@ -15,9 +15,10 @@ export interface IContent {
 export interface IDocument extends Document {
   topicId: mongoose.Types.ObjectId;
   content: IContent[];
+  createdAt: Date; // Adding createdAt to the document interface
 }
 
-// Create the schema for the document
+// Create the schema for the content
 const ContentSchema: Schema<IContent> = new Schema({
   type: { 
     type: String,  // Now it's a normal string without enum
@@ -29,12 +30,14 @@ const ContentSchema: Schema<IContent> = new Schema({
     source: { type: String },
     generatedAt: { type: Date },
   },
-});
+}, { _id: false });  // ContentSchema does not need a separate _id
 
-// Update this line to use Schema.Types.ObjectId
+// Update this line to use Schema.Types.ObjectId and include timestamps
 const DocumentSchema: Schema<IDocument> = new Schema({
   topicId: { type: Schema.Types.ObjectId, required: true },
   content: { type: [ContentSchema], required: true },
+}, {
+  timestamps: true,  // Automatically adds `createdAt` and `updatedAt`
 });
 
 // Create the model

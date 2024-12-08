@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import 'react-quill/dist/quill.snow.css'; // Add the default theme for ReactQuill
+import dynamic from 'next/dynamic';
 
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 interface Thought {
   _id: string;
   topicId: string;
@@ -8,7 +11,8 @@ interface Thought {
     type: string;
     content: string;
     _id: string;
-  }[]; // Adjusted to match the actual structure of content
+  }[];
+  createdAt: string;
 }
 
 const DumpYourThought = () => {
@@ -20,7 +24,7 @@ const DumpYourThought = () => {
 
   const fetchThoughts = async () => {
     try {
-      const response = await fetch('/api/getdumpYourThought'); // Adjust this to your actual API route
+      const response = await fetch('/api/getdumpYourThought');
       if (!response.ok) {
         throw new Error('Failed to fetch thoughts');
       }
@@ -48,9 +52,9 @@ const DumpYourThought = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          topicId: '671fdebdf99d11cf32d2f727', // Replace with actual topic ID
+          topicId: '671fdebdf99d11cf32d2f727',
           content,
-          type: 'dumpYourThought'
+          type: 'dumpYourThought',
         }),
       });
 
@@ -60,7 +64,7 @@ const DumpYourThought = () => {
 
       setSuccess(true);
       setContent('');
-      fetchThoughts(); // Refresh thoughts after saving
+      fetchThoughts();
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An unknown error occurred');
     } finally {
@@ -69,51 +73,66 @@ const DumpYourThought = () => {
   };
 
   const handleThoughtClick = (thought: Thought) => {
-    setContent(thought.content[0].content); // Load the clicked thought's content into the textarea
+    setContent(thought.content[0].content);
+  };
+
+  // Format the date to a readable format
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString(); // You can modify this to your preferred format
   };
 
   return (
-    <div className="max-w-md mx-auto w-full h-full bg-white rounded-lg shadow-lg p-4">
-      <h2 className="text-2xl font-bold text-center mb-4">Dump Your Thoughts</h2>
-      <form onSubmit={handleSubmit}>
-        <textarea
+    <div className="max-w-lg mx-auto w-full h-full bg-gradient-to-t from-blue-500 to-indigo-600 rounded-xl shadow-2xl p-2">
+      <h2 className="text-3xl font-semibold text-white text-center mb-2">Dump Your Thoughts</h2>
+
+      <form onSubmit={handleSubmit} className="bg-white p-1 rounded-xl shadow-lg">
+        <ReactQuill
           value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={5}
+          onChange={setContent}
           placeholder="Write your thoughts here..."
-          className="w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
-          required
+          className="w-full p-1 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none transition-all duration-300"
         />
-        <button
+        <motion.button
           type="submit"
           disabled={loading}
-          className="w-full mt-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 focus:outline-none"
+          className="w-full mt-2 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none transition-all duration-300"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
           {loading ? 'Saving...' : 'Save Thought'}
-        </button>
+        </motion.button>
       </form>
-      {error && <p className="text-red-500 text-center mt-2">{error}</p>}
-      {success && <p className="text-green-500 text-center mt-2">Thought saved successfully!</p>}
 
-      <h3 className="text-xl font-semibold mt-6">Your Thoughts</h3>
-      <motion.ul 
-        className="mt-4 space-y-2"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        {thoughts.map((thought) => (
-          <motion.li 
-            key={thought._id} 
-            className="p-2 border rounded-lg cursor-pointer hover:bg-gray-100"
-            onClick={() => handleThoughtClick(thought)}
-            whileHover={{ scale: 1.05 }} // Scale effect on hover
-            whileTap={{ scale: 0.95 }} // Scale effect on tap
-          >
-            {thought.content[0]?.content} {/* Access the first content item */}
-          </motion.li>
-        ))}
-      </motion.ul>
+      {error && <p className="text-red-500 text-center mt-4">{error}</p>}
+      {success && <p className="text-green-500 text-center mt-4">Thought saved successfully!</p>}
+      <div className='bg-white rounded p-2 mt-2'>
+        <h3 className="text-2xl font-semibold text-center mt-2">Your Thoughts</h3>
+        <motion.ul
+          className="mt-4 space-y-3 h-64 scrollabler overflow-y-auto overflow-x-hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          {thoughts.map((thought) => (
+            <motion.li
+              key={thought._id}
+              className="p-2 bg-white rounded-lg shadow-md cursor-pointer hover:bg-gray-100 transition-all duration-300"
+              onClick={() => handleThoughtClick(thought)}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {thought.createdAt ? (
+                <p className="text-lg text-gray-700">
+                  {formatDate(thought.createdAt)} {/* Call formatDate here */}
+                </p>
+              ) : null}
+
+              <p className="text-lg text-gray-700" dangerouslySetInnerHTML={{ __html: thought.content[0]?.content?.slice(0, 50)}} />
+            </motion.li>
+          ))}
+        </motion.ul>
+      </div>
     </div>
   );
 };

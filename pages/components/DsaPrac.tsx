@@ -316,20 +316,24 @@ const DSAPlayground: React.FC = () => {
 
             <div className="p-6 bg-white shadow-lg rounded-md">
               <h3 className="text-2xl font-semibold text-gray-800 mb-4">Recently Solved</h3>
+              
               {recentlySolved.length > 0 ? (
-                recentlySolved.map((q) => (
-                  <div key={q._id} className="border-b py-2">
-                    <p className="text-gray-700">
-                      <strong>Problem:</strong> {q.problem}
-                    </p>
-                    <p className="text-gray-600">
-                      <strong>Topic:</strong> {q.topic}
-                    </p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-600">No recently solved questions.</p>
-              )}
+  
+<div className='h-64 scrollabler overflow-y-auto overflow-x-hidden'>
+    {recentlySolved.map((q) => (
+      <div key={q._id} className="border-b py-2">
+        <p className="text-gray-700">
+          <strong>Problem:</strong> {q.problem}
+        </p>
+        <p className="text-gray-600">
+          <strong>Topic:</strong> {q.topic}
+        </p>
+      </div>
+    ))}
+  </div>
+) : (
+  <p className="text-gray-600">No recently solved questions.</p>
+)}
               <button
                 onClick={fetchMoreSolvedQuestions}
                 disabled={loadingMore}

@@ -16,20 +16,20 @@ import FileUpload from "./components/upload";
 import TextEditor from "./components/TextEditor";
 import Dashboard from "./components/Dashboard";
 import DSAPlayground from "./components/DsaPrac";
-import DumpYourThought from "./components/DumpYourThought";
+// import DumpYourThought from "./components/DumpYourThought";
 import LearningPathsAndGoals from "./components/LearningPathsAndGoals";
 import Notebook from "./components/notebook";
-import Books from "./components/books";
+// import Books from "./components/books";
 
 const sections = {
   dashboard: <Dashboard />,
   playground: <DSAPlayground />,
   notebook: <Notebook />,
-  dumpYourThought: <DumpYourThought />,
+  // dumpYourThought: <DumpYourThought />,
   learningpathsandgoals: <LearningPathsAndGoals />,
   upload: <FileUpload />,
   editor: <TextEditor />,
-  books: <Books />,
+  // books: <Books />,
 };
 
 type SectionKeys = keyof typeof sections;
@@ -131,11 +131,10 @@ const Home: NextPage = () => {
           >
             {key === "dashboard" && <FiFileText />}
             {key === "playground" && <FiCode />}
-            {key === "dumpYourThought" && <FiThumbsUp />}
             {key === "learningpathsandgoals" && <FaIceCream />}
             {key === "upload" && <FiUpload />}
             {key === "editor" && <FiCode />}
-            {key === "books" && <FiBook />}
+            {/* {key === "books" && <FiBook />} */}
             {key === "notebook" && <FiGithub />}
           </button>
         ))}

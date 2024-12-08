@@ -1,0 +1,122 @@
+[
+  {
+    "taskName": "DSA Practice",
+    "description": "Solve 2-3 DSA problems (focusing on arrays/strings).",
+    "frequency": "daily",
+    "userId": "user123",
+    "priority": "high"
+  },
+  {
+    "taskName": "DSA Theory",
+    "description": "Revise key concepts and patterns.",
+    "frequency": "daily",
+    "userId": "user123",
+    "priority": "medium"
+  },
+  {
+    "taskName": "High-focus job tasks",
+    "description": "Prioritize critical job tasks.",
+    "frequency": "daily",
+    "userId": "user123",
+    "priority": "high"
+  },
+  {
+    "taskName": "Skill Exploration Break",
+    "description": "Read an article on DSA or scaling systems.",
+    "frequency": "daily",
+    "userId": "user123",
+    "priority": "low"
+  },
+  {
+    "taskName": "Website Business Brainstorming",
+    "description": "Generate new ideas or refine current strategies.",
+    "frequency": "weekly",
+    "dayOfWeek": "Monday",
+    "userId": "user123",
+    "priority": "medium"
+  },
+  {
+    "taskName": "ML Course",
+    "description": "Watch 1 video or complete 1 module.",
+    "frequency": "daily",
+    "userId": "user123",
+    "priority": "high"
+  },
+  {
+    "taskName": "ML Implementation",
+    "description": "Practice by coding an example from the course.",
+    "frequency": "daily",
+    "userId": "user123",
+    "priority": "high"
+  },
+  {
+    "taskName": "Personal Projects Execution",
+    "description": "Progress on personal tech projects.",
+    "frequency": "weekly",
+    "dayOfWeek": "Tuesday",
+    "userId": "user123",
+    "priority": "medium"
+  },
+  {
+    "taskName": "Web Development Basics",
+    "description": "Learn/implement foundational web dev concepts.",
+    "frequency": "daily",
+    "userId": "user123",
+    "priority": "medium"
+  },
+  {
+    "taskName": "Build Small Feature",
+    "description": "Create a small web component or feature.",
+    "frequency": "daily",
+    "userId": "user123",
+    "priority": "medium"
+  },
+  {
+    "taskName": "DevOps Concepts",
+    "description": "Learn containerization or CI/CD pipelines.",
+    "frequency": "weekly",
+    "dayOfWeek": "Thursday",
+    "userId": "user123",
+    "priority": "high"
+  },
+  {
+    "taskName": "DevOps Implementation",
+    "description": "Implement pipelines or debug a sample project.",
+    "frequency": "weekly",
+    "dayOfWeek": "Thursday",
+    "userId": "user123",
+    "priority": "medium"
+  },
+  {
+    "taskName": "Web3 Concepts",
+    "description": "Learn basics of smart contracts.",
+    "frequency": "weekly",
+    "dayOfWeek": "Friday",
+    "userId": "user123",
+    "priority": "medium"
+  },
+  {
+    "taskName": "Co-Ord Project Execution",
+    "description": "Advance Co-Ord or related projects.",
+    "frequency": "weekly",
+    "dayOfWeek": "Friday",
+    "userId": "user123",
+    "priority": "high"
+  },
+  {
+    "taskName": "Week Review",
+    "description": "Reflect on wins and areas for improvement.",
+    "frequency": "weekly",
+    "dayOfWeek": "Sunday",
+    "userId": "user123",
+    "priority": "medium"
+  },
+  {
+    "taskName": "Plan Week Ahead",
+    "description": "Set priorities and adjust routines.",
+    "frequency": "weekly",
+    "dayOfWeek": "Sunday",
+    "userId": "user123",
+    "priority": "high"
+  }
+]

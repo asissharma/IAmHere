@@ -15,6 +15,8 @@ import {
   ArcElement,
 } from 'chart.js';
 
+import TaskCard from './taskManager'; // Adjust path as needed
+import DumpYourThought from './DumpYourThought'; // Adjust path as needed
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,
@@ -68,18 +70,17 @@ const Dashboard: NextPage = () => {
 
   // Prepare chart data
   const lineChartData = {
-    labels: data?.metrics?.map((metric) => metric.title) || [], // Ensure data.metrics exists
+    labels: data?.metrics?.map((metric) => metric.title) || [],
     datasets: [
       {
         label: 'Metric Values',
-        data: data?.metrics?.map((metric) => metric.value) || [], // Handle undefined safely
+        data: data?.metrics?.map((metric) => metric.value) || [],
         backgroundColor: 'rgba(75,192,192,0.2)',
         borderColor: 'rgba(75,192,192,1)',
         borderWidth: 2,
       },
     ],
   };
-  
 
   const barChartData = {
     labels: data.metrics.map((metric) => metric.title),
@@ -97,7 +98,7 @@ const Dashboard: NextPage = () => {
     datasets: [
       {
         label: 'Overall Completion',
-        data: [55, 45], // You can replace this with actual data
+        data: [55, 45],
         backgroundColor: ['rgba(76, 175, 80, 0.8)', 'rgba(244, 67, 54, 0.8)'],
       },
     ],
@@ -105,23 +106,38 @@ const Dashboard: NextPage = () => {
 
   return (
     <motion.div
-      className="flex flex-col p-6 space-y-6"
+      className="flex flex-col p-6 space-y-6 bg-gray-100 max-w-screen-xl mx-auto overflow-auto"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <h1 className="text-2xl font-bold">Dashboard</h1>
+      <h1 className="text-3xl font-semibold text-gray-800">Dashboard</h1>
 
       {/* Main Section */}
-      <div className="flex flex-col md:flex-row md:space-x-6">
+      <div className="flex flex-col md:flex-row md:space-x-6 w-full">
         {/* Left Column */}
-        <div className="flex flex-col space-y-6 md:w-1/4">
+
+        {/* Middle Section */}
+        <div className="flex flex-col space-y-6 md:w-1/2 w-full">
+          {/* Weekly Progress Line Chart */}
+          <div className="p-6 bg-white rounded-lg shadow-lg border-t-4 border-indigo-500">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Weekly Progress</h2>
+            <Line data={lineChartData} />
+          </div>
+
+          {/* Resource Usage Bar Chart */}
+          <div className="p-6 bg-white rounded-lg shadow-lg border-t-4 border-yellow-500">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Resource Usage</h2>
+            <Bar data={barChartData} />
+          </div>
+          {/* Overall Completion Doughnut Chart */}
+
           {/* Insights */}
-          <div className="p-6 bg-white rounded-lg shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Insights</h2>
-            <ul>
+          <div className="p-6 bg-white rounded-lg shadow-lg border-t-4 border-blue-500">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Insights</h2>
+            <ul className="space-y-3">
               {data.insights.map((insight, index) => (
-                <li key={index} className="mb-2 text-gray-700">
+                <li key={index} className="text-gray-600">
                   {insight.message}
                 </li>
               ))}
@@ -129,54 +145,51 @@ const Dashboard: NextPage = () => {
           </div>
 
           {/* Notifications */}
-          <div className="p-6 bg-white rounded-lg shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Notifications</h2>
-            <ul>
+          <div className="p-6 bg-white rounded-lg shadow-lg border-t-4 border-green-500">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Notifications</h2>
+            <ul className="space-y-3">
               {data.notifications.map((notification) => (
-                <li key={notification.id} className="mb-2 text-gray-700">
+                <li key={notification.id} className="text-gray-600">
                   {notification.message}
                 </li>
               ))}
             </ul>
           </div>
-        </div>
-
-        {/* Middle Section */}
-        <div className="flex flex-col space-y-6 md:w-2/4">
-          {/* Weekly Progress Line Chart */}
-          <div className="p-6 bg-white rounded-lg shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Weekly Progress</h2>
-            <Line data={lineChartData} />
-          </div>
-
-          {/* Resource Usage Bar Chart */}
-          <div className="p-6 bg-white rounded-lg shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Resource Usage</h2>
-            <Bar data={barChartData} />
+          <div className="p-6 bg-white rounded-lg shadow-lg border-t-4 border-teal-500">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Overall Completion</h2>
+            <Doughnut data={doughnutChartData} />
           </div>
         </div>
 
         {/* Right Column */}
-        <div className="flex flex-col space-y-6 md:w-1/4">
-          {/* Overall Completion Doughnut Chart */}
-          <div className="p-6 bg-white rounded-lg shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Overall Completion</h2>
-            <Doughnut data={doughnutChartData} />
-          </div>
+        <div className="flex flex-col space-y-6 md:w-1/2 w-full">
+          {/* Task Manager */}
+          <TaskCard />
 
-          {/* Additional Metrics Display */}
-          <div className="p-6 bg-white rounded-lg shadow-lg">
-            <h2 className="text-lg font-semibold mb-4">Metrics</h2>
-            <ul>
+          {/* Metrics */}
+          <div className="p-6 bg-white rounded-lg shadow-lg border-t-4 border-red-500">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Metrics</h2>
+            <ul className="space-y-3">
               {data.metrics.map((metric) => (
-                <li key={metric.title} className="mb-2 text-gray-700">
+                <li key={metric.title} className="text-gray-600">
                   {metric.title}: {metric.value}
                 </li>
               ))}
             </ul>
           </div>
+          <motion.div
+        className="flex flex-col p-6 space-y-6 bg-gray-100 w-full"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      >
+          
+        <DumpYourThought />
+      </motion.div>
         </div>
       </div>
+
+      {/* Dump Thoughts Section - Full Width */}
     </motion.div>
   );
 };
