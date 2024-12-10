@@ -103,8 +103,8 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    const today = "2024-12-09";
-    const todayDay = "Monday";
+    const today = getTodayDate();
+    const todayDay = getTodayDay();
     console.log(today);
     const tasks = await Task.find({
       userId,
