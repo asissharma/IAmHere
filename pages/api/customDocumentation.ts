@@ -9,14 +9,27 @@ const saveDocument = async (req: NextApiRequest, res: NextApiResponse) => {
 
   if (req.method === 'POST') {
     try {
-      const { topicId, content, type, name } = req.body;
+      const { title,topicId, content, type, name } = req.body;
 
       // Sanitize inputs
       const sanitizedContent = validator.escape(content);
 
       // Validate input
-      if (!topicId || !sanitizedContent || !['ai', 'note','dumpYourThought'].includes(type)) {
+      if (!topicId || !sanitizedContent || !['ai', 'note', 'dumpYourThought'].includes(type)) {
         return res.status(400).json({ message: 'Invalid input data' });
+      }
+
+      // Handle "note" type: Check if a document with the same topicId already exists
+      if (type === 'note') {
+        const existingDocument = await DocumentModel.findOne({ topicId });
+        
+        if (existingDocument) {
+          // Update the existing document by appending the new content
+          console.log('updated');
+          existingDocument.content.push({ title,type, content: sanitizedContent });
+          await existingDocument.save();
+          return res.status(200).json(existingDocument);
+        }
       }
 
       // Generate a default name if not provided
@@ -27,11 +40,14 @@ const saveDocument = async (req: NextApiRequest, res: NextApiResponse) => {
       }
 
       // Wrap content in the expected format for the array of IContent
-      const contentArray = [{
-        type,
-        content: sanitizedContent,
-      }];
+      const contentArray = [
+        {
+          type,
+          content: sanitizedContent,
+        },
+      ];
 
+      // Create a new document
       const newDocument = await DocumentModel.create({
         topicId,
         content: contentArray,

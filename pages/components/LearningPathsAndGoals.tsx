@@ -252,6 +252,7 @@ const fetchTopic = async () => {
         },
         body: JSON.stringify({
           topicId: topic._id,
+          title: documentName,
           content: notes,
           type: 'note',
           name: documentName

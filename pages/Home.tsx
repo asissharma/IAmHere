@@ -19,6 +19,7 @@ import DSAPlayground from "./components/DsaPrac";
 // import DumpYourThought from "./components/DumpYourThought";
 import LearningPathsAndGoals from "./components/LearningPathsAndGoals";
 import Notebook from "./components/notebook";
+import Learning from "./components/learning";
 // import Books from "./components/books";
 
 const sections = {
@@ -27,6 +28,7 @@ const sections = {
   notebook: <Notebook />,
   // dumpYourThought: <DumpYourThought />,
   learningpathsandgoals: <LearningPathsAndGoals />,
+  learning: <Learning />,
   upload: <FileUpload />,
   editor: <TextEditor />,
   // books: <Books />,
@@ -136,6 +138,7 @@ const Home: NextPage = () => {
             {key === "editor" && <FiCode />}
             {/* {key === "books" && <FiBook />} */}
             {key === "notebook" && <FiGithub />}
+            {key === "learning" && <FiGithub />}
           </button>
         ))}
       </aside>

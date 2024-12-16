@@ -2,6 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 // Define the content interface
 export interface IContent {
+  title?: string;
   type: string;  // Removed the enum and made it a string
   content: string;
   metadata?: {
@@ -24,6 +25,7 @@ const ContentSchema: Schema<IContent> = new Schema({
     type: String,  // Now it's a normal string without enum
     required: true 
   },
+  title: { type: String },
   content: { type: String, required: true },
   metadata: {
     level: { type: String },
