@@ -6,15 +6,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   await connectToDatabase();
 
   const { method } = req;
-  const { nodeId, title, type, content, parentId } = req.body;
-  const { recursive } = req.query;
+  const { nodeId, title, type, content } = req.body;
+
+  const { recursive, parentId} = req.query;
 
   try {
     switch (method) {
       case "GET": {
-        const parentId = req.query.parentId || null;
-        const nodes = await Notebook.find();
-        return res.status(200).json(nodes);
+        console.log(parentId);
+        if(parentId){
+          console.log(parentId)
+          const nodes = await Notebook.find({parentId: parentId});
+          return res.status(200).json(nodes);
+        }else{
+          const nodes = await Notebook.find({parentId: null});
+          return res.status(200).json(nodes);
+        }
+
       }
 
       case "POST": {

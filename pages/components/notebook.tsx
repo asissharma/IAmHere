@@ -41,9 +41,9 @@ const Sidebar: React.FC<{
   const renderTree = useCallback(
     (nodes: Node[]) =>
       nodes.map((node) => (
-        <div key={node.id} className="ml-6">
+        <div key={node.id} className="ml-1">
           <div
-            className="flex items-center bg-white rounded-lg shadow-md p-3 mb-1 cursor-pointer hover:bg-primary hover:text-white transition"
+            className="flex items-center bg-white rounded-lg shadow-md p-2 mb-1 cursor-pointer hover:bg-primary hover:text-white transition"
             onClick={() => onSelectNode(node)}
           >
             {node.type === "folder" ? (
@@ -128,11 +128,27 @@ const NodeEditor: React.FC<{
       {node.type === "file" ? (
         <div className="flex flex-col justify-between">
           <ReactQuill
-            theme="snow"
-            value={content}
-            onChange={setContent}
-            className="h-72 mb-16"
-          />
+          theme="snow"
+          value={content}
+          onChange={setContent}
+          modules={{
+            toolbar: [
+              [{ 'header': '1' }, { 'header': '2' }, { 'font': [] }],
+              [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+              ['bold', 'italic', 'underline'],
+              ['link', 'image'],
+              [{ 'align': [] }],
+              ['clean'],
+            ],
+          }}
+          formats={[
+            'header', 'font',
+            'bold', 'italic', 'underline',
+            'list', 'bullet',
+            'link', 'image', 'align',
+          ]}
+          style={{ height: '400px' }}
+        />
           <button
             onClick={() => onSaveContent(node.id, content)}
             className="bg-primary text-white py-2 px-4 rounded hover:bg-primary-dark transition"
@@ -200,7 +216,7 @@ const NotebookPage: React.FC = () => {
 
   const fetchDescendants = async (nodeId: string) => {
     try {
-      const data = await apiRequest(`/api/notes?nodeId=${nodeId}&recursive=true`, "GET");
+      const data = await apiRequest(`/api/notes?parentId=${nodeId}&recusive=true`, "GET");
       const descendants = data.map((n: any) => ({ ...n, id: n.nodeId }));
       const updatedNodes = nodes.filter((n) => !descendants.some((d: any) => d.id === n.id));
       setNodes([...updatedNodes, ...descendants]);
@@ -216,7 +232,7 @@ const NotebookPage: React.FC = () => {
 
   return (
     <div className="flex min-h-96 p-4 space-x-4 bg-accent">
-      <div className="w-64 flex-shrink-0 h-full">
+      <div className="w-64 text-xs flex-shrink-0 h-full">
         <Sidebar tree={buildTree(nodes)} onAddNode={addNode} onDeleteNode={deleteNode} onSelectNode={onSelectNode} />
       </div>
       <NodeEditor node={selectedNode} onSaveContent={saveContent} />
