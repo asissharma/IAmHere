@@ -13,9 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     switch (method) {
       case "GET": {
-        console.log(parentId);
         if(parentId){
-          console.log(parentId)
           const nodes = await Notebook.find({parentId: parentId});
           return res.status(200).json(nodes);
         }else{

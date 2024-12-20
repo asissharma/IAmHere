@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { FaFolder, FaFile, FaTrash, FaPlus } from "react-icons/fa";
+import { FaFolder, FaFile, FaTrash, FaPlus, FaEllipsisV } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-quill/dist/quill.snow.css";
 import "react-toastify/dist/ReactToastify.css";
@@ -31,6 +31,7 @@ const buildTree = (nodes: Node[], parentId: string | null = null): Node[] =>
   nodes
     .filter((node) => node.parentId === parentId)
     .map((node) => ({ ...node, children: buildTree(nodes, node.id) }));
+    
 
 const Sidebar: React.FC<{
   tree: Node[];
@@ -38,57 +39,128 @@ const Sidebar: React.FC<{
   onDeleteNode: (nodeId: string) => void;
   onSelectNode: (node: Node) => void;
 }> = ({ tree, onAddNode, onDeleteNode, onSelectNode }) => {
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+
+  const toggleCollapse = (nodeId: string) => {
+    setCollapsed((prev) => ({
+      ...prev,
+      [nodeId]: !prev[nodeId], // Toggle the specific node's state
+    }));
+  };
+
+  const handleMenuToggle = (nodeId: string) => {
+    setActiveMenu((prev) => (prev === nodeId ? null : nodeId));
+  };
+
   const renderTree = useCallback(
     (nodes: Node[]) =>
       nodes.map((node) => (
-        <div key={node.id} className="ml-1">
+        <div key={node.id} className="ml-2">
           <div
             className="flex items-center bg-white rounded-lg shadow-md p-2 mb-1 cursor-pointer hover:bg-primary hover:text-white transition"
-            onClick={() => onSelectNode(node)}
+            onClick={() => {
+              if (node.type === "folder") toggleCollapse(node.id);
+              onSelectNode(node);
+            }}
           >
             {node.type === "folder" ? (
-              <FaFolder className="text-primary mr-2" />
+              <FaFolder
+                className={`text-primary mr-2 ${
+                  collapsed[node.id] ? "opacity-50" : ""
+                }`}
+              />
             ) : (
               <FaFile className="text-primary mr-2" />
             )}
-            <span className="flex-1">{node.title}</span>
+            <span
+              className="flex-1"
+              style={{
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {node.title}
+            </span>
             <div className="flex space-x-2">
-              {node.type === "folder" && (
-                <>
-                  <FaFolder
-                    className="text-gray-500 hover:text-secondary cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onAddNode(node.id, "folder");
-                    }}
-                  />
-                  <FaFile
-                    className="text-gray-500 hover:text-secondary cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onAddNode(node.id, "file");
-                    }}
-                  />
-                </>
-              )}
-              <FaTrash
-                className="text-red-500 hover:text-red-700 cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteNode(node.id);
-                }}
-              />
+              <div className="relative">
+                <FaEllipsisV
+                  className="text-gray-500 hover:text-secondary cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMenuToggle(node.id);
+                  }}
+                />
+                {activeMenu === node.id && (
+                  <div
+                    className="absolute right-0 mt-2 bg-white shadow-lg rounded-lg p-2 z-50"
+                    onClick={(e) => e.stopPropagation()} // Prevent menu click from triggering parent events
+                  >
+                    {node.type === "folder" && (
+                      <>
+                        <button
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
+                          onClick={() => {
+                            setActiveMenu(null);
+                            onAddNode(node.id, "folder");
+                          }}
+                        >
+                          Add Folder
+                        </button>
+                        <button
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
+                          onClick={() => {
+                            setActiveMenu(null);
+                            onAddNode(node.id, "file");
+                          }}
+                        >
+                          Add File
+                        </button>
+                      </>
+                    )}
+                    <button
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
+                      onClick={() => {
+                        setActiveMenu(null);
+                        onDeleteNode(node.id);
+                      }}
+                    >
+                      Delete
+                    </button>
+                    <button
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
+                      onClick={() => {
+                        setActiveMenu(null);
+                        console.log(`Generate content for node ${node.id}`);
+                      }}
+                    >
+                      Generate
+                    </button>
+                    <button
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
+                      onClick={() => {
+                        setActiveMenu(null);
+                        console.log(`Summarize content for node ${node.id}`);
+                      }}
+                    >
+                      Summarize
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-          {renderTree(node.children)}
+          {!collapsed[node.id] && node.children?.length
+            ? renderTree(node.children)
+            : null}
         </div>
       )),
-    [onAddNode, onDeleteNode, onSelectNode]
+    [collapsed, onAddNode, onDeleteNode, onSelectNode, activeMenu]
   );
 
   return (
     <div className="h-full bg-accent p-4 rounded-lg flex flex-col">
-      {/* Add New Buttons */}
       <div className="flex space-x-4 mb-4 justify-end items-center">
         <div
           className="bg-gray-800 p-3 rounded-full cursor-pointer hover:bg-gray-600 transition"
@@ -105,12 +177,11 @@ const Sidebar: React.FC<{
           <FaFile className="text-white" />
         </div>
       </div>
-
-      {/* Sidebar Tree */}
-      <div className="overflow-y-auto flex-grow">{renderTree(tree)}</div>
+      <div className="overflow-y-auto flex-grow h-96">{renderTree(tree)}</div>
     </div>
   );
 };
+
 
 const NodeEditor: React.FC<{
   node: Node | null;
@@ -123,7 +194,7 @@ const NodeEditor: React.FC<{
   }, [node]);
 
   return node ? (
-    <div className="flex-1 bg-white p-2 rounded-lg shadow-lg">
+    <div className="flex-1 bg-white p-2 rounded-lg shadow-lg overflow-y-scroll scrollabler">
       <h2 className="text-xl font-semibold mb-1">{node.title}</h2>
       {node.type === "file" ? (
         <div className="flex flex-col justify-between">
@@ -232,7 +303,7 @@ const NotebookPage: React.FC = () => {
 
   return (
     <div className="flex min-h-96 p-4 space-x-4 bg-accent">
-      <div className="w-64 text-xs flex-shrink-0 h-full">
+      <div className="w-64 text-xs flex-shrink-0">
         <Sidebar tree={buildTree(nodes)} onAddNode={addNode} onDeleteNode={deleteNode} onSelectNode={onSelectNode} />
       </div>
       <NodeEditor node={selectedNode} onSaveContent={saveContent} />
