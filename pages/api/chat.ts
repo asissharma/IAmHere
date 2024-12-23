@@ -53,7 +53,7 @@ marked.setOptions({
   highlight: function (code: string, lang: string) {
     const language = hljs.getLanguage(lang) ? lang : 'plaintext';
     const highlightedCode = hljs.highlight(code, { language }).value;
-    return `<div style="background-color: #f0f0f0; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);"><pre><code class="hljs language-${language}">${highlightedCode}</code></pre></div>`;
+    return `<div style="scrollbar-width: thin; scrollbar-color: rgba(0, 0, 0, 0.4) rgba(0, 0, 0, 0.1); background-color: #f0f0f0; border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);"><pre><code class="hljs language-${language}">${highlightedCode}</code></pre></div>`;
   },
 });
 
@@ -89,7 +89,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         
         const responseText = result.response.text();
         const formattedResponse = await marked(responseText);
-        const styledResponse = formattedResponse.replace(/<pre><code class="/g, `<pre style="border: 0.5px solid #555;background-color: #1E1E1E;color: #D4D4D4;border-radius: 30px;padding: 25px;margin-bottom: 16px;box-shadow: 0 4px 12px rgb(255 255 255);"><code style="color: inherit; overflow-y: auto;" class="`);
+        const styledResponse = formattedResponse.replace(
+          /<pre><code class="/g, 
+          `<pre style="border: 0.5px solid #555; background-color: #1E1E1E; color: #D4D4D4; border-radius: 30px; padding: 25px; margin-bottom: 16px; box-shadow: 0 4px 12px rgb(255 255 255); width: 100%; max-width: 100%; overflow-x: auto; scrollbar-width: thin; scrollbar-color: rgba(0, 0, 0, 0.4) rgba(0, 0, 0, 0.1);"><code style="color: inherit; display: block;" class="`
+        );
         
         res.status(200).json({ response: styledResponse });
       } catch (error) {

@@ -168,7 +168,7 @@ const DSAPlayground: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-100 via-white to-gray-200">
-      <div className="max-w-7xl mx-auto p-4">
+      <div className="max-w-7xl mx-auto">
         <div className="flex space-x-6">
           <div className="flex-1">
           <div className='flex flex-row w-full space-x-4 p-2'> {/* Use space-x-4 for spacing between cards */}

@@ -9,6 +9,7 @@ interface INotebook extends Document {
   content?: string; // For text content, PDFs, or external links
   progress?: number; // For tracking completion (0-100)
   parentId?: string | null; // Parent ID for hierarchical structure
+  generated?: false;
 }
 
 // Schema definition for the notebook model
@@ -28,6 +29,7 @@ const NotebookSchema: Schema = new Schema(
     content: { type: String }, // Store text, URLs, or relevant file links
     progress: { type: Number, min: 0, max: 100, default: 0 }, // Default progress is 0
     parentId: { type: String, default: null }, // Null for root-level nodes
+    generated: { type: Boolean, default: false }, // Null for root-level nodes
   },
   {
     timestamps: true, // Automatically add createdAt and updatedAt fields

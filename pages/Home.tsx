@@ -144,12 +144,12 @@ const Home: NextPage = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="ml-12 mt-12 p-2">
+      <main className="ml-12 mt-12">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          className="bg-white shadow-md rounded-xl p-8 dark:bg-gray-800"
+          className="bg-white shadow-md rounded-xl dark:bg-gray-800"
         >
           {sections[activeSection]}
         </motion.div>
