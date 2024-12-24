@@ -48,118 +48,115 @@ const Sidebar: React.FC<{
 
   const renderTree = useCallback(
     (nodes: Node[]) =>
-      Array.isArray(nodes)&&nodes.length >0 ?
-      nodes.map((node) => (
-        <div key={node.id} className="ml-2">
-          <div
-            className="flex items-center bg-white rounded-lg shadow-md p-2 mb-1 cursor-pointer hover:bg-primary hover:text-white transition"
-            onClick={() => {
-              if (node.type === "folder") toggleCollapse(node.id);
-              onSelectNode(node);
-            }}
-          >
-            {node.type === "folder" ? (
-              <FaFolder
-                className={`text-primary mr-2 ${collapsed[node.id] ? "opacity-50" : ""}`}
-              />
-            ) : (
-              <FaFile className="text-primary mr-2" />
-            )}
-            <span
-              className="flex-1"
-              style={{
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {node.title}
-            </span>
-            <div className="flex space-x-2">
-              <div className="relative">
-                <FaEllipsisV
-                  className="text-gray-500 hover:text-secondary cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleMenuToggle(node.id);
-                  }}
-                />
-                {activeMenu === node.id && (
-                  <div
-                    className="absolute right-0 mt-2 bg-white shadow-lg rounded-lg p-2 z-50"
-                    onClick={(e) => e.stopPropagation()} // Prevent menu click from triggering parent events
-                  >
-                    {node.type === "folder" && (
-                      <>
-                        <button
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 rounded"
-                          onClick={() => {
-                            setActiveMenu(null);
-                            onAddNode(node.id, "folder");
-                          }}
-                        >
-                          Add Folder
-                        </button>
-                        <button
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 rounded"
-                          onClick={() => {
-                            setActiveMenu(null);
-                            onAddNode(node.id, "file");
-                          }}
-                        >
-                          Add File
-                        </button>
-                      </>
-                    )}
-                    <button
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 rounded"
-                      onClick={() => {
-                        setActiveMenu(null);
-                        onDeleteNode(node.id);
-                      }}
-                    >
-                      Delete
-                    </button>
-                    {node.generated !== true && (
-                      <button
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 rounded"
-                        onClick={async () => {
-                          try {
-                            setActiveMenu(null);
-                            const success = await handleGenerateData(node.nodeId); // Wait for handleGenerateData to complete
-                            if (success as any) {
-                              await onSelectNode(node.nodeId as any); // Call onSelectNode only after success
-                            }
-                          } catch (error) {
-                            console.error("Error generating data or selecting node:", error);
-                          }
-                        }}
-                      >
-                        Generate
-                      </button>
-                    )}
-                    <button
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 rounded"
-                    >
-                      Summarize
-                    </button>
-                    <button
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 rounded"
-                    >
-                      MindMap
-                    </button>
-                  </div>
+      Array.isArray(nodes) && nodes.length > 0
+        ? nodes.map((node) => (
+            <div key={node.id} className="ml-2">
+              <div
+                className="flex items-center bg-white rounded-lg shadow-md p-2 mb-1 cursor-pointer hover:bg-primary hover:text-white transition"
+                onClick={() => {
+                  if (node.type === "folder") toggleCollapse(node.id);
+                  onSelectNode(node);
+                }}
+              >
+                {node.type === "folder" ? (
+                  <FaFolder
+                    className={`text-primary mr-2 ${
+                      collapsed[node.id] ? "opacity-50" : ""
+                    }`}
+                  />
+                ) : (
+                  <FaFile className="text-primary mr-2" />
                 )}
+                <span
+                  className="flex-1"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {node.title}
+                </span>
+                <div className="flex space-x-2">
+                  <div className="relative">
+                    <FaEllipsisV
+                      className="text-gray-500 hover:text-secondary cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMenuToggle(node.id);
+                      }}
+                    />
+                    {activeMenu === node.id && (
+                      <div
+                        className="absolute right-0 mt-2 bg-white shadow-lg rounded-lg p-2 z-50"
+                        onClick={(e) => e.stopPropagation()} // Prevent menu click from triggering parent events
+                      >
+                        {node.type === "folder" && (
+                          <>
+                            <button
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 rounded"
+                              onClick={() => {
+                                setActiveMenu(null);
+                                onAddNode(node.id, "folder");
+                              }}
+                            >
+                              Add Folder
+                            </button>
+                            <button
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 rounded"
+                              onClick={() => {
+                                setActiveMenu(null);
+                                onAddNode(node.id, "file");
+                              }}
+                            >
+                              Add File
+                            </button>
+                          </>
+                        )}
+                        <button
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 rounded"
+                          onClick={() => {
+                            setActiveMenu(null);
+                            onDeleteNode(node.id);
+                          }}
+                        >
+                          Delete
+                        </button>
+                        {node.generated !== true && (
+                          <button
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 rounded"
+                            onClick={async () => {
+                              try {
+                                setActiveMenu(null);
+                                const success = await handleGenerateData(node.nodeId); // Wait for handleGenerateData to complete
+                                if (success as any) {
+                                  await onSelectNode(node.nodeId as any); // Call onSelectNode only after success
+                                }
+                              } catch (error) {
+                                console.error("Error generating data or selecting node:", error);
+                              }
+                            }}
+                          >
+                            Generate
+                          </button>
+                        )}
+                        <button className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 rounded">
+                          Summarize
+                        </button>
+                        <button className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 rounded">
+                          MindMap
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
+              {!collapsed[node.id] && node.children?.length
+                ? renderTree(node.children)
+                : null}
             </div>
-          </div>
-          {!collapsed[node.id] && node.children?.length
-            ? renderTree(node.children)
-            : null}
-        </div>
-      )
-      : null
-    ),
+          ))
+        : null,
     [collapsed, onAddNode, onDeleteNode, onSelectNode, activeMenu]
   );
 
