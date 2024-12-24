@@ -48,6 +48,7 @@ const Sidebar: React.FC<{
 
   const renderTree = useCallback(
     (nodes: Node[]) =>
+      Array.isArray(nodes)&&nodes.length >0 ?
       nodes.map((node) => (
         <div key={node.id} className="ml-2">
           <div
@@ -156,7 +157,9 @@ const Sidebar: React.FC<{
             ? renderTree(node.children)
             : null}
         </div>
-      )),
+      )
+      : null
+    ),
     [collapsed, onAddNode, onDeleteNode, onSelectNode, activeMenu]
   );
 
