@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import Sidebar from "./notebook/Sidebar";
 import NodeEditor from "./notebook/NodeEditor";
-import { fetchNodes, addNode, deleteNode, saveContent,fetchDescendants } from "./notebook/utils";
+import { fetchNodes, addNode, deleteNode, saveContent,fetchDescendants } from "../api/utils";
 import { toast, ToastContainer } from "react-toastify";
-
 import "react-toastify/dist/ReactToastify.css";
 
 // Define the Node type

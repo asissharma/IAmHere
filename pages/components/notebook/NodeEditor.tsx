@@ -2,13 +2,24 @@ import "react-quill/dist/quill.snow.css";
 import "react-toastify/dist/ReactToastify.css";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import { Node } from "./types";
 import { marked } from "marked"; // For converting markdown back to HTML
 import TurndownService from "turndown"; // For converting HTML to markdown
 import MonacoEditor from "@monaco-editor/react";
 import { AiOutlineFileText, AiOutlineCode, AiOutlineSave } from "react-icons/ai"; // React Icons for text/code editor
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+
+export type Node = {
+  nodeId: string;
+  id: string;
+  title: string;
+  type: "folder" | "file";
+  parentId: string | null;
+  content?: string;
+  children: Node[];
+  generated: boolean;
+};
+
 
 const NodeEditor: React.FC<{
   node: Node | null;

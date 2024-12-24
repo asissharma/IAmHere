@@ -1,8 +1,18 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { FaFolder, FaFile, FaTrash, FaEllipsisV } from "react-icons/fa";
 import { toast } from "react-toastify";
-import { Node } from "./types";
-import { handleGenerateData } from "./utils";
+import { handleGenerateData } from "../../api/utils";
+
+export type Node = {
+  nodeId: string;
+  id: string;
+  title: string;
+  type: "folder" | "file";
+  parentId: string | null;
+  content?: string;
+  children: Node[];
+  generated: boolean;
+};
 
 const Sidebar: React.FC<{
   tree: Node[];

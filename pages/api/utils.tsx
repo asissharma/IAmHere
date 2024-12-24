@@ -93,14 +93,3 @@ export const fetchDescendants = async (node: Node) => {
     throw err;
   }
 };
-
-// Default export
-export default {
-  apiRequest,
-  handleGenerateData,
-  fetchNodes,
-  addNode,
-  deleteNode,
-  saveContent,
-  fetchDescendants,
-};
