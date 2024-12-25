@@ -19,7 +19,8 @@ const Sidebar: React.FC<{
   onAddNode: (parentId: string | null, type: "folder" | "file") => void;
   onDeleteNode: (nodeId: string) => void;
   onSelectNode: (node: Node) => void;
-}> = ({ tree, onAddNode, onDeleteNode, onSelectNode }) => {
+  setShowMindMap: (nodeId: string) => void; // Add callback prop for toggling Mind Map
+}> = ({ tree, onAddNode, onDeleteNode, onSelectNode, setShowMindMap }) => {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -143,7 +144,13 @@ const Sidebar: React.FC<{
                         <button className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 rounded">
                           Summarize
                         </button>
-                        <button className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 rounded">
+                        <button
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 rounded"
+                          onClick={() => {
+                            setActiveMenu(null);
+                            setShowMindMap(node.id); // Pass the node.id to the parent
+                          }}
+                        >
                           MindMap
                         </button>
                       </div>

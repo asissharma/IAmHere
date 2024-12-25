@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Sidebar from "./notebook/Sidebar";
 import NodeEditor from "./notebook/NodeEditor";
+import MindMap from "./notebook/MindMap";
 import { fetchNodes, addNode, deleteNode, saveContent,fetchDescendants } from "../api/utils";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -21,6 +22,9 @@ const NotebookPage: React.FC = () => {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [fetched, setFetched] = useState<Record<string, boolean>>({}); 
+  const [showMindMap, setShowMindMapState] = useState(false); // Whether to show MindMap
+  const [mindMapNodeId, setMindMapNodeId] = useState<string | null>(null); // Node for MindMap
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -33,6 +37,17 @@ const NotebookPage: React.FC = () => {
     };
     fetchData();
   }, []);
+
+    const setShowMindMap = (nodeId: string) => {
+      setMindMapNodeId(nodeId); // Set the selected node's ID
+      setShowMindMapState(true); // Show the Mind Map
+    };
+
+    const handleHideMindMap = () => {
+      setShowMindMapState(false); // Hide the Mind Map
+      setMindMapNodeId(null); // Clear the selected node ID
+    };
+
 
   const handleAddNode = async (parentId: string | null, type: "folder" | "file") => {
     const title = prompt(`Enter name for the new ${type}:`);
@@ -92,9 +107,16 @@ const NotebookPage: React.FC = () => {
   return (
     <div className="flex h-screen p-0">
       <ToastContainer />
-      <Sidebar tree={buildTree(nodes)} onAddNode={handleAddNode} onDeleteNode={handleDeleteNode} onSelectNode={fetchChildrenNode} />
-      <NodeEditor node={selectedNode} onSaveContent={handleSaveContent} />
+      <Sidebar tree={buildTree(nodes)} onAddNode={handleAddNode} onDeleteNode={handleDeleteNode} onSelectNode={fetchChildrenNode} setShowMindMap={setShowMindMap} />
+      <div className="flex-grow">
+        {showMindMap ? (
+          <MindMap parentId={mindMapNodeId || ""} onClose={handleHideMindMap} />
+        ) : (
+          <NodeEditor node={selectedNode} onSaveContent={handleSaveContent} />
+        )}
+      </div>
     </div>
+
   );
 };
 

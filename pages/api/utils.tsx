@@ -32,6 +32,14 @@ type Node = {
   children: Node[];
 };
 
+export const fetchMindMap = async (parentId: string) => {
+  try {
+    const identifier = "fetchMindMap";
+    return await apiRequest("/api/notes", "GET", { parentId, identifier });
+  } catch (error) {
+    throw new Error("Failed to generate data. Please try again.");
+  }
+};
 export const handleGenerateData = async (parentId: string) => {
   try {
     const identifier = "handleGenerateData";
