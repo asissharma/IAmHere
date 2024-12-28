@@ -1,33 +1,37 @@
 import React, { useState, useEffect } from "react";
 import ReactFlow, {
+  ReactFlowProvider,
+  useNodesState,
+  useEdgesState,
   MiniMap,
   Controls,
   Background,
-  Position,
   Node,
   Edge,
-  ReactFlowProvider,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { fetchMindMap } from "../../api/utils";
+import { AiFillCloseCircle } from "react-icons/ai";
+import { fetchMindMap } from "@/pages/api/utils";
 
+// Define types for TreeNode and props
 type TreeNode = {
   nodeId: string;
   title: string;
   type: string;
   parentId: string | null;
   content?: string;
-  children: TreeNode[]; // Recursive definition for children
+  children: TreeNode[];
 };
 
 type MindMapProps = {
-  parentId: string; // Required prop to specify which node's mind map to show
-  onClose: () => void; // Callback to close the Mind Map view
+  parentId: string;
+  onClose: () => void;
 };
 
+// Main MindMap component
 const MindMap: React.FC<MindMapProps> = ({ parentId, onClose }) => {
-  const [nodes, setNodes] = useState<Node[]>([]);
-  const [edges, setEdges] = useState<Edge[]>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node[]>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,8 +41,7 @@ const MindMap: React.FC<MindMapProps> = ({ parentId, onClose }) => {
       setError(null);
 
       try {
-        const res = await fetchMindMap(parentId); // Fetch the mind map for the given nodeId
-
+        const res = await fetchMindMap(parentId);
         const treeData: TreeNode[] = res;
         const { nodes, edges } = transformTreeToFlow(treeData);
         setNodes(nodes);
@@ -52,120 +55,153 @@ const MindMap: React.FC<MindMapProps> = ({ parentId, onClose }) => {
     };
 
     fetchTreeData();
-  }, [parentId]); // Re-run the effect when nodeId changes
+  }, [parentId]);
 
-  const transformTreeToFlow = (treeData: TreeNode[]) => {
+  // Recursive function to transform tree into React Flow nodes and edges
+  const transformTreeToFlow = (
+    treeData: TreeNode[],
+    parentId: string | null = null
+  ) => {
     const nodes: Node[] = [];
     const edges: Edge[] = [];
+    let maxDepth = 0;
 
-    const traverse = (
-      items: TreeNode[],
-      currentX: number,
-      currentY: number,
-      parentId: string | null = null
+    // Calculate the maximum depth of the tree
+    const calculateDepth = (node: TreeNode, depth: number): number => {
+      maxDepth = Math.max(maxDepth, depth);
+      node.children.forEach((child) => calculateDepth(child, depth + 1));
+      return maxDepth;
+    };
+    treeData.forEach((rootNode) => calculateDepth(rootNode, 1));
+
+    // Recursive function to position nodes
+    const traverseTree = (
+      node: TreeNode,
+      parentId: string | null,
+      level: number,
+      centerX: number,
+      centerY: number,
+      angleStart: number,
+      angleEnd: number
     ) => {
-      let xOffset = currentX;
 
-      items.forEach((item) => {
-        const nodeId = item.nodeId;
+      // Calculate dynamic distance based on depth
+      const baseDistance = maxDepth * 100; // Base distance for root nodes
+      const depthFactor = 50; // Reduce distance with depth
+      const distance = baseDistance - depthFactor * level;
+      // Calculate the available angle range for this node's children
+      const childrenCount = node.children.length;
+      const angleRange = angleEnd - angleStart;
 
-        const newNode: Node = {
-          id: nodeId,
-          data: { label: item.title },
-          position: { x: xOffset, y: currentY },
-          type: "default",
-          style: {
-            backgroundColor: "#ffcc00", // Custom background color
-            color: "black", // Text color
-            padding: "10px",
-            borderRadius: "5px",
-            fontSize: "14px",
-            border: "2px solid #333", // Border for clarity
-            boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)", // Add shadow for a clearer node appearance
-          },
-        };
+      // Adjust angle spacing based on depth and number of children
+      const depthAngleScaling = Math.max(0.5, 1 - level * 0.1); // Reduce angle range at deeper levels
+      const adjustedAngleRange = angleRange * depthAngleScaling;
 
-        nodes.push(newNode);
+      // Calculate this node's position
+      const angle = (angleStart + angleEnd) / 2; // Midpoint angle for the current node
+      const x = centerX + distance * Math.cos(angle);
+      const y = centerY + distance * Math.sin(angle);
 
-        if (parentId) {
-          edges.push({
-            id: `${parentId}-${nodeId}`,
-            source: parentId,
-            target: nodeId,
-            animated: true,
-            style: { stroke: "#00f" }, // Edge color
-          });
-        }
+      // Create the node
+      const newNode: Node = {
+        id: node.nodeId,
+        type: "default",
+        data: { label: node.title },
+        position: { x, y },
+        style: {
+          backgroundColor: node.type === "folder" ? "#FFD700" : "#6AB9FF",
+          fontWeight: "bold",
+          padding: "10px",
+        },
+      };
+      nodes.push(newNode);
 
-        const childY = currentY + 150;
-        const childXOffset = xOffset - (item.children?.length || 0) * 100;
-        traverse(item.children || [], childXOffset, childY, nodeId);
+      // Add an edge to the parent
+      if (parentId) {
+        edges.push({
+          id: `${parentId}-${node.nodeId}`,
+          source: parentId,
+          target: node.nodeId,
+          animated: true,
+        });
+      }
 
-        xOffset += 200; // Adjust to ensure proper spacing
+      // Adjust child node positioning
+      const childAngleSpacing = adjustedAngleRange * level / Math.max(childrenCount, 1); // Spread adjusted angle over children
+
+      node.children.forEach((child, index) => {
+        // Calculate the angles for child nodes
+        const childAngleStart = angleStart + index * childAngleSpacing;
+        const childAngleEnd = childAngleStart + childAngleSpacing;
+
+        // Recurse for child nodes
+        traverseTree(child, node.nodeId, level + 1, x, y, childAngleStart, childAngleEnd);
       });
     };
 
-    traverse(treeData, 0, 0);
+    // Start traversal from root nodes
+    const rootAngleStart = 0;
+    const rootAngleEnd = 2 * Math.PI;
+    treeData.forEach((rootNode, index) => {
+      const centerX = 5000 + index * 800; // Adjust starting center position
+      const centerY = 5000;
+      traverseTree(rootNode, parentId, 1, centerX, centerY, rootAngleStart, rootAngleEnd);
+    });
 
     return { nodes, edges };
   };
 
-  const handleNodeDragStop = (event: any, node: Node) => {
-    setNodes((prevNodes) =>
-      prevNodes.map((n) =>
-        n.id === node.id
-          ? { ...n, position: { x: node.position.x, y: node.position.y } }
-          : n
-      )
-    );
-  };
-
   if (loading) {
-    return <div>Loading Mind Map...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div role="status" className="flex flex-col items-center space-y-2">
+          <span>Loading Mind Map...</span>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div>
-        <p>Error loading Mind Map: {error}</p>
-        <button onClick={onClose}>Close</button>
+      <div className="flex flex-col items-center p-6 text-center">
+        <p className="mb-4 text-red-500">Error: {error}</p>
+        <button
+          className="px-4 py-2 text-white bg-blue-600 rounded"
+          onClick={() => window.location.reload()}
+        >
+          Retry
+        </button>
       </div>
     );
   }
 
   return (
-    <ReactFlowProvider>
-      <div style={{ width: "100%", height: "100vh" }}>
+    <div style={{ height: "90vh", position: "relative" }}>
+      <ReactFlowProvider>
         <ReactFlow
           nodes={nodes}
           edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
           fitView
-          nodesConnectable={false}
-          nodesDraggable={true}
-          onNodeDragStop={handleNodeDragStop} // Handle node drag stop
         >
           <MiniMap />
           <Controls />
-          <Background color="#aaa" gap={12} />
+          <Background color="#aaa" gap={16} />
         </ReactFlow>
-        <button
-          style={{
-            position: "absolute",
-            top: "10px",
-            right: "10px",
-            padding: "10px 15px",
-            backgroundColor: "#f56565",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-          onClick={onClose}
-        >
-          Close Mind Map
-        </button>
-      </div>
-    </ReactFlowProvider>
+      </ReactFlowProvider>
+      <AiFillCloseCircle
+        onClick={onClose}
+        style={{
+          position: "absolute",
+          top: "10px",
+          right: "10px",
+          fontSize: "24px",
+          cursor: "pointer",
+          color: "red",
+        }}
+      />
+    </div>
   );
 };
 

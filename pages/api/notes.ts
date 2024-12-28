@@ -41,31 +41,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(200).json(descendants);
             
             case "fetchMindMap":
-              const { parentId } = req.query;
-  
-              // Fetch all notebooks at once
-              let notebooks = await Notebook.find({});
-  
-              // Get all descendants recursively
-              if (parentId) {
-                notebooks = await getNestedDescendants(parentId as string, notebooks);
-              }
-  
-              // Transform database results into TreeNode format
-              const treeData: TreeNode[] = notebooks.map((notebook) => ({
-                nodeId: notebook.nodeId,
-                title: notebook.title,
-                type: notebook.type,
-                parentId: notebook.parentId ?? null, // Ensure parentId is either string or null
-                content: notebook.content,
-                children: [], // Initialize with an empty array for the recursive build
-              }));
-  
-              // Build the hierarchical tree structure
-              const tree = buildTree(treeData, parentId ? (parentId as string) : null);
-  
-              return res.status(200).json(tree);
-
+                const { parentId } = req.query;
+            
+                // Fetch nodes from the database
+                const notebooks = await Notebook.find({}).lean();
+            
+                if (!notebooks) {
+                  return res.status(404).json({ message: "No data found" });
+                }
+            
+                // Build the tree for the requested parentId
+                const treeData = buildTree(notebooks, parentId as string | null);
+            
+                return res.status(200).json(treeData);
           default:
             return res.status(404).json({ error: "Identifier not found" });
         }
@@ -160,9 +148,28 @@ async function getNestedDescendants(parentId: string, notes: any[]): Promise<any
   return results;
 }
 
+// Recursive function to build the tree structure dynamically
+const buildTree = (data: any[], parentId: string | null): any[] => {
+  const parentNode = data.find((item) => item.nodeId === parentId);
+  const children = data
+    .filter((item) => item.parentId === parentId)
+    .map((item) => ({
+      ...item,
+      children: buildTree(data, item.nodeId),
+    }));
+  if (parentNode) {
+    return [
+      {
+        ...parentNode,
+        children: children,
+      },
+    ];
+  }
+  return children;
+};
+
 
 // const buildTree = (data: TreeNode[], parentId: string | null = null): TreeNode[] => {
-//   // Start by filtering nodes that belong to the current parentId
 //   const nodes = data.filter((item) => item.parentId === parentId);
 
 //   return nodes.map((node) => ({
@@ -171,29 +178,24 @@ async function getNestedDescendants(parentId: string, notes: any[]): Promise<any
 //   }));
 // };
 
-const buildTree = (data: TreeNode[], parentId: string | null = null): TreeNode[] => {
-  // First, get all the nodes that match the parentId
-  const parentNode = data.find((item) => item.nodeId === parentId);
+// const buildTree = (data: TreeNode[], parentId: string | null = null): TreeNode[] => {
+//   const parentNode = data.find((item) => item.nodeId === parentId);
 
-  // Start by including the parent node in the tree
-  const tree: TreeNode[] = parentNode ? [{
-    ...parentNode,
-    children: [] // Initialize children as an empty array, which will be populated
-  }] : [];
+//   // Start by including the parent node in the tree
+//   const tree: TreeNode[] = parentNode ? [{
+//     ...parentNode,
+//     children: [] // Initialize children as an empty array, which will be populated
+//   }] : [];
 
-  // Now, gather the children of this parent node recursively
-  const children = data
-    .filter((item) => item.parentId === parentId && item.nodeId !== parentId) // Exclude the parent itself
-    .map((item) => ({
-      ...item,
-      children: buildTree(data, item.nodeId) // Recursively build the children tree
-    }));
+//   const children = data
+//     .filter((item) => item.parentId === parentId && item.nodeId !== parentId) // Exclude the parent itself
+//     .map((item) => ({
+//       ...item,
+//       children: buildTree(data, item.nodeId)
+//     }));
 
-  // Attach the children to the parent node
-  if (tree.length > 0) {
-    tree[0].children = children;
-  }
-
-  return tree;
-};
-
+//   if (tree.length > 0) {
+//     tree[0].children = children;
+//   }
+//   return tree;
+// };
