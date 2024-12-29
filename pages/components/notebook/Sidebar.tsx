@@ -149,6 +149,7 @@ const Sidebar: React.FC<{
                           onClick={() => {
                             setActiveMenu(null);
                             setShowMindMap(node.id); // Pass the node.id to the parent
+                            setIsSidebarCollapsed((prev) => !prev);
                           }}
                         >
                           MindMap
