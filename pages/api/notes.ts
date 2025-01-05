@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   await connectToDatabase();
 
   const { method } = req;
-  const { nodeId, title, type, content, parentId, identifier } = req.body; // From the request body
+  let { nodeId, title, type, content, parentId, identifier,resourceType } = req.body; // From the request body
   const { identifier: queryIdentifier, parentId: queryParentId } = req.query; // From the query parameters
   const actualIdentifier = identifier || queryIdentifier; // Prefer body identifier over query
   const actualParentId = parentId || queryParentId; // Prefer body identifier over query
@@ -76,10 +76,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       case "PUT":
         if (actualIdentifier === "saveContent") {
           if (!nodeId) return res.status(400).json({ error: "Node ID is required" });
-
+          if(resourceType === ''){
+            resourceType = undefined;
+          }
           const updatedNode = await Notebook.findOneAndUpdate(
             { nodeId },
-            { title, type, content },
+            { title, type, content,resourceType },
             { new: true }
           );
 

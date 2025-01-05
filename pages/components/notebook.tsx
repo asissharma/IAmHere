@@ -14,6 +14,7 @@ type Node = {
   type: "folder" | "file";
   parentId: string | null;
   children: Node[];
+  resourceType : string;
   generated: boolean;
 };
 
@@ -70,9 +71,9 @@ const NotebookPage: React.FC = () => {
     }
   };
 
-  const handleSaveContent = async (nodeId: string, content: string) => {
+  const handleSaveContent = async (nodeId: string, content: string,resourceType:string) => {
     try {
-      await saveContent(nodeId, content);
+      await saveContent(nodeId, content,resourceType);
       toast.success("Content saved.");
     } catch (error) {
       toast.error("Failed to save content.");

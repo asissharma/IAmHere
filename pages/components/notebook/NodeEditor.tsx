@@ -4,7 +4,8 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import TurndownService from "turndown"; // For converting HTML to markdown
 import MonacoEditor from "@monaco-editor/react";
-import { AiOutlineFileText, AiOutlineCode, AiOutlineSave } from "react-icons/ai";
+import { AiOutlineFileText, AiOutlineCode, AiOutlineSave, AiOutlineEye } from "react-icons/ai";
+import FileAnalysis from "./fileRipper";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
@@ -16,16 +17,18 @@ export type Node = {
   parentId: string | null;
   content?: string;
   children: Node[];
+  resourceType: string;
   generated: boolean;
 };
 
 const NodeEditor: React.FC<{
   node: Node | null;
-  onSaveContent: (nodeId: string, content: string) => void;
+  onSaveContent: (nodeId: string, content: string,resourceType: string) => void;
 }> = ({ node, onSaveContent }) => {
   const [htmlContent, setHtmlContent] = useState(node?.content || ""); // For ReactQuill
   const [markdownContent, setMarkdownContent] = useState(""); // For Monaco
-  const [isMonaco, setIsMonaco] = useState(false); // Track editor toggle state
+  const [editorMode, setEditorMode] = useState<"quill" | "monaco" | "fileAnalysis">("quill"); // Editor modes: quill, monaco, or fileAnalysis
+  const [analysedContent, setAnalysedContent] = useState(""); // State for analyzed content
 
   const turndownService = new TurndownService();
 
@@ -34,21 +37,33 @@ const NodeEditor: React.FC<{
       const content = node.content || "";
       setHtmlContent(content);
       setMarkdownContent(turndownService.turndown(content));
+      
+      // Set editorMode based on resourceType
+      if (node.resourceType === "fileAnalysis") {
+        setEditorMode("fileAnalysis");
+      } else {
+        setEditorMode("quill"); // Default mode
+      }
     }
   }, [node]);
 
-  const handleEditorToggle = () => {
-    if (!isMonaco) {
-      // Convert current HTML content to markdown before toggling
+  const handleSave = () => {
+    let saveContent = editorMode === "monaco" ? markdownContent : htmlContent;
+    let resourceType = '';
+    if(editorMode == "fileAnalysis"){
+      resourceType = 'fileAnalysis'; 
+      saveContent = analysedContent;
+    }
+    onSaveContent(node?.id || "", saveContent,resourceType);
+  };
+
+  const handleEditorModeChange = (mode: "quill" | "monaco" | "fileAnalysis") => {
+    if (mode === "monaco" && editorMode !== "monaco") {
+      // Convert current HTML content to markdown before switching to Monaco
       const markdown = turndownService.turndown(htmlContent || "");
       setMarkdownContent(markdown);
     }
-    setIsMonaco((prev) => !prev); // Toggle editor mode
-  };
-
-  const handleSave = () => {
-    const saveContent = isMonaco ? markdownContent : htmlContent;
-    onSaveContent(node?.id || "", saveContent);
+    setEditorMode(mode);
   };
 
   if (!node) {
@@ -69,14 +84,28 @@ const NodeEditor: React.FC<{
 
         <div className="flex items-center gap-2">
           <button
-            onClick={handleEditorToggle}
-            className="transition bg-gray-200 p-2 rounded hover:bg-gray-300"
+            onClick={() => handleEditorModeChange("quill")}
+            className={`transition bg-gray-200 p-2 rounded hover:bg-gray-300 ${
+              editorMode === "quill" && "bg-gray-400"
+            }`}
           >
-            {isMonaco ? (
-              <AiOutlineFileText size={24} title="Switch to ReactQuill" />
-            ) : (
-              <AiOutlineCode size={24} title="Switch to Monaco" />
-            )}
+            <AiOutlineFileText size={24} title="Switch to ReactQuill" />
+          </button>
+          <button
+            onClick={() => handleEditorModeChange("monaco")}
+            className={`transition bg-gray-200 p-2 rounded hover:bg-gray-300 ${
+              editorMode === "monaco" && "bg-gray-400"
+            }`}
+          >
+            <AiOutlineCode size={24} title="Switch to Monaco" />
+          </button>
+          <button
+            onClick={() => handleEditorModeChange("fileAnalysis")}
+            className={`transition bg-gray-200 p-2 rounded hover:bg-gray-300 ${
+              editorMode === "fileAnalysis" && "bg-gray-400"
+            }`}
+          >
+            <AiOutlineEye size={24} title="Switch to File Analysis" />
           </button>
           <button
             onClick={handleSave}
@@ -87,9 +116,9 @@ const NodeEditor: React.FC<{
         </div>
       </div>
 
-      {/* Editor: ReactQuill or Monaco */}
+      {/* Editor Modes */}
       {node.type === "file" ? (
-        isMonaco ? (
+        editorMode === "monaco" ? (
           <MonacoEditor
             height="600px"
             language="markdown"
@@ -100,7 +129,7 @@ const NodeEditor: React.FC<{
               selectOnLineNumbers: true,
             }}
           />
-        ) : (
+        ) : editorMode === "quill" ? (
           <ReactQuill
             theme="snow"
             value={htmlContent} // Use HTML state
@@ -129,7 +158,9 @@ const NodeEditor: React.FC<{
             ]}
             style={{ height: "400px" }}
           />
-        )
+        ) : editorMode === "fileAnalysis" ? (
+          <FileAnalysis analysedContent={node.content || null} setAnalysedContent={setAnalysedContent}/>
+        ) : null
       ) : (
         <p>Select a file to edit its content</p>
       )}

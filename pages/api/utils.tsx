@@ -79,10 +79,10 @@ export const deleteNode = async (nodeId: string) => {
   }
 };
 
-export const saveContent = async (nodeId: string, content: string) => {
+export const saveContent = async (nodeId: string, content: string,resourceType: string) => {
   const identifier = "saveContent";
   try {
-    return await apiRequest("/api/notes", "PUT", { nodeId, content, identifier });
+    return await apiRequest("/api/notes", "PUT", { nodeId, content, resourceType, identifier });
   } catch (error) {
     console.error("Error saving content:", error);
     throw error;

@@ -10,8 +10,9 @@ const FileUpload: React.FC = () => {
   useEffect(() => {
     const fetchFiles = async () => {
       try {
-        const response = await fetch('/api/getUpload');
+        const response = await fetch('/api/fileUploader');
         const data = await response.json();
+        console.log(data);
         setFiles(data);
       } catch (error) {
         console.error('Error fetching files:', error);
@@ -26,42 +27,70 @@ const FileUpload: React.FC = () => {
     }
   };
 
+  // const handleUpload = async () => {
+  //   if (file) {
+  //     setLoading(true);
+  //     const reader = new FileReader();
+  //     reader.readAsDataURL(file);
+  //     reader.onloadend = async () => {
+  //       try {
+  //         const base64 = reader.result?.toString().split(',')[1];
+  //         if (base64) {
+  //           const response = await fetch('/api/fileUploader', {
+  //             method: 'POST',
+  //             headers: { 'Content-Type': 'application/json' },
+  //             body: JSON.stringify({
+  //               file: base64,
+  //               filename: file.name,
+  //               mimetype: file.type,
+  //             }),
+  //           });
+  //           const data = await response.json();
+  //           if (response.ok) {
+  //             const updatedResponse = await fetch('/api/getUpload');
+  //             const updatedData = await updatedResponse.json();
+  //             setFiles(updatedData);
+  //           } else {
+  //             console.error('Upload failed:', data.error);
+  //           }
+  //         }
+  //       } catch (error) {
+  //         console.error('Upload error:', error);
+  //       } finally {
+  //         setLoading(false);
+  //       }
+  //     };
+  //   }
+  // };
+
   const handleUpload = async () => {
     if (file) {
       setLoading(true);
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onloadend = async () => {
-        try {
-          const base64 = reader.result?.toString().split(',')[1];
-          if (base64) {
-            const response = await fetch('/api/upload', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                file: base64,
-                filename: file.name,
-                mimetype: file.type,
-              }),
-            });
-            const data = await response.json();
-            if (response.ok) {
-              const updatedResponse = await fetch('/api/getUpload');
-              const updatedData = await updatedResponse.json();
-              setFiles(updatedData);
-            } else {
-              console.error('Upload failed:', data.error);
-            }
-          }
-        } catch (error) {
-          console.error('Upload error:', error);
-        } finally {
-          setLoading(false);
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+  
+        const response = await fetch('/api/fileUploader', {
+          method: 'POST',
+          body: formData, // Send FormData directly
+        });
+  
+        const data = await response.json();
+        if (response.ok) {
+          const updatedResponse = await fetch('/api/fileUploader');
+          const updatedData = await updatedResponse.json();
+          setFiles(updatedData);
+        } else {
+          console.error('Upload failed:', data.error);
         }
-      };
+      } catch (error) {
+        console.error('Upload error:', error);
+      } finally {
+        setLoading(false);
+      }
     }
   };
-
+  
   return (
     <motion.div
       className="bg-white shadow-lg rounded-lg p-8 max-w-2xl mx-auto"
@@ -81,7 +110,6 @@ const FileUpload: React.FC = () => {
           className="hidden"
         />
       </div>
-
       <button 
         onClick={handleUpload} 
         disabled={loading}
@@ -97,12 +125,13 @@ const FileUpload: React.FC = () => {
         transition={{ delay: 0.3, duration: 0.5 }}
       >
         <h3 className="text-xl font-semibold mb-4">Uploaded Files</h3>
+        
         {files.length > 0 ? (
           <ul className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-6">
             {files.map((file) => (
               <div key={file._id} className="relative overflow-hidden rounded-lg shadow-md transition-transform duration-300 hover:scale-105">
-                {file.mimetype && file.mimetype.startsWith('image/') ? (
-                  <a href={file.url} target="_blank" rel="noopener noreferrer">
+                {file.metadata.mimetype && file.metadata.mimetype.startsWith('image/') ? (
+                  <a href={file.url} target="_blank" rel="noopener noreferrer" download={'download'}>
                     <img 
                       src={file.url} 
                       alt={file.filename} 

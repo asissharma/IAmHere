@@ -11,6 +11,7 @@ export type Node = {
   parentId: string | null;
   content?: string;
   children: Node[];
+  resourceType : string;
   generated: boolean;
 };
 

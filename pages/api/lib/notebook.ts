@@ -5,7 +5,7 @@ interface INotebook extends Document {
   nodeId: string;
   title: string;
   type: "folder" | "file"; // Restrict to 'folder' or 'file'
-  resourceType?: "text" | "pdf" | "url" | "quiz"|""; // Specific to files
+  resourceType?: "text" | "pdf" | "url" | "quiz"|"fileAnalysis"; // Specific to files
   content?: string; // For text content, PDFs, or external links
   progress?: number; // For tracking completion (0-100)
   parentId?: string | null; // Parent ID for hierarchical structure
@@ -24,7 +24,7 @@ const NotebookSchema: Schema = new Schema(
     type: { type: String, required: true, enum: ["folder", "file"] },
     resourceType: {
       type: String,
-      enum: ["text", "pdf", "url", "quiz",""],
+      enum: ["text", "pdf", "url", "quiz","fileAnalysis"],
     },
     content: { type: String }, // Store text, URLs, or relevant file links
     progress: { type: Number, min: 0, max: 100, default: 0 }, // Default progress is 0
