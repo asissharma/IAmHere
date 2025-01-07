@@ -75,7 +75,7 @@ const NodeEditor: React.FC<{
   }
 
   return (
-    <div className="flex-1 bg-white p-2 rounded-lg shadow-lg overflow-y-scroll">
+    <div className="h-full flex-1 bg-white p-2 rounded-lg shadow-lg overflow-y-scroll scrollabler">
       {/* Header: Title and Action Buttons */}
       <div className="text-xl font-semibold mb-2 flex items-center justify-between">
         <div className="flex-1 text-center">
