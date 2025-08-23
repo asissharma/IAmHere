@@ -51,10 +51,10 @@ export default function FileAnalysis({ setAnalysedContent, analysedContent }: Fi
   };
 
   const handleFileUpload = async () => {
-    if (!file && !url && !text) {
-      setError("Please provide a file, URL, or text input.");
-      return;
-    }
+    // if (!file && !url && !text) {
+    //   setError("Please provide a file, URL, or text input.");
+    //   return;
+    // }
     if (analysisType === "Custom" && !customPrompt.trim()) {
       setError("Please provide a custom prompt for analysis.");
       return;

@@ -111,19 +111,16 @@ export default function Home() {
   };
 
   return (
-    <div className="p-1 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex flex-col items-center rounded-md">
-      <h1 className="text-xl font-semibold text-center text-gray-900 dark:text-white mb-2">
-        Task Manager
-      </h1>
+    <div className="bg-white dark:bg-gray-700 p-2 rounded-lg shadow-lg w-full">
 
       {/* Error Message */}
       {error && (
-        <div className="mb-4 bg-red-500 text-white p-2 rounded-md shadow-md w-full sm:w-96 text-center">
+        <div className="mb-4 bg-red-500 text-white p-2 rounded-md shadow-md w-full text-center">
           {error}
         </div>
       )}
       {/* Add Task Form */}
-      <div className="bg-white dark:bg-gray-700 p-2 rounded-lg shadow-lg w-full sm:w-96">
+      <div className="">
         <h2 className="text-lg font-semibold mb-1 text-gray-900 dark:text-white">
           Create Task
         </h2>
@@ -207,7 +204,7 @@ export default function Home() {
       </div>
 
       {/* Tasks List */}
-      <div className="mt-1 w-full sm:w-96 card bg-white rounded p-2">
+      <div className="mt-1 w-full card bg-white rounded p-2">
         <h2 className="text-xl font-semibold mb-1 text-gray-900 dark:text-white">
           Your Tasks For The Day
         </h2>

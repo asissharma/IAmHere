@@ -30,6 +30,5 @@ function generateValidationCode(offset: number = 0): string {
     const lastDigitOfDay = dayOfMonth % 10;
     const hour = nowIST.hours();
     const sumOfHourAndMinute = hour + minutes;
-  
     return `${minutes}-${lastDigitOfDay}-${sumOfHourAndMinute}`;
 }

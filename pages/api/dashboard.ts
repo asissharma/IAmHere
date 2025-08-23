@@ -13,6 +13,7 @@ import connectToDatabase from './lib/mongodb';
 interface Metric {
   title: string;
   value: number;
+  meta?: {};
 }
 
 interface Insight {
@@ -44,6 +45,7 @@ export default async function handler(
 
     // Fetch metrics
     const solvedProblems = await Question.countDocuments({ isSolved: true });
+    const solvedProblemsData = await Question.find({ isSolved: true });
     const totalQuestions = await Question.countDocuments();
     const completedTopics = await Topic.countDocuments({ isCompleted: true });
     const totalNotes = await DocumentModel.countDocuments({ type: 'note' });
@@ -51,7 +53,7 @@ export default async function handler(
     // Constructing metrics
     const metrics: Metric[] = [
       { title: 'Notes Taken', value: totalNotes },
-      { title: 'DSA Problems Solved', value: solvedProblems },
+      { title: 'DSA Problems Solved', value: solvedProblems,meta:solvedProblemsData },
       { title: 'Topics Completed', value: completedTopics },
       { title: 'Total DSA Problems', value: totalQuestions },
     ];

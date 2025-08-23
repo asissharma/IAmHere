@@ -171,12 +171,12 @@ const Sidebar: React.FC<{
 
   return (
     <div
-      className={`h-full bg-accent p-4 rounded-lg flex flex-col ${
+      className={`h-full bg-accent rounded-lg flex flex-col ${
         isSidebarCollapsed ? "w-20" : isMobile ? "w-56" : "w-80"
       } transition-all duration-300`}
     >
       {/* Mobile collapse button */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-2">
         <div
           className="bg-gray-800 p-2 rounded-full cursor-pointer hover:bg-gray-600 transition"
           title="Toggle Sidebar"

@@ -74,9 +74,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       try {
+        let InstructionForSystem = systemInstruction || "You are a teacher and be straight forward.";
+        let role ="Your name is Kaala Sharma, and you provide insightful, precise, and professional responses."
+        const fullInstruction = `${InstructionForSystem} ${role}`;
         const model = genAI.getGenerativeModel({
           model: "gemini-1.5-flash",
-          systemInstruction: systemInstruction || "You are a teacher and be straight forward.",
+          systemInstruction: fullInstruction,
         });
 
         const chatSession = model.startChat({

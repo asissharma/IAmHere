@@ -26,7 +26,8 @@ const Auth: React.FC<AuthProps> = ({ onSuccess }) => {
       });
 
       const data = await response.json();
-
+      const now = new Date();
+      console.log(now.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }));
       if (response.ok) {
         setMessage('Authenticated!');
         onSuccess(); // Notify parent component of success

@@ -15,8 +15,12 @@ import {
   ArcElement,
 } from 'chart.js';
 
-import TaskCard from './taskManager'; // Adjust path as needed
-import DumpYourThought from './DumpYourThought'; // Adjust path as needed
+import TaskCard from './taskManager'; 
+import DumpYourThought from './DumpYourThought'; 
+import DsaQuestionsGraph from './dsaQuestionsGraph'; 
+import dynamic from 'next/dynamic';
+const PdfToAudioClient = dynamic(() => import('./AudioBook'), { ssr: false });
+ 
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,
@@ -51,6 +55,7 @@ const Dashboard: NextPage = () => {
     insights: Insight[];
     notifications: Notification[];
   } | null>(null);
+const [solvedProblemGraph, setSolvedProblemGraph] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -58,6 +63,7 @@ const Dashboard: NextPage = () => {
         const response = await fetch('/api/dashboard');
         const result = await response.json();
         setData(result);
+        setSolvedProblemGraph(result.metrics[1].meta);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       }
@@ -112,14 +118,17 @@ const Dashboard: NextPage = () => {
       exit={{ opacity: 0 }}
     >
       <h1 className="text-3xl font-semibold text-gray-800">Dashboard</h1>
-
+      <PdfToAudioClient/>
       {/* Main Section */}
+
       <div className="flex flex-col md:flex-row md:space-x-6 w-full">
         {/* Left Column */}
-
         {/* Middle Section */}
         <div className="flex flex-col space-y-6 md:w-1/2 w-full">
           {/* Weekly Progress Line Chart */}
+          <DsaQuestionsGraph solvedProblems={solvedProblemGraph}/>
+          <div className="p-6 bg-white rounded-lg shadow-lg border-t-4 border-indigo-500">
+          </div>
           <div className="p-6 bg-white rounded-lg shadow-lg border-t-4 border-indigo-500">
             <h2 className="text-xl font-semibold mb-4 text-gray-800">Weekly Progress</h2>
             <Line data={lineChartData} />

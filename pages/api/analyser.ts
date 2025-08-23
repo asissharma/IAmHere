@@ -12,7 +12,8 @@ const multerMiddleware = util.promisify(upload.single("file"));
 
 export const config = {
   api: {
-    bodyParser: false,
+    bodyParser: false, // Disable the default body parser
+    responseLimit: "10mb", // Adjust the response limit as needed
   },
 };
 
@@ -27,16 +28,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const { url, text, analysisType, analysisPrompt } = req.body;
       const file = (req as any).file;
+      let chunks: any[] = [];
+      let finalOutput;
+      if(file || url || text ){
+        // Step 1: Extract Text
+        const textContent = await extractTextFromFile(file, url, text);
 
-      // Step 1: Extract Text
-      const textContent = await extractTextFromFile(file, url, text);
+        // Initial Prompt
+        const initialPrompt = `You have to ${analysisType} the given data.`;
 
-      // Initial Prompt
-      const initialPrompt = `You have to ${analysisType} the given data.`;
-
-      // Step 2: Chunking and Processing
-      const chunks = processChunks(textContent, initialPrompt);
-      const finalOutput = await sendPromptToGemini(baseUrl, chunks, analysisPrompt);
+        // Step 2: Chunking and Processing
+        chunks = processChunks(textContent, initialPrompt);
+      }      
+        finalOutput = await sendPromptToGemini(baseUrl, analysisPrompt,chunks);
+        chunks.push({ role: "user", text: analysisPrompt});
 
       res.status(200).json({ history: chunks, summary: finalOutput });
     } catch (error) {
@@ -111,15 +116,15 @@ const processChunks = (text: string, initialPrompt: string, chunkSize = 2000) =>
 /**
  * Send a text chunk to the Gemini API for processing based on analysis type.
  */
-const sendPromptToGemini = async (baseUrl : string, history : any, message:string) => {
+const sendPromptToGemini = async (baseUrl : string, message:string,history? : any) => {
   const MAX_RETRIES = 3;
   let attempt = 0;
-
+  let historyOfChat = history;
   while (attempt < MAX_RETRIES) {
     try {
       const response = await axios.post(`${baseUrl}/api/chat`, {
         message,
-        history,
+        historyOfChat,
         systemInstruction: `You are an expert tutor generating precise insights.`,
       });
       return response.data.response;

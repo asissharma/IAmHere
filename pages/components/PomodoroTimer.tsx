@@ -82,13 +82,13 @@ const PomodoroTimer: React.FC = () => {
       transition={{ duration: 0.5, ease: 'easeOut' }} // Animation duration and ease
     >
       {/* Time Display */}
-      <div className="text-xl font-bold mr-3">{formatTime(timeLeft)}</div>
+      <div className="text-sm font-bold mr-3">{formatTime(timeLeft)}</div>
 
       {/* Inline Controls */}
       <div className="flex items-center space-x-2">
         <motion.button
           onClick={handleStartPause}
-          className="text-lg p-2 rounded-md transition bg-gray-200 hover:bg-gray-300 text-black"
+          className="text-lg p-0.5 rounded-md transition bg-gray-200 hover:bg-gray-300 text-black"
           whileHover={{ scale: 1.1 }} // Scale up on hover
           whileTap={{ scale: 0.95 }} // Scale down slightly on click
         >
@@ -96,7 +96,7 @@ const PomodoroTimer: React.FC = () => {
         </motion.button>
         <motion.button
           onClick={handleReset}
-          className="text-lg p-2 rounded-md transition bg-gray-200 hover:bg-gray-300 text-black"
+          className="text-lg p-0.5 rounded-md transition bg-gray-200 hover:bg-gray-300 text-black"
           whileHover={{ scale: 1.1 }} // Scale up on hover
           whileTap={{ scale: 0.95 }} // Scale down slightly on click
         >

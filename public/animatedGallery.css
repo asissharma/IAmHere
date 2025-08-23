@@ -1,0 +1,243 @@
+/*Hero Section Styling */
+/* .hero-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 50px 20px;
+    background: linear-gradient(120deg, #7f5af0, #ff4d6d);
+    color: #fff;
+    text-align: center;
+    overflow: hidden;
+    position: relative;
+  } */
+  .hero-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 50px 20px;
+    position: relative;
+    overflow: hidden;
+    color: #fff;
+  }
+  
+  .rotating-tech-globe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1e1e2e, #0d0d14);
+    overflow: hidden;
+    z-index: -1;
+    background-repeat: no-repeat;
+  }  
+  
+  .header{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .content {
+    max-width: 800px;
+    margin-bottom: 30px;
+    z-index: 10;
+  }
+  
+  .animated-text {
+    font-size: 3rem;
+    font-weight: bold;
+    line-height: 1.2;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  
+  .animated-text span {
+    display: inline-block;
+    transform: translateY(100%);
+    opacity: 0;
+    filter: blur(10px);
+    animation: text-pop-up 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  }
+  
+  .subtext {
+    font-size: 1rem;
+    color: #ffecec;
+  }
+  
+  .cta-button {
+    align-items: end;
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 1rem;
+    background: #ff4d6d;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  
+  .cta-button:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+  }
+  
+  /* Images Section */
+  .header .profile-image{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    z-index: 10;
+    max-width: 55%;
+    height: auto;
+    animation: fade-in 2s ease-in-out;
+    animation: slide-in-left 1.5s ease-in-out;
+    border-radius: 10px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  }
+  
+  .display-section .display-image {
+    position: relative;
+    display: flex;
+    margin-left: 50%;
+    top: -20px;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    z-index: 10;
+    max-width: 40%;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    animation: fade-in 2s ease-in-out;
+    animation: zoomIn 1.5s ease-in-out;
+  }
+  
+  
+
+  /* Animations */
+  @keyframes text-pop-up {
+    0% {
+      transform: translateY(100%);
+      opacity: 0;
+      filter: blur(10px);
+    }
+    50% {
+      transform: translateY(0);
+      opacity: 1;
+      filter: blur(5px);
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+      filter: blur(0);
+    }
+  }
+  
+  @keyframes slide-in-left {
+    0% {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slide-in-right {
+    0% {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes zoomIn {
+    0% {
+      transform: scale(0.5);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* General Container Styling */
+.hsImgBoxUp {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 100vh;
+}
+
+.hsImgBox {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform: translate(0, 0);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+}
+
+/* Line Animation */
+.hsLine {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(90deg);
+  height: 72%;
+  width: 50%;
+  background-color: #000;
+  opacity: 0.8;
+}
+
+.hsEllipse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: 200px;
+  width: 200px;
+  border: 2px solid #000;
+  border-radius: 50%;
+  opacity: 0.8;
+}
+
+/* Sequential Icon Styling */
+.hs-img {
+  position: relative;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.5s ease-in-out;
+}
+
+.hs-img img {
+  max-width: 100px;
+  height: auto;
+}
+
+  

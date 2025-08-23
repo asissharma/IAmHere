@@ -84,13 +84,18 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
       // Upload file to Supabase storage
       const { data, error } = await supabase.storage
-        .from('IAmHere')
-        .upload(`public/${file.originalname}`, file.buffer, {
-          contentType: file.mimetype,
-          upsert: false,
-        });
+          .from('IAmHere')
+          .upload(`public/${file.originalname}`, file.buffer, {
+            contentType: file.mimetype,
+            upsert: false,
+          });
 
-      if (error) throw error;
+        if (error) {
+          console.error('Supabase Upload Error:', error);
+          throw error;
+        }
+
+        console.log('Supabase Upload Success:', data);
 
       // Save file metadata to MongoDB
       const newFile = new File({
