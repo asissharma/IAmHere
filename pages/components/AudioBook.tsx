@@ -6,18 +6,21 @@ import React, { useState, useEffect } from 'react';
  * This component must run only in the browser.
  * We polyfill Promise.withResolvers (which pdfjs‑dist expects) before loading pdfjs‑dist.
  */
-if (typeof window !== 'undefined' && typeof Promise.withResolvers !== 'function') {
+if (typeof window !== 'undefined' && typeof (Promise as any).withResolvers !== 'function') {
   // Polyfill for pdfjs-dist internal use.
-  Promise.withResolvers = function () {
-    let resolve: (value?: any) => void;
-    let reject: (reason?: any) => void;
-    const promise = new Promise((res, rej) => {
+  (Promise as any).withResolvers = function <T>() {
+    let resolve!: (value: T | PromiseLike<T>) => void;
+    let reject!: (reason?: any) => void;
+
+    const promise = new Promise<T>((res, rej) => {
       resolve = res;
       reject = rej;
     });
-    return { promise, resolve: resolve!, reject: reject! };
+
+    return { promise, resolve, reject };
   };
 }
+
 
 // Import PDF.js libraries *after* the polyfill is set up.
 import * as pdfjsLib from 'pdfjs-dist';
