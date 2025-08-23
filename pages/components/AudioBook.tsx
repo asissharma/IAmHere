@@ -2,12 +2,10 @@
 import React, { useState, useEffect } from 'react';
 
 /**
- * IMPORTANT:
- * This component must run only in the browser.
- * We polyfill Promise.withResolvers (which pdfjs‑dist expects) before loading pdfjs‑dist.
+ * Polyfill Promise.withResolvers for pdfjs-dist.
+ * Applied globally, safe on both server and client.
  */
-if (typeof window !== 'undefined' && typeof (Promise as any).withResolvers !== 'function') {
-  // Polyfill for pdfjs-dist internal use.
+if (typeof (Promise as any).withResolvers !== 'function') {
   (Promise as any).withResolvers = function <T>() {
     let resolve!: (value: T | PromiseLike<T>) => void;
     let reject!: (reason?: any) => void;
@@ -21,22 +19,31 @@ if (typeof window !== 'undefined' && typeof (Promise as any).withResolvers !== '
   };
 }
 
-
-// Import PDF.js libraries *after* the polyfill is set up.
-import * as pdfjsLib from 'pdfjs-dist';
-import { GlobalWorkerOptions } from 'pdfjs-dist';
-
-// Set the PDF.js worker source from a CDN (using the same version as pdfjsLib)
-GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.js`;
-
 const PdfToAudioClient: React.FC = () => {
   const [pdfUrl, setPdfUrl] = useState<string>('');
   const [extractedText, setExtractedText] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
 
+  // pdf.js imports stored in state after dynamic load
+  const [pdfjsLib, setPdfjsLib] = useState<any>(null);
+
+  useEffect(() => {
+    (async () => {
+      // Load pdfjs-dist dynamically in the browser
+      const pdfjs = await import('pdfjs-dist');
+      const { GlobalWorkerOptions } = await import('pdfjs-dist');
+
+      // Set worker from CDN
+      GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
+
+      setPdfjsLib(pdfjs);
+    })();
+  }, []);
+
   // Extract text from each page of the PDF.
   const extractTextFromPdf = async (url: string): Promise<string> => {
+    if (!pdfjsLib) throw new Error('pdfjs not loaded yet');
     try {
       const loadingTask = pdfjsLib.getDocument(url);
       const pdf = await loadingTask.promise;
@@ -81,7 +88,7 @@ const PdfToAudioClient: React.FC = () => {
 
   // Handler to extract text from the PDF and speak it.
   const handleConvertAndSpeak = async () => {
-    if (!pdfUrl) return;
+    if (!pdfUrl || !pdfjsLib) return;
     setLoading(true);
     try {
       const text = await extractTextFromPdf(pdfUrl);
@@ -99,12 +106,20 @@ const PdfToAudioClient: React.FC = () => {
   // Ensure voices are loaded (some browsers load them asynchronously)
   useEffect(() => {
     if ('speechSynthesis' in window) {
-      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = () =>
+        window.speechSynthesis.getVoices();
     }
   }, []);
 
   return (
-    <div style={{ maxWidth: '600px', margin: '2rem auto', padding: '1rem', fontFamily: 'sans-serif' }}>
+    <div
+      style={{
+        maxWidth: '600px',
+        margin: '2rem auto',
+        padding: '1rem',
+        fontFamily: 'sans-serif',
+      }}
+    >
       <h2>PDF to Audio Converter</h2>
       <input
         type="text"
@@ -113,13 +128,27 @@ const PdfToAudioClient: React.FC = () => {
         placeholder="Enter PDF URL (must have CORS enabled)"
         style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }}
       />
-      <button onClick={handleConvertAndSpeak} disabled={loading || !pdfUrl || isSpeaking}>
-        {loading ? 'Processing...' : isSpeaking ? 'Speaking...' : 'Convert PDF to Audio'}
+      <button
+        onClick={handleConvertAndSpeak}
+        disabled={loading || !pdfUrl || isSpeaking || !pdfjsLib}
+      >
+        {!pdfjsLib
+          ? 'Loading PDF engine...'
+          : loading
+          ? 'Processing...'
+          : isSpeaking
+          ? 'Speaking...'
+          : 'Convert PDF to Audio'}
       </button>
       {extractedText && (
         <div style={{ marginTop: '1rem' }}>
           <h3>Extracted Text (limited)</h3>
-          <textarea value={extractedText} readOnly rows={6} style={{ width: '100%', padding: '0.5rem' }} />
+          <textarea
+            value={extractedText}
+            readOnly
+            rows={6}
+            style={{ width: '100%', padding: '0.5rem' }}
+          />
         </div>
       )}
     </div>
