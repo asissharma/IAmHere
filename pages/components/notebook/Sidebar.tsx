@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { FaFolder, FaFile, FaTrash, FaEllipsisV } from "react-icons/fa";
+import { FaFolder, FaFile, FaTrash, FaEllipsisV, FaBook } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { handleGenerateData } from "../../api/utils";
 
@@ -7,7 +7,7 @@ export type Node = {
   nodeId: string;
   id: string;
   title: string;
-  type: "folder" | "file";
+  type: "syllabus"|"folder" | "file";
   parentId: string | null;
   content?: string;
   children: Node[];
@@ -17,7 +17,7 @@ export type Node = {
 
 const Sidebar: React.FC<{
   tree: Node[];
-  onAddNode: (parentId: string | null, type: "folder" | "file") => void;
+  onAddNode: (parentId: string | null, type: "syllabus"|"folder" | "file") => void;
   onDeleteNode: (nodeId: string) => void;
   onSelectNode: (node: Node) => void;
   setShowMindMap: (nodeId: string) => void; // Add callback prop for toggling Mind Map
@@ -222,6 +222,13 @@ const Sidebar: React.FC<{
             isSidebarCollapsed ? "opacity-0" : "opacity-100"
           } flex space-x-4`}
         >
+          <div
+            className="bg-gray-800 p-2 rounded-full cursor-pointer hover:bg-gray-600 transition"
+            title="Add Folder"
+            onClick={() => onAddNode(null, "syllabus")}
+          >
+            <FaBook className="text-white text-lg" />
+          </div>
           <div
             className="bg-gray-800 p-2 rounded-full cursor-pointer hover:bg-gray-600 transition"
             title="Add Folder"

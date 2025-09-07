@@ -26,7 +26,7 @@ type Node = {
   nodeId: string;
   id: string;
   title: string;
-  type: "folder" | "file";
+  type: "syllabus"|"folder" | "file";
   parentId: string | null;
   content?: string;
   children: Node[];
@@ -59,7 +59,7 @@ export const fetchNodes = async () => {
   }
 };
 
-export const addNode = async (title: string, type: "folder" | "file", parentId: string | null) => {
+export const addNode = async (title: string, type: "syllabus"|"folder" | "file", parentId: string | null) => {
   const identifier = "addNode";
   try {
     return await apiRequest("/api/notes", "POST", { title, type, parentId, identifier });

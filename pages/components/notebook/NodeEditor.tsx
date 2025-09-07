@@ -6,6 +6,7 @@ import TurndownService from "turndown"; // For converting HTML to markdown
 import MonacoEditor from "@monaco-editor/react";
 import { AiOutlineFileText, AiOutlineCode, AiOutlineSave, AiOutlineEye } from "react-icons/ai";
 import FileAnalysis from "./fileRipper";
+import ProEditorWrapper from "../editor/Editor";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
@@ -13,7 +14,7 @@ export type Node = {
   nodeId: string;
   id: string;
   title: string;
-  type: "folder" | "file";
+  type: "syllabus"|"folder" | "file";
   parentId: string | null;
   content?: string;
   children: Node[];
@@ -123,41 +124,47 @@ const NodeEditor: React.FC<{
             height="600px"
             language="markdown"
             theme="vs-dark"
-            value={markdownContent} // Use markdown state
+            value={markdownContent}
             onChange={(newValue) => setMarkdownContent(newValue || "")}
             options={{
               selectOnLineNumbers: true,
             }}
           />
         ) : editorMode === "quill" ? (
-          <ReactQuill
-            theme="snow"
-            value={htmlContent} // Use HTML state
-            onChange={(value) => setHtmlContent(value || "")}
-            modules={{
-              toolbar: [
-                [{ header: "1" }, { header: "2" }, { font: [] }],
-                [{ list: "ordered" }, { list: "bullet" }],
-                ["bold", "italic", "underline"],
-                ["link", "image"],
-                [{ align: [] }],
-                ["clean"],
-              ],
-            }}
-            formats={[
-              "header",
-              "font",
-              "bold",
-              "italic",
-              "underline",
-              "list",
-              "bullet",
-              "link",
-              "image",
-              "align",
-            ]}
-            style={{ height: "400px" }}
+          <ProEditorWrapper
+            initialContent={htmlContent}
+            onChange={(html) => setHtmlContent(html|| "")}
+            storageKey={undefined}
+            className=""
           />
+          // <ReactQuill
+          //   theme="snow"
+          //   value={htmlContent}
+          //   onChange={(value) => setHtmlContent(value || "")}
+          //   modules={{
+          //     toolbar: [
+          //       [{ header: "1" }, { header: "2" }, { font: [] }],
+          //       [{ list: "ordered" }, { list: "bullet" }],
+          //       ["bold", "italic", "underline"],
+          //       ["link", "image"],
+          //       [{ align: [] }],
+          //       ["clean"],
+          //     ],
+          //   }}
+          //   formats={[
+          //     "header",
+          //     "font",
+          //     "bold",
+          //     "italic",
+          //     "underline",
+          //     "list",
+          //     "bullet",
+          //     "link",
+          //     "image",
+          //     "align",
+          //   ]}
+          //   style={{ height: "400px" }}
+          // />
         ) : editorMode === "fileAnalysis" ? (
           <FileAnalysis analysedContent={node.content || null} setAnalysedContent={setAnalysedContent}/>
         ) : null

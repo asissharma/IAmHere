@@ -4,7 +4,7 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 interface INotebook extends Document {
   nodeId: string;
   title: string;
-  type: "folder" | "file"; // Restrict to 'folder' or 'file'
+  type: "syllabus"|"folder" | "file"; // Restrict to 'folder' or 'file'
   resourceType?: "text" | "pdf" | "url" | "quiz"|"fileAnalysis"; // Specific to files
   content?: string; // For text content, PDFs, or external links
   progress?: number; // For tracking completion (0-100)
@@ -21,7 +21,7 @@ const NotebookSchema: Schema = new Schema(
       default: () => new mongoose.Types.ObjectId().toString(),
     },
     title: { type: String, required: true },
-    type: { type: String, required: true, enum: ["folder", "file"] },
+    type: { type: String, required: true, enum: ["syllabus","folder", "file"] },
     resourceType: {
       type: String,
       enum: ["text", "pdf", "url", "quiz","fileAnalysis"],

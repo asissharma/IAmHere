@@ -11,7 +11,7 @@ type Node = {
   id: string;
   nodeId: string;
   title: string;
-  type: "folder" | "file";
+  type: "syllabus" | "folder" | "file" ;
   parentId: string | null;
   children: Node[];
   resourceType : string;
@@ -50,7 +50,7 @@ const NotebookPage: React.FC = () => {
     };
 
 
-  const handleAddNode = async (parentId: string | null, type: "folder" | "file") => {
+  const handleAddNode = async (parentId: string | null, type: "syllabus" | "folder" | "file") => {
     const title = prompt(`Enter name for the new ${type}:`);
     if (!title) return toast.error("Name is required!");
     

@@ -15,11 +15,12 @@ const Index: NextPage = () => {
   return (
     <div>
        {/* <HomeScreen></HomeScreen> */}
-      {!isAuthenticated ? (
+      {/* {!isAuthenticated ? (
         <Auth onSuccess={handleAuthenticationSuccess} />
       ) : (
         <Home />
-       )}   
+       )}    */}
+        <Home />
     </div>
   );
 };
