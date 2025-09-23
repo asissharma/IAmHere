@@ -1,5 +1,5 @@
 import { NextPage } from "next";
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import {
   FiFileText,
   FiCode,
@@ -24,16 +24,42 @@ import Notebook from "./components/notebook";
 import Learning from "./components/learning";
 // import Books from "./components/books";
 
+const menuOrder: SectionKeys[] = [
+  "dashboard",
+  "playground",
+  "learningpathsandgoals",
+  "upload",
+  "editor",
+  "notebook",
+];
+
+const containerVariants: Variants = {
+  hidden: { opacity: 0, scale: 0.9, y: 12 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 400, damping: 28, staggerChildren: 0.06 },
+  },
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 8, scale: 0.92 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 700, damping: 30 } },
+  exit: { opacity: 0, y: 6, scale: 0.95, transition: { duration: 0.12 } },
+};
+
+
 const sections = {
   dashboard: <Dashboard />,
   playground: <DSAPlayground />,
   notebook: <Notebook />,
   // dumpYourThought: <DumpYourThought />,
   learningpathsandgoals: <LearningPathsAndGoals />,
-  learning: <Learning />,
+  // learning: <Learning />,
   upload: <FileUpload />,
   editor: <TextEditor />,
-  trial: <Trial />,
+  // trial: <Trial />,
   // books: <Books />,
 };
 
@@ -43,6 +69,8 @@ const Home: NextPage = () => {
   const [activeSection, setActiveSection] = useState<SectionKeys>("dashboard");
   const [currentDate, setCurrentDate] = useState<string>("");
   const [darkMode, setDarkMode] = useState<boolean>(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [showPing, setShowPing] = useState(true);
 
   // Set the dark mode preference in localStorage and apply it to the body
   useEffect(() => {
@@ -89,6 +117,16 @@ const Home: NextPage = () => {
       document.body.classList.remove("dark");
     }
   };
+   const iconForKey = (key: string) => {
+    if (key === "dashboard") return <FiFileText className="w-5 h-5" />;
+    if (key === "playground") return <FiCode className="w-5 h-5" />;
+    if (key === "learningpathsandgoals") return <FaIceCream className="w-5 h-5" />;
+    if (key === "upload") return <FiUpload className="w-5 h-5" />;
+    if (key === "editor") return <FiCode className="w-5 h-5" />;
+    if (key === "notebook") return <FiGithub className="w-5 h-5" />;
+    if (key === "trial") return <FiFastForward className="w-5 h-5" />;
+    return <FiFileText className="w-5 h-5" />;
+  };
 
   return (
     <motion.div
@@ -104,7 +142,7 @@ const Home: NextPage = () => {
           <div>
             <PomodoroTimer />
           </div>
-          <aside className="flex flex-row items-center">
+          {/* <aside className="flex flex-row items-center">
             {Object.keys(sections).map((key) => (
               <button
                 key={key}
@@ -127,7 +165,7 @@ const Home: NextPage = () => {
                 {key === "trial" && <FiFastForward className="w-full h-full"/>}
               </button>
             ))}
-          </aside>
+          </aside> */}
           <div className="flex items-center">
             <div className="flex items-center">
               <span className="px-3 py-1 bg-orange-500 text-white rounded-full text-sm">
@@ -170,6 +208,77 @@ const Home: NextPage = () => {
           </button>
         ))}
       </aside> */}
+      {/* Floating signal button at bottom-right (menu above button, one-time ping) */}
+      <div className="fixed right-6 bottom-6 z-50">
+        <div className="flex flex-col items-end">
+          {/* Animated menu panel */}
+          <motion.div
+            className="mb-3 flex flex-col items-end"
+            initial="hidden"
+            animate={menuOpen ? "visible" : "hidden"}
+            variants={containerVariants}
+            aria-hidden={!menuOpen}
+          >
+            {menuOrder.map((key) => (
+              <motion.button
+                key={key}
+                variants={itemVariants}
+                exit="exit"
+                onClick={() => {
+                  setActiveSection(key);
+                  setMenuOpen(false);
+                }}
+                className={`flex items-center gap-3 mb-2 px-3 py-2 rounded-2xl shadow-md text-sm transition-all focus:outline-none focus:ring-2 focus:ring-orange-300 ${
+                  activeSection === key
+                    ? "bg-orange-600 text-white"
+                    : "bg-gray-800/70 text-gray-100 hover:bg-gray-700/80"
+                }`}
+                aria-label={`Navigate to ${key}`}
+              >
+                <span className="flex items-center justify-center w-6 h-6">
+                  {iconForKey(key)}
+                </span>
+                <span className="pr-1">
+                  {key.charAt(0).toUpperCase() + key.slice(1)}
+                </span>
+              </motion.button>
+            ))}
+          </motion.div>
+
+          {/* Signal button */}
+          <div className="relative">
+            {/* one-time ping */}
+            {showPing && (
+              <span
+                className="absolute inset-1 rounded-full bg-orange-500 opacity-75 animate-ping"
+                aria-hidden="true"
+              />
+            )}
+            <button
+              onClick={() => {
+                setMenuOpen((s) => !s);
+                setShowPing(false); // disable ping forever after first click
+              }}
+              aria-expanded={menuOpen}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              className="relative flex items-center justify-center w-14 h-14 rounded-full bg-orange-600 text-white shadow-2xl hover:scale-105 active:scale-95 transition-transform focus:outline-none"
+              title="Open quick menu"
+            >
+              {/* signal icon, rotates when open */}
+              <motion.span
+                initial={false}
+                animate={menuOpen ? { rotate: 45 } : { rotate: 0 }}
+                transition={{ type: "tween", stiffness: 500, damping: 30 }}
+                className="text-xl font-bold select-none"
+              >
+                ⚡
+              </motion.span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+
 
       {/* Main Content */}
       <main className="ml-1 mt-2">
