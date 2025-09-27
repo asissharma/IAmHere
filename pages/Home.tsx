@@ -30,6 +30,7 @@ const menuOrder: SectionKeys[] = [
   "learningpathsandgoals",
   "upload",
   "editor",
+  "trial",
   "notebook",
 ];
 
@@ -59,7 +60,7 @@ const sections = {
   // learning: <Learning />,
   upload: <FileUpload />,
   editor: <TextEditor />,
-  // trial: <Trial />,
+  trial: <Trial />,
   // books: <Books />,
 };
 
