@@ -1,5 +1,5 @@
 import { NextPage } from "next";
-import { motion, Variants } from "framer-motion";
+import { AnimatePresence, motion, Variants } from "framer-motion";
 import {
   FiFileText,
   FiCode,
@@ -67,7 +67,7 @@ const sections = {
 type SectionKeys = keyof typeof sections;
 
 const Home: NextPage = () => {
-  const [activeSection, setActiveSection] = useState<SectionKeys>("dashboard");
+  const [activeSection, setActiveSection] = useState<SectionKeys>("trial");
   const [currentDate, setCurrentDate] = useState<string>("");
   const [darkMode, setDarkMode] = useState<boolean>(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -212,39 +212,44 @@ const Home: NextPage = () => {
       {/* Floating signal button at bottom-right (menu above button, one-time ping) */}
       <div className="fixed right-6 bottom-6 z-50">
         <div className="flex flex-col items-end">
-          {/* Animated menu panel */}
-          <motion.div
-            className="mb-3 flex flex-col items-end"
-            initial="hidden"
-            animate={menuOpen ? "visible" : "hidden"}
-            variants={containerVariants}
-            aria-hidden={!menuOpen}
-          >
-            {menuOrder.map((key) => (
-              <motion.button
-                key={key}
-                variants={itemVariants}
-                exit="exit"
-                onClick={() => {
-                  setActiveSection(key);
-                  setMenuOpen(false);
-                }}
-                className={`flex items-center gap-3 mb-2 px-3 py-2 rounded-2xl shadow-md text-sm transition-all focus:outline-none focus:ring-2 focus:ring-orange-300 ${
-                  activeSection === key
-                    ? "bg-orange-600 text-white"
-                    : "bg-gray-800/70 text-gray-100 hover:bg-gray-700/80"
-                }`}
-                aria-label={`Navigate to ${key}`}
+          <AnimatePresence>
+            {menuOpen && (
+              <motion.div
+                className="mb-3 flex flex-col items-end"
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+                variants={containerVariants}
+                aria-hidden={!menuOpen}
               >
-                <span className="flex items-center justify-center w-6 h-6">
-                  {iconForKey(key)}
-                </span>
-                <span className="pr-1">
-                  {key.charAt(0).toUpperCase() + key.slice(1)}
-                </span>
-              </motion.button>
-            ))}
-          </motion.div>
+                {menuOrder.map((key) => (
+                  <motion.button
+                    key={key}
+                    variants={itemVariants}
+                    exit="exit"
+                    onClick={() => {
+                      setActiveSection(key);
+                      setMenuOpen(false);
+                    }}
+                    className={`flex items-center gap-3 mb-2 px-3 py-2 rounded-2xl shadow-md text-sm transition-all focus:outline-none focus:ring-2 focus:ring-orange-300 ${
+                      activeSection === key
+                        ? "bg-orange-600 text-white"
+                        : "bg-gray-800/70 text-gray-100 hover:bg-gray-700/80"
+                    }`}
+                    aria-label={`Navigate to ${key}`}
+                    // ensure buttons aren't focusable if somehow menu re-renders during closing
+                    tabIndex={menuOpen ? 0 : -1}
+                  >
+                    <span className="flex items-center justify-center w-6 h-6">
+                      {iconForKey(key)}
+                    </span>
+                    <span className="pr-1">{key.charAt(0).toUpperCase() + key.slice(1)}</span>
+                  </motion.button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
 
           {/* Signal button */}
           <div className="relative">
