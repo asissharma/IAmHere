@@ -18,6 +18,7 @@ import TextEditor from "./components/TextEditor";
 import Dashboard from "./components/Dashboard";
 import DSAPlayground from "./components/DsaPrac";
 import Trial from "./components/homePage/trial";
+import Trialcomp from "./components/homePage/trialcomp";
 // import DumpYourThought from "./components/DumpYourThought";
 import LearningPathsAndGoals from "./components/LearningPathsAndGoals";
 import Notebook from "./components/notebook";
@@ -31,6 +32,7 @@ const menuOrder: SectionKeys[] = [
   "upload",
   "editor",
   "trial",
+  "trialcomp",
   "notebook",
 ];
 
@@ -61,6 +63,7 @@ const sections = {
   upload: <FileUpload />,
   editor: <TextEditor />,
   trial: <Trial />,
+  trialcomp: <Trialcomp />,
   // books: <Books />,
 };
 
@@ -126,6 +129,7 @@ const Home: NextPage = () => {
     if (key === "editor") return <FiCode className="w-5 h-5" />;
     if (key === "notebook") return <FiGithub className="w-5 h-5" />;
     if (key === "trial") return <FiFastForward className="w-5 h-5" />;
+    if (key === "trialcomp") return <FiFastForward className="w-5 h-5" />;
     return <FiFileText className="w-5 h-5" />;
   };
 
@@ -139,7 +143,7 @@ const Home: NextPage = () => {
       {/* Top Navigation */}
       <nav className="sticky top-0 z-20 bg-opacity-90 backdrop-blur-lg shadow-md rounded-xl">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">🌟 Personal Management Hub</h1>
+          <h1 className="text-2xl font-bold pl-5">Hello Sweetie</h1>
           <div>
             <PomodoroTimer />
           </div>
