@@ -1,202 +1,245 @@
-// File: components/AnimatedLandingPage.tsx
-'use client';
+/*
+Single-file demo: "Scrollytelling + Parallax" for Next.js / React + Tailwind
 
-import React, { useRef } from 'react';
-import { motion, useScroll, useTransform, useInView } from 'framer-motion';
+How to use
+1. Save this file as `app/components/KaalaScrollyDemo.tsx` in a Next 13 app (app router).
+2. Import it from `app/page.tsx` or a route: `import KaalaScrollyDemo from './components/KaalaScrollyDemo'` then render <KaalaScrollyDemo />.
+3. Requirements: Tailwind CSS configured, optionally framer-motion installed (the demo works without it, but includes small motion hooks if available).
+4. Images are using placeholder public URLs — replace with `/public/...` assets as desired.
 
-interface SectionRevealProps {
-  children: React.ReactNode;
-  className?: string;
+What this file contains
+- A lightweight Marquee component
+- KaalaProfileComponent (adapted from your submission; respects reduced motion)
+- ScrollyContainer: 4 full-height narrative panels which pin text and animate as you scroll
+- Parallax background layer that responds to pointermove + scroll (disabled when prefers-reduced-motion)
+
+This is meant as a plug-and-play demo; tweak copy, timing, and images to taste.
+*/
+
+import React, { useEffect, useRef, useState } from 'react';
+
+// Try to import framer-motion if available; otherwise fall back to noop animations
+let motion: any = null;
+try { motion = require('framer-motion'); } catch (e) { motion = null; }
+
+function Marquee({ items = [], duration = 20 }: { items?: string[]; duration?: number }) {
+  return (
+    <div className="overflow-hidden whitespace-nowrap w-full">
+      <div
+        className="inline-block animate-marquee py-2"
+        style={{ animationDuration: `${duration}s` }}
+      >
+        {items.concat(items).map((it, i) => (
+          <span key={i} className="mx-6 inline-block text-sm uppercase tracking-widest opacity-80">
+            {it}
+          </span>
+        ))}
+      </div>
+      <style jsx>{`
+        @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        .animate-marquee { display: inline-block; will-change: transform; animation-name: marquee; animation-timing-function: linear; animation-iteration-count: infinite; }
+      `}</style>
+    </div>
+  );
 }
 
-const SectionReveal: React.FC<SectionRevealProps> = ({ children, className = '' }) => {
-  const ref = useRef<HTMLElement | null>(null);
-  const isInView = useInView(ref, { once: true, margin: '-100px' });
+function KaalaProfileComponent({ className = '' }: { className?: string }) {
+  const IMAGE_SRC = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=800&auto=format&fit=crop&ixlib=rb-4.0.3&s=abc';
+  const BACKGROUND_SRC = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.0.3&s=def';
 
-  const variants = {
-    hidden: { opacity: 0, y: 40, scale: 0.995 },
-    visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.6, ease: [0.2, 0.8, 0.2, 1] } }
-  };
+  const bgRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+  const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setIsMounted(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+    if (!bgRef.current || !containerRef.current) return;
+    let raf = 0;
+    let lastX = 0;
+    let lastY = 0;
+
+    function onPointer(e: PointerEvent) {
+      const rect = containerRef.current!.getBoundingClientRect();
+      lastX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      lastY = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+      schedule();
+    }
+    function onScroll() { schedule(); }
+    function schedule() {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const tx = lastX * 12; // horizontal parallax
+        const ty = lastY * 8 + (window.scrollY * 0.02); // vertical + scroll
+        if (bgRef.current) bgRef.current.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(1.04)`;
+      });
+    }
+
+    window.addEventListener('pointermove', onPointer, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('pointermove', onPointer);
+      window.removeEventListener('scroll', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [prefersReducedMotion]);
+
+  const title = 'Kaala Sharma';
+  const subtitle = 'Software Engineer · Published by Us';
+  const tech = ['React', 'TypeScript', 'Next.js', 'Node', 'Tailwind', 'WebGL', 'GraphQL'];
 
   return (
-    <motion.section
-      ref={ref}
-      className={`w-full max-w-6xl mx-auto px-6 py-16 ${className}`}
-      initial="hidden"
-      animate={isInView ? 'visible' : 'hidden'}
-      variants={variants}
-    >
-      {children}
-    </motion.section>
-  );
-};
+    <div ref={containerRef} className={`relative w-full max-w-5xl mx-auto p-6 ${className}`}>
+      {/* background layer */}
+      <div
+        ref={bgRef}
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 h-full"
+        style={{ transition: 'transform 350ms cubic-bezier(.2,.9,.3,1)', backgroundImage: `url(${BACKGROUND_SRC})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+      />
 
-const ScrollProgress: React.FC = () => {
-  const { scrollYProgress } = useScroll();
-  const width = useTransform(scrollYProgress, [0, 1], ['0%', '100%']);
+      <div className="relative grid grid-cols-1 md:grid-cols-3 gap-6 items-center bg-white/60 backdrop-blur-md p-6 rounded-2xl shadow-lg">
+        <div>
+          <h1 className="text-3xl font-extrabold">{title}</h1>
+          <p className="mt-1 text-sm text-slate-700">{subtitle}</p>
 
-  return (
-    <motion.div className="fixed top-0 left-0 h-1 z-50 bg-transparent w-full">
-      <motion.div style={{ width }} className="h-full origin-left bg-gradient-to-r from-indigo-500 via-pink-500 to-yellow-400 shadow-md" />
-    </motion.div>
-  );
-};
+          <div className="mt-4 flex flex-wrap gap-2">
+            {tech.map((t) => (
+              <span key={t} className="text-xs px-3 py-1 rounded-full bg-white/80 ring-1 ring-white/20">{t}</span>
+            ))}
+          </div>
 
-const Navbar: React.FC = () => {
-  const { scrollY } = useScroll();
-  const blur = useTransform(scrollY, [0, 150], [0, 6]);
-  const y = useTransform(scrollY, [0, 200], [0, -10]);
-  const bgOpacity = useTransform(scrollY, [0, 120], [0.0, 0.95]);
+          <p className="mt-4 text-sm text-slate-700">I ship delightful developer tools and quirky product features — thoughtful, testable, and fun. Here are a few project highlights.</p>
+        </div>
 
-  return (
-    <motion.header style={{ y }} className="fixed top-4 left-0 right-0 z-40 pointer-events-none">
-      <motion.nav
-        style={{ backdropFilter: blur ? `blur(${(blur as any).get() || 0}px)` : undefined, backgroundColor: bgOpacity ? `rgba(255,255,255,${(bgOpacity as any).get?.() ?? 0})` : undefined }}
-        className="mx-auto max-w-6xl px-6 py-3 pointer-events-auto rounded-2xl shadow-sm flex items-center justify-between border border-transparent"
-      >
-        <div className="flex items-center gap-3">
-          <motion.div whileTap={{ scale: 0.92 }} className="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-pink-500 text-white font-bold">
-            K
-          </motion.div>
-          <div>
-            <div className="font-semibold">K — Labs</div>
-            <div className="text-xs opacity-60">Next.js experiments</div>
+        <div className="flex items-center justify-center">
+          <div className="w-[220px] h-[320px] bg-white/30 rounded-xl overflow-hidden p-4 flex items-center justify-center">
+            <img src={IMAGE_SRC} alt="portrait" className="object-contain w-full h-full" />
           </div>
         </div>
 
-        <div className="hidden md:flex items-center gap-6 text-sm opacity-80">
-          <a className="hover:underline" href="#features">Features</a>
-          <a className="hover:underline" href="#work">Work</a>
-          <a className="hover:underline" href="#contact">Contact</a>
-          <button className="py-2 px-3 rounded-lg bg-black text-white text-sm">Get Started</button>
+        <div className="flex flex-col justify-between">
+          <div className="text-sm text-slate-700">Social / Links
+            <ul className="mt-2 text-xs opacity-80">
+              <li>Twitter — @kaala</li>
+              <li>GitHub — /kaala</li>
+            </ul>
+          </div>
+
+          <div className="mt-4">
+            <button className="px-4 py-2 rounded-md bg-slate-900 text-white text-sm">Contact</button>
+          </div>
         </div>
-      </motion.nav>
-    </motion.header>
-  );
-};
-
-const Hero: React.FC = () => {
-  const ref = useRef<HTMLElement | null>(null);
-  const { scrollYProgress } = useScroll({ target: ref as any }); // framer types are finicky with generic targets
-  const y = useTransform(scrollYProgress, [0, 1], [0, -120]);
-
-  return (
-    <section ref={ref} className="relative min-h-[80vh] flex items-center">
-      <motion.div style={{ y }} className="absolute inset-0 -z-10 bg-[length:1600px] bg-center" aria-hidden>
-        <div className="absolute inset-0 bg-gradient-to-b from-indigo-700 via-purple-700 to-transparent opacity-80" />
-        <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="g1" x1="0" x2="1">
-              <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.18" />
-              <stop offset="100%" stopColor="#ec4899" stopOpacity="0.12" />
-            </linearGradient>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#g1)" />
-        </svg>
-      </motion.div>
-
-      <div className="w-full max-w-6xl mx-auto px-6 py-24">
-        <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="text-4xl md:text-6xl font-extrabold leading-tight text-white">
-          Build fast, smooth, and delightful web experiences.
-        </motion.h1>
-        <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mt-6 max-w-2xl text-lg text-white/90">
-          Production-ready patterns: scroll-driven motion, section reveals, parallax, and micro-interactions — all in one composable component.
-        </motion.p>
-
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="mt-8 flex gap-3">
-          <a href="#features" className="px-5 py-3 rounded-lg bg-white text-black font-medium">Explore features</a>
-          <a href="#work" className="px-5 py-3 rounded-lg border border-white/30 text-white">See work</a>
-        </motion.div>
-      </div>
-    </section>
-  );
-};
-
-type ScrollerItem = { tag: string; title: string; excerpt: string };
-
-interface HorizontalScrollerProps {
-  items?: ScrollerItem[];
-}
-
-const HorizontalScroller: React.FC<HorizontalScrollerProps> = ({ items = [] }) => {
-  return (
-    <div className="w-full overflow-x-auto scroll-snap-x py-8">
-      <div className="flex gap-6 px-6" style={{ width: 'max-content' }}>
-        {items.map((it, idx) => (
-          <motion.article key={idx} whileHover={{ scale: 1.03 }} className="min-w-[320px] md:min-w-[420px] p-6 rounded-2xl bg-white/5 border border-white/6 backdrop-blur-md scroll-snap-start">
-            <div className="text-sm uppercase opacity-60 tracking-wide">{it.tag}</div>
-            <h3 className="mt-2 font-semibold text-lg">{it.title}</h3>
-            <p className="mt-3 text-sm opacity-80">{it.excerpt}</p>
-          </motion.article>
-        ))}
       </div>
     </div>
   );
-};
+}
 
-export default function AnimatedLandingPage(): JSX.Element {
-  const sampleItems: ScrollerItem[] = [
-    { tag: 'Design', title: 'Pixel-perfect UI kits', excerpt: 'Reusable design tokens & component library for scale.' },
-    { tag: 'Performance', title: 'Load-fast architectures', excerpt: 'Practical patterns to cut TTFB & improve LCP.' },
-    { tag: 'Motion', title: 'Scroll-driven magic', excerpt: 'High-signal animations that guide the eye, not distract.' },
-  ];
+function ScrollyPanel({ index, title, copy, bg }: { index: number; title: string; copy: string; bg: string }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => setVisible(entry.isIntersecting));
+      },
+      { threshold: 0.55 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0f172a] to-[#071029] text-white antialiased">
-      <ScrollProgress />
-      <Navbar />
-
-      <main className="pt-24">
-        <Hero />
-
-        <SectionReveal>
-          <div id="features" className="grid md:grid-cols-3 gap-8 items-start">
-            <div>
-              <h2 className="text-2xl font-bold">Design principles</h2>
-              <p className="mt-3 text-sm opacity-80">Zero-clutter UI, motion that clarifies, and components that are composable and themeable.</p>
-            </div>
-
-            <div className="md:col-span-2 grid gap-6">
-              <div className="p-6 rounded-2xl bg-white/3 border border-white/6">
-                <h4 className="font-semibold">Reveal on scroll</h4>
-                <p className="text-sm mt-2 opacity-80">Each section uses IntersectionObserver to trigger a single, smooth entrance animation.</p>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-white/3 border border-white/6">
-                <h4 className="font-semibold">Parallax layers</h4>
-                <p className="text-sm mt-2 opacity-80">Background layers subtly translate with scroll to create depth without performance penalty.</p>
-              </div>
-            </div>
+    <section ref={ref} className="min-h-screen flex items-center relative">
+      <div className="absolute inset-0 -z-10 bg-cover bg-center" style={{ backgroundImage: `url(${bg})`, filter: 'contrast(0.9) saturate(0.9)' }} />
+      <div className="container mx-auto px-6 py-24">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          <div className="sticky top-28">
+            <h2 className={`text-4xl font-bold mb-4 ${visible ? 'opacity-100 translate-y-0' : 'opacity-40 translate-y-6'} transition-all duration-600`}>{title}</h2>
+            <p className={`text-lg text-slate-800 ${visible ? 'opacity-100' : 'opacity-60'} transition-opacity duration-600`}>{copy}</p>
           </div>
-        </SectionReveal>
 
-        <SectionReveal>
-          <div className="max-w-6xl mx-auto px-6">
-            <h3 className="text-2xl font-bold mb-6">Horizontal showcase</h3>
-            <HorizontalScroller items={sampleItems} />
-          </div>
-        </SectionReveal>
-
-        <SectionReveal>
-          <div id="work" className="max-w-4xl mx-auto px-6 text-center">
-            <h3 className="text-2xl font-bold">Selected work</h3>
-            <p className="mt-4 text-sm opacity-80">Examples of production-grade animations and micro-interactions. Each piece tuned to reduce cognitive load while increasing perceived speed.</p>
-          </div>
-        </SectionReveal>
-
-        <div id="contact" className="py-20">
-          <div className="max-w-3xl mx-auto px-6 text-center">
-            <h4 className="text-xl font-bold">Want this wired into your Next.js app?</h4>
-            <p className="mt-3 text-sm opacity-80">I can break this into small, testable components, connect to your theme tokens, and add SSR-friendly optimisations.</p>
-            <div className="mt-6 flex justify-center gap-3">
-              <button className="px-5 py-3 rounded-lg bg-white text-black">Ship it</button>
-              <button className="px-5 py-3 rounded-lg border border-white/20">Discuss scope</button>
+          <div>
+            <div className="space-y-6">
+              <div className={`p-6 rounded-xl bg-white/80 shadow ${visible ? 'scale-100' : 'scale-97'} transition-transform duration-600`}>Card A — supporting detail</div>
+              <div className={`p-6 rounded-xl bg-white/80 shadow ${visible ? 'scale-100' : 'scale-97'} transition-transform duration-700`}>Card B — supporting detail</div>
+              <div className={`p-6 rounded-xl bg-white/80 shadow ${visible ? 'scale-100' : 'scale-97'} transition-transform duration-800`}>Card C — supporting detail</div>
             </div>
           </div>
         </div>
+      </div>
+    </section>
+  );
+}
+
+export default function KaalaScrollyDemo() {
+  const marqueeItems = ['Design', 'Engineering', 'Performance', 'Scrollytelling', 'Parallax', 'Motion'];
+  const panels = [
+    { title: 'Origin', copy: 'Where it all began — a small studio, big ideas, and endless iteration.', bg: 'https://images.unsplash.com/photo-1503264116251-35a269479413?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.0.3&s=aaa' },
+    { title: 'Build', copy: 'Fast feedback loops, instrumentation, and product-led growth mindset.', bg: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.0.3&s=bbb' },
+    { title: 'Scale', copy: 'Automate, delegate, and institutionalize the flywheel.', bg: 'https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.0.3&s=ccc' },
+    { title: 'Future', copy: 'Speculative, bold, and grounded in first principles.', bg: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.0.3&s=ddd' },
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white text-slate-900">
+      <header className="py-10">
+        <div className="container mx-auto px-6 flex items-center justify-between">
+          <div className="text-xl font-bold">Kaala — Demo</div>
+          <nav className="space-x-4 text-sm opacity-80 hidden md:inline-flex">
+            <a href="#" className="hover:underline">Work</a>
+            <a href="#" className="hover:underline">About</a>
+            <a href="#" className="hover:underline">Contact</a>
+          </nav>
+        </div>
+      </header>
+
+      <main>
+        <section className="pt-6 pb-12">
+          <KaalaProfileComponent />
+        </section>
+
+        <div className="w-full border-t" />
+
+        <div className="py-6">
+          <div className="container mx-auto px-6">
+            <Marquee items={marqueeItems} duration={30} />
+          </div>
+        </div>
+
+        {/* Scrollytelling panels */}
+        {panels.map((p, i) => (
+          <ScrollyPanel key={i} index={i} title={p.title} copy={p.copy} bg={p.bg} />
+        ))}
+
+        <section className="min-h-[40vh] flex items-center justify-center">
+          <div className="text-center">
+            <h3 className="text-3xl font-bold">Thanks — next steps</h3>
+            <p className="mt-3 text-slate-700">Swap images, adjust copy, or tell me where you want the scrollytelling to pin/animate and I’ll tighten the motion curve and timing.</p>
+          </div>
+        </section>
       </main>
 
-      <footer className="py-8 text-center text-sm opacity-70">© {new Date().getFullYear()} K — Labs</footer>
+      <footer className="py-8">
+        <div className="container mx-auto px-6 text-center text-xs opacity-70">© Kaala Demo — generated boilerplate</div>
+      </footer>
+
+      <style jsx>{`
+        .container { max-width: 1100px; }
+        @media (min-width: 768px) {
+          .top-28 { top: 7rem; }
+        }
+        .scale-97 { transform: scale(.97); }
+      `}</style>
     </div>
   );
 }
