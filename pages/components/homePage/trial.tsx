@@ -189,7 +189,6 @@ export default function KaalaProfileComponent() {
         animate={isMounted ? "show" : "hidden"}
       >
         {words.map((w, idx) => {
-          // keep the separator (space) after each word by rendering a trailing space via margin
           return (
             <motion.span
               aria-hidden
@@ -239,24 +238,18 @@ export default function KaalaProfileComponent() {
         <main className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6 pt-12 pr-6 pl-6 halo">
           {/* LEFT — Meta & Bio */}
           <section className="flex flex-col items-start md:items-center justify-center p-6 md:pl-10 md:pr-6 bg-white/30 h-4/5 backdrop-blur-sm ">
+            <motion.h1
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+              className="text-4xl md:text-4xl font-extrabold leading-tight text-black"
+            >
+              {title}
+            </motion.h1>
             <header className="w-full">
-              {/* Title — letter-by-letter */}
-              {renderTitle()}
-
-              {/* Subtitle — per-word gentle entrance */}
               {renderSubtitle()}
             </header>
 
-            {/* Tech chips — staggered fade+scale */}
-            {prefersReducedMotion ? (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {tech.map((t) => (
-                  <span key={t} className="text-xs px-3 py-1 rounded-full bg-white/70 backdrop-blur-sm ring-1 ring-white/20 inline-flex">
-                    {t}
-                  </span>
-                ))}
-              </div>
-            ) : (
               <motion.div
                 className="mt-4 flex flex-wrap gap-2"
                 variants={chipsContainer}
@@ -273,24 +266,12 @@ export default function KaalaProfileComponent() {
                   </motion.span>
                 ))}
               </motion.div>
-            )}
 
             {/* Blurb — slide in from left */}
-            {prefersReducedMotion ? (
-              <p className="mt-4 text-sm text-slate-700">
-                I ship delightful developer tools and quirky product features — thoughtful, testable, and fun. Here are a few project highlights.
-              </p>
-            ) : (
-              <motion.p
-                className="mt-4 text-sm text-slate-700"
-                variants={blurbVariant}
-                initial="hidden"
-                animate={isMounted ? "show" : "hidden"}
-                aria-live="polite"
-              >
-                I ship delightful developer tools and quirky product features — thoughtful, testable, and fun. Here are a few project highlights.
-              </motion.p>
-            )}
+            
+            <motion.p className="mt-4 text-sm text-slate-700 fade-in-15">
+              I ship delightful developer tools and quirky product features — thoughtful, testable, and fun. Here are a few project highlights.
+            </motion.p>
           </section>
 
           {/* CENTER — Portrait */}
