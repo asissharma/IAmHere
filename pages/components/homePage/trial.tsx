@@ -1,323 +1,338 @@
-// app/components/KaalaProfileComponent.tsx
-'use client'
+import React, { useEffect, useRef, useState } from 'react';
+import Marquee, { marqueeItems } from './marquee';
 
-import Image from "next/image";
-import React, { useEffect, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
-import Marquee, { marqueeItems } from "./marquee";
+export default function ScrollAnimation() {
+  // TS: Explicitly type refs for DOM elements
+  const imgWrapRef = useRef<HTMLDivElement>(null);
+  const sec2Ref = useRef<HTMLDivElement>(null);
+  
+  // TS: Store request ID for animation frame (number)
+  const requestRef = useRef<number | null>(null);
+  
+  const [showHalo, setShowHalo] = useState<boolean>(false);
 
-const IMAGE_SRC = "/profile.png";
-const BACKGROUND_SRC = "/positive_mountains.png";
-
-export default function KaalaProfileComponent() {
-  const bgRef = useRef<HTMLDivElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [isMounted, setIsMounted] = useState(false);
-
-  // respect user reduced-motion preference (framer hook)
-  const prefersReducedMotion = useReducedMotion();
+  // --- CYBER TYPEWRITER LOGIC ---
+  const [typedLines, setTypedLines] = useState<string[]>([]);
 
   useEffect(() => {
-    // mount flag used to avoid running enter animation during SSR/hydration
-    const raf = requestAnimationFrame(() => setIsMounted(true));
-    return () => cancelAnimationFrame(raf);
+const textLines: string[] = [
+      "> INITIALIZING: BACKEND_ARCHITECT_PROTOCOL...",
+      "> ROLE: ARCHITECTING_SCALABILITY",
+      "> MISSION: TRANSFORM_COMPLEXITY -> SIMPLICITY",
+      "> BUILDING: LOW_LATENCY_SYSTEMS // ROBUST_APIS",
+      "> STANDARD: CLEAN_CODE // HIGH_PERFORMANCE",
+      "> STATUS: READY_TO_DELIVER_IMPACT_ CONNECTING...",
+      "> DEPLOYING: SCALABLE_SOLUTIONS_AT_VOLUME",
+      "> SYSTEM_CHECK: 100% // OPTIMIZED_FOR_SCALE",
+      "> FOCUS: PERFORMANCE // LATENCY // SIMPLICITY",
+      "> QUALITY: ROBUST // CLEAN // MAINTAINABLE",
+      "> RESULT: HIGH_IMPACT_DELIVERY"
+    ];
+
+    let lineIndex = 0;
+    let charIndex = 0;
+    
+    // Initialize array with empty strings matching line count
+    const currentTextArray: string[] = new Array(textLines.length).fill(""); 
+    
+    let isMounted = true;
+    let typeTimeout: ReturnType<typeof setTimeout>;
+
+    const typeChar = () => {
+      if (!isMounted) return;
+
+      if (lineIndex < textLines.length) {
+        const currentLine = textLines[lineIndex];
+        
+        if (charIndex < currentLine.length) {
+          // Append next character
+          currentTextArray[lineIndex] = currentLine.substring(0, charIndex + 1);
+          setTypedLines([...currentTextArray]);
+          charIndex++;
+          // Randomize typing speed for "human hacker" feel
+          typeTimeout = setTimeout(typeChar, Math.random() * 30 + 30); 
+        } else {
+          // Line complete, pause before next line
+          lineIndex++;
+          charIndex = 0;
+          typeTimeout = setTimeout(typeChar, 200); 
+        }
+      }
+    };
+
+    // Initial delay before typing starts
+    const startTimeout = setTimeout(typeChar, 500);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(startTimeout);
+      clearTimeout(typeTimeout);
+    };
+  }, []);
+  // --- END TYPEWRITER ---
+
+  useEffect(() => {
+    const update = () => {
+      if (!imgWrapRef.current || !sec2Ref.current) return;
+
+      const scrollY = window.scrollY;
+      const vh = window.innerHeight;
+      const vw = window.innerWidth;
+      
+      const sec2Top = sec2Ref.current.offsetTop;
+      const sec2Height = sec2Ref.current.offsetHeight;
+      const sec2Center = sec2Top + sec2Height / 2;
+      
+      const startScroll = 0;
+      const endScroll = sec2Center - vh / 2;
+      const totalDistance = endScroll - startScroll;
+      
+      let f = (scrollY - startScroll) / totalDistance;
+      
+      // Clamp f
+      if (f < 0) f = 0;
+      if (f > 1) f = 1;
+
+      // Responsive movement calculation
+      const maxMoveX = vw < 768 ? -vw * 0.1 : -400; 
+      const moveX = f * maxMoveX;
+      
+      const triggerPoint = endScroll;
+
+      if (scrollY < triggerPoint) {
+        // Fixed phase
+        imgWrapRef.current.style.position = 'fixed';
+        imgWrapRef.current.style.top = '50%';
+        imgWrapRef.current.style.left = '50%';
+        imgWrapRef.current.style.transform = 
+          `translate(-50%, -50%) translate3d(${moveX}px, 0, 0) scale(1)`; 
+      } else {
+        // Absolute phase (locked)
+        imgWrapRef.current.style.position = 'absolute';
+        imgWrapRef.current.style.top = `${sec2Center}px`;
+        imgWrapRef.current.style.left = '50%';
+        imgWrapRef.current.style.transform = 
+          `translate(-50%, -50%) translate3d(${maxMoveX}px, 0, 0) scale(1)`;
+      }
+
+      // Toggle Halo state
+      const shouldShowHalo = f >= 0.95;
+      setShowHalo(prev => prev === shouldShowHalo ? prev : shouldShowHalo);
+    };
+
+    const onScroll = () => {
+      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+      requestRef.current = requestAnimationFrame(update);
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    
+    // Initial update
+    update();
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+    };
   }, []);
 
-  // optional parallax — disabled for reduced motion
-  useEffect(() => {
-    if (prefersReducedMotion) return;
-    if (!bgRef.current || !containerRef.current) return;
-    let raf = 0;
-    let lastX = 0;
-    let lastY = 0;
-
-    function onPointer(e: PointerEvent) {
-      const rect = containerRef.current!.getBoundingClientRect();
-      lastX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      lastY = ((e.clientY - rect.top) / rect.height) * 2 - 1;
-      schedule();
-    }
-    function onScroll() { schedule(); }
-    function schedule() {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        const tx = lastX * 10;
-        const ty = lastY * 6 + (window.scrollY * 0.01);
-        if (bgRef.current) bgRef.current.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(1.02)`;
-      });
-    }
-
-    window.addEventListener("pointermove", onPointer, { passive: true });
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("pointermove", onPointer);
-      window.removeEventListener("scroll", onScroll);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, [prefersReducedMotion]);
-
-  const title = "Kaala Sharma";
-  const subtitle = "Software Engineer · Published by Us";
-
-  const tech = [
-    "React",
-    "TypeScript",
-    "Next.js",
-    "Node",
-    "Tailwind",
-    "WebGL",
-    "GraphQL",
+  const haloImages: string[] = [
+    'https://randomuser.me/api/portraits/women/1.jpg',
+    'https://randomuser.me/api/portraits/men/2.jpg',
+    'https://randomuser.me/api/portraits/women/3.jpg',
+    'https://randomuser.me/api/portraits/men/4.jpg',
+    'https://randomuser.me/api/portraits/women/5.jpg',
+    'https://randomuser.me/api/portraits/men/6.jpg',
+    'https://randomuser.me/api/portraits/women/7.jpg',
+    'https://randomuser.me/api/portraits/men/8.jpg',
+    'https://randomuser.me/api/portraits/women/9.jpg',
+    'https://randomuser.me/api/portraits/men/10.jpg',
+    'https://randomuser.me/api/portraits/women/11.jpg',
+    'https://randomuser.me/api/portraits/men/12.jpg',
   ];
 
-  //
-  // Framer motion variants
-  //
-  const titleContainer = {
-    hidden: {},
-    show: {
-      transition: {
-        staggerChildren: 0.045,
-        delayChildren: 0.04,
-      },
-    },
-  } as const;
-
-  const titleLetter = {
-    hidden: { opacity: 0, y: -28, scale: 0.78 },
-    show: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: { type: "spring", stiffness: 760, damping: 32, mass: 0.12 },
-    },
-  } as const;
-
-  const subtitleContainer = {
-    hidden: {},
-    show: {
-      transition: {
-        staggerChildren: 0.09,
-        delayChildren: 0.28, // start after title begins
-      },
-    },
-  } as const;
-
-  const subtitleWord = {
-    hidden: { opacity: 0, y: -18, scale: 0.92 },
-    show: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: { duration: 0.42, ease: [0.2, 0.9, 0.3, 1] },
-    },
-  } as const;
-
-  const chipsContainer = {
-    hidden: {},
-    show: {
-      transition: { staggerChildren: 0.08, delayChildren: 0.22 },
-    },
-  } as const;
-
-  const chipItem = {
-    hidden: { opacity: 0, scale: 0.88, y: 6 },
-    show: {
-      opacity: 1,
-      scale: 1,
-      y: 0,
-      transition: { type: "spring", stiffness: 520, damping: 30 },
-    },
-  } as const;
-
-  const blurbVariant = {
-    hidden: { opacity: 0, x: -28 },
-    show: { opacity: 1, x: 0, transition: { duration: 0.56, ease: [0.2, 0.9, 0.3, 1] } },
-  } as const;
-
-  // helpers
-  const renderTitle = () => {
-    if (prefersReducedMotion) {
-      return <h1 className="text-4xl md:text-4xl font-extrabold leading-tight text-black">{title}</h1>;
-    }
-
-    // render each character; skip animating plain spaces (render a small spacer)
-    return (
-      <motion.h1
-        aria-label={title}
-        className="text-4xl md:text-4xl font-extrabold leading-tight text-black"
-        variants={titleContainer}
-        initial="hidden"
-        animate={isMounted ? "show" : "hidden"}
-      >
-        {Array.from(title).map((chr, idx) => {
-          if (chr === " ") {
-            // small non-animated spacer to preserve word spacing
-            return (
-              <span key={`sp-${idx}`} aria-hidden style={{ display: "inline-block", width: "0.38rem" }}>
-                &nbsp;
-              </span>
-            );
-          }
-          return (
-            <motion.span
-              aria-hidden
-              key={`t-${idx}-${chr}`}
-              className="inline-block"
-              variants={titleLetter}
-            >
-              {chr}
-            </motion.span>
-          );
-        })}
-      </motion.h1>
-    );
-  };
-
-  const renderSubtitle = () => {
-    if (prefersReducedMotion) {
-      return <p className="mt-1 text-sm text-slate-600 leading-snug">{subtitle}</p>;
-    }
-
-    const words = subtitle.split(" ");
-    return (
-      <motion.p
-        className="mt-1 text-sm text-slate-600 leading-snug flex flex-wrap"
-        aria-label={subtitle}
-        variants={subtitleContainer}
-        initial="hidden"
-        animate={isMounted ? "show" : "hidden"}
-      >
-        {words.map((w, idx) => {
-          return (
-            <motion.span
-              aria-hidden
-              key={`s-${idx}-${w}`}
-              className="inline-block mr-2"
-              variants={subtitleWord}
-            >
-              {w}
-            </motion.span>
-          );
-        })}
-      </motion.p>
-    );
-  };
-
   return (
-    <div
-      ref={containerRef}
-      className={`flex flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-slate-50 to-white text-slate-900`}
-    >
-      {/* First section */}
-      <div className="relative isolate w-full">
-        <div
-          ref={bgRef}
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -z-20"
-          style={{ transition: "transform 350ms cubic-bezier(.2,.9,.3,1)" }}
-        >
-          <Image
-            src={BACKGROUND_SRC}
-            alt=""
-            fill
-            priority={false}
-            sizes="(max-width: 1024px) 100vw, 1200px"
-            style={{ objectFit: "cover", objectPosition: "center" }}
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(180deg, rgba(8,10,15,0.06) 0%, rgba(8,10,15,0.12) 30%, rgba(8,10,15,0.34) 100%)",
-              mixBlendMode: "multiply",
-            }}
-          />
-          <div className="absolute inset-0 opacity-40 animate-shimmer pointer-events-none" />
-        </div>
-        <main className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6 pt-12 pr-6 pl-6 halo">
-          {/* LEFT — Meta & Bio */}
-          <section className="flex flex-col items-start md:items-center justify-center p-6 md:pl-10 md:pr-6 bg-white/30 h-4/5 backdrop-blur-sm ">
-            <motion.h1
-              initial={{ y: 40, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              className="text-4xl md:text-4xl font-extrabold leading-tight text-black"
-            >
-              {title}
-            </motion.h1>
-            <header className="w-full">
-              {renderSubtitle()}
-            </header>
+    <>
+      <style jsx global>{`
+        body { margin: 0; font-family: sans-serif; background: #fff; overflow-x: hidden; }
+        
+        .hero, .sec2, .sec3 {
+          min-height: 100vh;
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+        }
+        
+        .hero { background: black; color: white; }
+        .sec2 { background: white; color: black; }
+        .sec3 { background: #f2f2f2; }
 
-              <motion.div
-                className="mt-4 flex flex-wrap gap-2"
-                variants={chipsContainer}
-                initial="hidden"
-                animate={isMounted ? "show" : "hidden"}
-              >
-                {tech.map((t) => (
-                  <motion.span
-                    key={t}
-                    className="text-xs px-3 py-1 rounded-full bg-white/70 backdrop-blur-sm ring-1 ring-white/20 inline-flex"
-                    variants={chipItem}
-                  >
-                    {t}
-                  </motion.span>
-                ))}
-              </motion.div>
+        .imgWrap {
+          position: fixed;
+          left: 50vw;
+          top: 50vh;
+          transform: translate(-50%, -50%) scale(0.5);
+          transition: transform 0.1s linear;
+          pointer-events: none;
+          z-index: 50;
+          will-change: transform;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
 
-            {/* Blurb — slide in from left */}
-            
-            <motion.p className="mt-4 text-sm text-slate-700 fade-in-15">
-              I ship delightful developer tools and quirky product features — thoughtful, testable, and fun. Here are a few project highlights.
-            </motion.p>
-          </section>
+        .founder {
+          width: 80%;
+          height: 80%;
+          object-fit: cover;
+          position: relative;
+        }
 
-          {/* CENTER — Portrait */}
-          <section className="flex items-center justify-center">
-            <figure
-              className="w-[320px] sm:w-[420px] bg-white/5 ring-1 ring-white/10 p-4 flex flex-col items-center relative"
-              role="img"
-              aria-label={`Kaala Sharma portrait`}
-            >
-              <div className="relative w-[220px] h-[420px] sm:w-[260px] sm:h-[  500px]">
-                <Image
-                  src={IMAGE_SRC}
-                  alt={`Kaala Sharma portrait`}
-                  fill
-                  sizes="(max-width: 640px) 60vw, 320px"
-                  style={{ objectFit: "contain", objectPosition: "center" }}
-                  priority
-                />
-                <div className="absolute -inset-2 rounded-full blur-3xl opacity-30" aria-hidden="true" />
-              </div>
-            </figure>
-          </section>
+        /* --- CYBER OVERLAY CSS --- */
+        .cyber-overlay {
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%); 
+          width: 600px;
+          max-width: 90vw;
+          height: auto;
+          z-index: 60; 
+          pointer-events: none;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          padding-top: 320px; /* Pushed down to clear the face area */
+        }
 
-          {/* RIGHT — placeholder */}
-          <section className="p-6 md:pr-10 md:pl-6 flex flex-col justify-between">
-            {/* right column left blank for mascot / social */}
-          </section>
-        </main>
-      </div>
+        .terminal-text {
+          font-family: 'Courier New', Courier, monospace;
+          font-size: 14px;
+          line-height: 1.6;
+          color: rgba(255, 255, 255, 0.9);
+          text-shadow: 0 0 5px rgba(0, 255, 0, 0.2); /* Slight green glow hints */
+          font-weight: 600;
+          letter-spacing: 0.5px;
+          text-align: left;
+        }
 
-      {/* Marquee */}
-      <div className="w-full m-2">
-        <Marquee items={marqueeItems} duration={50} gap="1rem"/>
-      </div>
-      
-      {/* Second section */}
-      <div className="relative isolate min-h-44 w-full bg-[#b1b2b3]" >
+        @media (min-width: 768px) {
+           .terminal-text { font-size: 16px; }
+        }
 
-      </div>
+        /* Cursor Blink */
+        .cursor {
+          display: inline-block;
+          width: 8px;
+          height: 16px;
+          background-color: white;
+          animation: blink 1s step-end infinite;
+          vertical-align: sub;
+          margin-left: 5px;
+        }
 
-      {/* Minor scoped styles */}
-      <style jsx>{`
-        @media (max-width: 420px) {
-          h1 { font-size: 1.4rem; }
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+
+        .halo {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          z-index: 5;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .haloItem {
+          position: absolute;
+          width: 60px;
+          height: 60px;
+          border-radius: 12px;
+          overflow: hidden;
+          opacity: 0;
+          transform: rotate(var(--angle)) translate(0px) rotate(calc(var(--angle) * -1)) scale(0);
+          transition: 
+            opacity 0.6s cubic-bezier(.12,.74,.36,1), 
+            transform 0.6s cubic-bezier(.12,.74,.36,1);
+        }
+
+        .haloItem img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Dynamic CSS generation for halo items */
+        ${haloImages.map((_, i) => `
+          .haloItem:nth-child(${i + 1}) {
+            --angle: ${i * 30}deg;
+            --dist: 210px;
+            --scale: 1.0;
+          }
+        `).join('')}
+          
+        .halo-on .haloItem {
+          opacity: 1;
+          transform: rotate(var(--angle)) translate(var(--dist)) rotate(calc(var(--angle) * -1)) scale(var(--scale));
+        }
+        
+        ${haloImages.map((_, i) => `
+          .halo-on .haloItem:nth-child(${i + 1}) { transition-delay: ${i * 0.05}s; }
+        `).join('')}
+        
+        @media (max-width: 768px) {
+           ${haloImages.map((_, i) => `
+             .haloItem:nth-child(${i + 1}) {
+               --dist: 130px; 
+             }
+           `).join('')}
         }
       `}</style>
-    </div>
+
+      <div className="flex flex-col items-center justify-center overflow-hidden bg-slate-50 text-slate-900">
+        <div className="hero">
+          <div style={{position: 'absolute', inset: 0, zIndex: 0}}>
+             {/* Background */}
+             <img 
+               src="/positive_mountains.png" 
+               alt="Hero" 
+               style={{width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5}} 
+             />
+          </div>
+
+          {/* TECH TERMINAL OVERLAY */}
+          <div className="cyber-overlay">
+            {typedLines.map((line, index) => (
+              <div key={index} className="terminal-text">
+                {line}
+                {index === typedLines.length - 1 && index < 4 && <span className="cursor"></span>}
+              </div>
+            ))}
+          </div>
+
+        </div>
+        
+        <div className="sec2" ref={sec2Ref}>
+        </div>
+        <div className="w-full m-2">
+          <Marquee items={marqueeItems} duration={50} gap="1rem"/>
+        </div>
+        <div className="sec3"><h1>SECTION 3</h1></div>
+        <div className="sec4"><h1>SECTION 4</h1></div>
+
+        <div className="imgWrap" ref={imgWrapRef}>
+          <img className="founder" src="/profile.png" alt="Founder" />
+          <div className={`halo ${showHalo ? 'halo-on' : ''}`}>
+            {haloImages.map((src, index) => (
+              <div key={index} className="haloItem">
+                <img src={src} alt={`Member ${index}`} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
