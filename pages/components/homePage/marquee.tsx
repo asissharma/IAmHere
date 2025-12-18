@@ -97,7 +97,7 @@ const Marquee: React.FC<MarqueeProps> = ({
       <div className={`w-full ${className}`}>
         <div className="py-2 overflow-x-auto">
           <div className="flex gap-4 whitespace-nowrap">
-            {items.map((it, idx) => (
+            {items?.map((it, idx) => (
               <div key={idx} className="font-mono text-sm inline-flex items-center gap-2">
                 {it}
               </div>
@@ -125,7 +125,7 @@ const Marquee: React.FC<MarqueeProps> = ({
           aria-hidden={false}
         >
           <ul className="marquee-list" role="list">
-            {items.map((it, idx) => (
+            {items?.map((it, idx) => (
               <li key={`m1-${idx}`} className="marquee-item font-mono whitespace-nowrap" style={{ marginRight: gap }}>
                 {it}
               </li>
@@ -134,7 +134,7 @@ const Marquee: React.FC<MarqueeProps> = ({
 
           {/* duplicate for seamless loop */}
           <ul className="marquee-list" aria-hidden="true">
-            {items.map((it, idx) => (
+            {items?.map((it, idx) => (
               <li key={`m2-${idx}`} className="marquee-item font-mono whitespace-nowrap" style={{ marginRight: gap }}>
                 {it}
               </li>

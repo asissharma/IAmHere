@@ -18,7 +18,6 @@ import TextEditor from "./components/TextEditor";
 import Dashboard from "./components/Dashboard";
 import DSAPlayground from "./components/DsaPrac";
 import Trial from "./components/homePage/trial";
-import Trialcomp from "./components/homePage/trialcomp";
 // import DumpYourThought from "./components/DumpYourThought";
 import LearningPathsAndGoals from "./components/LearningPathsAndGoals";
 import Notebook from "./components/notebook";
@@ -32,7 +31,6 @@ const menuOrder: SectionKeys[] = [
   "upload",
   "editor",
   "trial",
-  "trialcomp",
   "notebook",
 ];
 
@@ -62,8 +60,7 @@ const sections = {
   // learning: <Learning />,
   upload: <FileUpload />,
   editor: <TextEditor />,
-  trial: <Trial />,
-  trialcomp: <Trialcomp />,
+  trial: <Trial />
   // books: <Books />,
 };
 
@@ -129,7 +126,6 @@ const Home: NextPage = () => {
     if (key === "editor") return <FiCode className="w-5 h-5" />;
     if (key === "notebook") return <FiGithub className="w-5 h-5" />;
     if (key === "trial") return <FiFastForward className="w-5 h-5" />;
-    if (key === "trialcomp") return <FiFastForward className="w-5 h-5" />;
     return <FiFileText className="w-5 h-5" />;
   };
 
