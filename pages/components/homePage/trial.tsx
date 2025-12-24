@@ -138,19 +138,32 @@ const textLines: string[] = [
     };
   }, []);
 
+// TS: Tech Stack Icons (Backend/Architecture Focus)
   const haloImages: string[] = [
-    'https://randomuser.me/api/portraits/women/1.jpg',
-    'https://randomuser.me/api/portraits/men/2.jpg',
-    'https://randomuser.me/api/portraits/women/3.jpg',
-    'https://randomuser.me/api/portraits/men/4.jpg',
-    'https://randomuser.me/api/portraits/women/5.jpg',
-    'https://randomuser.me/api/portraits/men/6.jpg',
-    'https://randomuser.me/api/portraits/women/7.jpg',
-    'https://randomuser.me/api/portraits/men/8.jpg',
-    'https://randomuser.me/api/portraits/women/9.jpg',
-    'https://randomuser.me/api/portraits/men/10.jpg',
-    'https://randomuser.me/api/portraits/women/11.jpg',
-    'https://randomuser.me/api/portraits/men/12.jpg',
+    // 1. The Core
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg',
+    // 2. The Data
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg',
+    // 3. The Container
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg',
+    // 4. The Cache
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redis/redis-original.svg',
+    // 5. The Frontend
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg',
+    // 6. The Streaming (Kafka - fits your System Design interest)
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/apachekafka/apachekafka-original.svg',
+    // 7. The Safety
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg',
+    // 8. The Environment
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/linux/linux-original.svg',
+    // 9. Version Control
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg',
+    // 10. Performance (Go is great for backend concurrency)
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original-wordmark.svg',
+    // 11. Orchestration
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kubernetes/kubernetes-plain.svg',
+    // 12. The Gateway
+    'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nginx/nginx-original.svg',
   ];
 
   return (
