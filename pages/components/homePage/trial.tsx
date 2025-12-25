@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Marquee, { marqueeItems } from './marquee';
+import TheProjectParallax from './theProjectParallax';
 
 export default function ScrollAnimation() {
   // TS: Explicitly type refs for DOM elements
@@ -332,8 +333,6 @@ const textLines: string[] = [
         <div className="w-full m-2">
           <Marquee items={marqueeItems} duration={50} gap="1rem"/>
         </div>
-        <div className="sec3"><h1>SECTION 3</h1></div>
-        <div className="sec4"><h1>SECTION 4</h1></div>
 
         <div className="imgWrap" ref={imgWrapRef}>
           <img className="founder" src="/profile.png" alt="Founder" />
@@ -346,6 +345,35 @@ const textLines: string[] = [
           </div>
         </div>
       </div>
+      <div className="w-full sec3">
+          <TheProjectParallax/>
+        </div>
+      <footer className="w-full bg-black text-white py-12 px-4">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+          <div>
+            <h3 className="text-2xl font-bold mb-4">Backend Architect</h3>
+            <p className="text-slate-400">Building scalable systems that power the digital world.</p>
+          </div>
+          <div>
+            <h4 className="text-lg font-bold mb-4">Quick Links</h4>
+            <ul className="space-y-2 text-slate-400">
+              <li><a href="#" className="hover:text-white transition-colors">Projects</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Skills</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-lg font-bold mb-4">Tech Stack</h4>
+            <p className="text-slate-400">Python • Go • PostgreSQL<br/>Docker • Kubernetes • Redis<br/>Kafka • React • TypeScript</p>
+          </div>
+        </div>
+        <div className="border-t border-slate-800 pt-8 text-center text-slate-500">
+          <p>© 2025 Backend Architect. Engineered with precision.</p>
+        </div>
+      </div>
+    </footer>
     </>
   );
 }
