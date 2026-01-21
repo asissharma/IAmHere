@@ -24,15 +24,7 @@ import Notebook from "./components/notebook";
 import Learning from "./components/learning";
 // import Books from "./components/books";
 
-const menuOrder: SectionKeys[] = [
-  "dashboard",
-  "playground",
-  "learningpathsandgoals",
-  "upload",
-  "editor",
-  "trial",
-  "notebook",
-];
+
 
 const containerVariants: Variants = {
   hidden: { opacity: 0, scale: 0.9, y: 12 },
@@ -51,22 +43,32 @@ const itemVariants: Variants = {
 };
 
 
-const sections = {
-  dashboard: <Dashboard />,
-  playground: <DSAPlayground />,
-  notebook: <Notebook />,
-  // dumpYourThought: <DumpYourThought />,
-  learningpathsandgoals: <LearningPathsAndGoals />,
-  // learning: <Learning />,
-  upload: <FileUpload />,
-  editor: <TextEditor />,
-  trial: <Trial />
-  // books: <Books />,
-};
-
-type SectionKeys = keyof typeof sections;
 
 const Home: NextPage = () => {
+  const menuOrder: SectionKeys[] = [
+    "dashboard",
+    "playground",
+    "learningpathsandgoals",
+    "upload",
+    "editor",
+    "trial",
+    "notebook",
+  ];
+  const sections = {
+    dashboard: <Dashboard />,
+    playground: <DSAPlayground />,
+    notebook: <Notebook />,
+    // dumpYourThought: <DumpYourThought />,
+    learningpathsandgoals: <LearningPathsAndGoals />,
+    // learning: <Learning />,
+    upload: <FileUpload />,
+    editor: <TextEditor />,
+    trial: <Trial onNavigate={(section) => setActiveSection(section as SectionKeys)} />,
+    // books: <Books />,
+  };
+
+  type SectionKeys = keyof typeof sections;
+
   const [activeSection, setActiveSection] = useState<SectionKeys>("trial");
   const [currentDate, setCurrentDate] = useState<string>("");
   const [darkMode, setDarkMode] = useState<boolean>(false);
@@ -137,44 +139,22 @@ const Home: NextPage = () => {
       transition={{ duration: 1.5 }}
     >
       {/* Top Navigation */}
-      <nav className="sticky top-0 z-20 bg-opacity-90 backdrop-blur-lg shadow-md rounded-xl">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold pl-5">Hello Sweetie</h1>
+      <nav className="sticky top-0 z-20 bg-opacity-90 backdrop-blur-lg shadow-md rounded-xl h-10">
+        <div className="flex justify-between items-center h-full px-4">
+          <h1 className="text-xl font-bold flex items-center justify-center pt-4">Hello Sweetie</h1>
+          
           <div>
             <PomodoroTimer />
           </div>
-          {/* <aside className="flex flex-row items-center">
-            {Object.keys(sections).map((key) => (
-              <button
-                key={key}
-                className={`flex items-center justify-center p-2 rounded-full text-lg transition-all duration-300 ${
-                  activeSection === key
-                    ? "bg-orange-600 text-white"
-                    : "bg-gray-700 text-gray-200 hover:bg-gray-600"
-                }`}
-                onClick={() => setActiveSection(key as SectionKeys)}
-                aria-label={`Navigate to ${key.charAt(0).toUpperCase() + key.slice(1)}`}
-              >
-                {key === "dashboard" && <FiFileText className="w-full h-full"/>}
-                {key === "playground" && <FiCode className="w-full h-full"/>}
-                {key === "learningpathsandgoals" && <FaIceCream className="w-full h-full"/>}
-                {key === "upload" && <FiUpload className="w-full h-full"/>}
-                {key === "editor" && <FiCode className="w-full h-full"/>}
-                {key === "books" && <FiBook className="w-full h-full"/>}
-                {key === "notebook" && <FiGithub className="w-full h-full"/>}
-                {key === "learning" && <FiGithub className="w-full h-full"/>}
-                {key === "trial" && <FiFastForward className="w-full h-full"/>}
-              </button>
-            ))}
-          </aside> */}
-          <div className="flex items-center">
+
+          <div className="flex items-center gap-2">
             <div className="flex items-center">
-              <span className="px-3 py-1 bg-orange-500 text-white rounded-full text-sm">
+              <span className="px-3 py-1 bg-orange-500 text-white rounded-full text-xs">
                 {currentDate}
               </span>
             </div>
             <button
-              className="p-2 rounded-full hover:bg-gray-700 focus:outline-none transition"
+              className="p-2 rounded-full hover:bg-gray-700 focus:outline-none transition flex items-center justify-center"
               onClick={toggleDarkMode}
               aria-label="Toggle Dark Mode"
             >

@@ -88,7 +88,7 @@ const NotebookPage: React.FC = () => {
           [node.nodeId]: true,
         }));
   
-        if (node.type === "folder") {
+        if (node.type === "folder" || node.type === "syllabus") {
           const descendants = await fetchDescendants(node);
           const updatedNodes = nodes.filter((n) => !descendants.some((d: any) => d.id === n.id));
           setNodes([...updatedNodes, ...descendants]);

@@ -56,11 +56,19 @@ const Sidebar: React.FC<{
               <div
                 className="flex items-center bg-white rounded-lg shadow-md p-2 mb-1 cursor-pointer hover:bg-primary hover:text-white transition"
                 onClick={() => {
-                  if (node.type === "folder") toggleCollapse(node.id);
+                  if (node.type === "folder" || node.type === "syllabus") {
+                    toggleCollapse(node.id)
+                  }
                   onSelectNode(node);
                 }}
               >
-                {node.type === "folder" ? (
+                {node.type === "syllabus" ? (
+                  <FaBook
+                    className={`text-primary mr-2 ${
+                      collapsed[node.id] ? "opacity-50" : ""
+                    }`}
+                  />
+                ) : node.type === "folder" ? (
                   <FaFolder
                     className={`text-primary mr-2 ${
                       collapsed[node.id] ? "opacity-50" : ""
@@ -93,7 +101,7 @@ const Sidebar: React.FC<{
                         className="absolute right-0 mt-2 bg-white shadow-lg rounded-lg p-2 z-50"
                         onClick={(e) => e.stopPropagation()} // Prevent menu click from triggering parent events
                       >
-                        {node.type === "folder" && (
+                        {(node.type === "folder" || node.type === "syllabus") && (
                           <>
                             <button
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200 rounded"
@@ -160,7 +168,7 @@ const Sidebar: React.FC<{
                   </div>
                 </div>
               </div>
-              {!collapsed[node.id] && node.children?.length
+              {collapsed[node.id] && node.children?.length
                 ? renderTree(node.children)
                 : null}
             </div>
@@ -224,7 +232,7 @@ const Sidebar: React.FC<{
         >
           <div
             className="bg-gray-800 p-2 rounded-full cursor-pointer hover:bg-gray-600 transition"
-            title="Add Folder"
+            title="Add Syllabus"
             onClick={() => onAddNode(null, "syllabus")}
           >
             <FaBook className="text-white text-lg" />

@@ -96,7 +96,6 @@ const CardStackScroll: React.FC = () => {
 
   return (
     <div className="w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
-      {/* Card Stack Container */}
       <div ref={containerRef} className="relative px-4 pb-screen">
         {cards.map((card, index) => (
           <div

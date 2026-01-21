@@ -1,76 +1,22 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Marquee, { marqueeItems } from './marquee';
 import TheProjectParallax from './theProjectParallax';
+import TerminalBlock from './terminalBlock';
+import ThoughtOfTheDayPedal from './thoughtOfTheDay';
 
-export default function ScrollAnimation() {
+interface TrialProps {
+  onNavigate: (section: string) => void;
+}
+
+export default function homePage({ onNavigate }: TrialProps) {
   // TS: Explicitly type refs for DOM elements
-  const imgWrapRef = useRef<HTMLDivElement>(null);
+  const imgWrapRef = useRef<HTMLDivElement>(null); 
   const sec2Ref = useRef<HTMLDivElement>(null);
   
   // TS: Store request ID for animation frame (number)
   const requestRef = useRef<number | null>(null);
   
   const [showHalo, setShowHalo] = useState<boolean>(false);
-
-  // --- CYBER TYPEWRITER LOGIC ---
-  const [typedLines, setTypedLines] = useState<string[]>([]);
-
-  useEffect(() => {
-const textLines: string[] = [
-      "> INITIALIZING: BACKEND_ARCHITECT_PROTOCOL...",
-      "> ROLE: ARCHITECTING_SCALABILITY",
-      "> MISSION: TRANSFORM_COMPLEXITY -> SIMPLICITY",
-      "> BUILDING: LOW_LATENCY_SYSTEMS // ROBUST_APIS",
-      "> STANDARD: CLEAN_CODE // HIGH_PERFORMANCE",
-      "> STATUS: READY_TO_DELIVER_IMPACT_ CONNECTING...",
-      "> DEPLOYING: SCALABLE_SOLUTIONS_AT_VOLUME",
-      "> SYSTEM_CHECK: 100% // OPTIMIZED_FOR_SCALE",
-      "> FOCUS: PERFORMANCE // LATENCY // SIMPLICITY",
-      "> QUALITY: ROBUST // CLEAN // MAINTAINABLE",
-      "> RESULT: HIGH_IMPACT_DELIVERY"
-    ];
-
-    let lineIndex = 0;
-    let charIndex = 0;
-    
-    // Initialize array with empty strings matching line count
-    const currentTextArray: string[] = new Array(textLines.length).fill(""); 
-    
-    let isMounted = true;
-    let typeTimeout: ReturnType<typeof setTimeout>;
-
-    const typeChar = () => {
-      if (!isMounted) return;
-
-      if (lineIndex < textLines.length) {
-        const currentLine = textLines[lineIndex];
-        
-        if (charIndex < currentLine.length) {
-          // Append next character
-          currentTextArray[lineIndex] = currentLine.substring(0, charIndex + 1);
-          setTypedLines([...currentTextArray]);
-          charIndex++;
-          // Randomize typing speed for "human hacker" feel
-          typeTimeout = setTimeout(typeChar, Math.random() * 30 + 30); 
-        } else {
-          // Line complete, pause before next line
-          lineIndex++;
-          charIndex = 0;
-          typeTimeout = setTimeout(typeChar, 200); 
-        }
-      }
-    };
-
-    // Initial delay before typing starts
-    const startTimeout = setTimeout(typeChar, 500);
-
-    return () => {
-      isMounted = false;
-      clearTimeout(startTimeout);
-      clearTimeout(typeTimeout);
-    };
-  }, []);
-  // --- END TYPEWRITER ---
 
   useEffect(() => {
     const update = () => {
@@ -170,115 +116,6 @@ const textLines: string[] = [
   return (
     <>
       <style jsx global>{`
-        body { margin: 0; font-family: sans-serif; background: #fff; overflow-x: hidden; }
-        
-        .hero, .sec2, .sec3 {
-          min-height: 100vh;
-          width: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-        }
-        
-        .hero { background: black; color: white; }
-        .sec2 { background: white; color: black; }
-        .sec3 { background: #f2f2f2; }
-
-        .imgWrap {
-          position: fixed;
-          left: 50vw;
-          top: 50vh;
-          transform: translate(-50%, -50%) scale(0.5);
-          transition: transform 0.1s linear;
-          pointer-events: none;
-          z-index: 50;
-          will-change: transform;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .founder {
-          width: 80%;
-          height: 80%;
-          object-fit: cover;
-          position: relative;
-        }
-
-        /* --- CYBER OVERLAY CSS --- */
-        .cyber-overlay {
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%); 
-          width: 600px;
-          max-width: 90vw;
-          height: auto;
-          z-index: 60; 
-          pointer-events: none;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          padding-top: 320px; /* Pushed down to clear the face area */
-        }
-
-        .terminal-text {
-          font-family: 'Courier New', Courier, monospace;
-          font-size: 14px;
-          line-height: 1.6;
-          color: rgba(255, 255, 255, 0.9);
-          text-shadow: 0 0 5px rgba(0, 255, 0, 0.2); /* Slight green glow hints */
-          font-weight: 600;
-          letter-spacing: 0.5px;
-          text-align: left;
-        }
-
-        @media (min-width: 768px) {
-           .terminal-text { font-size: 16px; }
-        }
-
-        /* Cursor Blink */
-        .cursor {
-          display: inline-block;
-          width: 8px;
-          height: 16px;
-          background-color: white;
-          animation: blink 1s step-end infinite;
-          vertical-align: sub;
-          margin-left: 5px;
-        }
-
-        @keyframes blink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
-        }
-
-        .halo {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          z-index: 5;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .haloItem {
-          position: absolute;
-          width: 60px;
-          height: 60px;
-          border-radius: 12px;
-          overflow: hidden;
-          opacity: 0;
-          transform: rotate(var(--angle)) translate(0px) rotate(calc(var(--angle) * -1)) scale(0);
-          transition: 
-            opacity 0.6s cubic-bezier(.12,.74,.36,1), 
-            transform 0.6s cubic-bezier(.12,.74,.36,1);
-        }
-
-        .haloItem img { width: 100%; height: 100%; object-fit: cover; }
-
-        /* Dynamic CSS generation for halo items */
         ${haloImages.map((_, i) => `
           .haloItem:nth-child(${i + 1}) {
             --angle: ${i * 30}deg;
@@ -287,11 +124,6 @@ const textLines: string[] = [
           }
         `).join('')}
           
-        .halo-on .haloItem {
-          opacity: 1;
-          transform: rotate(var(--angle)) translate(var(--dist)) rotate(calc(var(--angle) * -1)) scale(var(--scale));
-        }
-        
         ${haloImages.map((_, i) => `
           .halo-on .haloItem:nth-child(${i + 1}) { transition-delay: ${i * 0.05}s; }
         `).join('')}
@@ -316,16 +148,8 @@ const textLines: string[] = [
              />
           </div>
 
-          {/* TECH TERMINAL OVERLAY */}
-          <div className="cyber-overlay">
-            {typedLines.map((line, index) => (
-              <div key={index} className="terminal-text">
-                {line}
-                {index === typedLines.length - 1 && index < 4 && <span className="cursor"></span>}
-              </div>
-            ))}
-          </div>
-
+          <ThoughtOfTheDayPedal />
+          <TerminalBlock onNavigate={onNavigate} />
         </div>
         
         <div className="sec2" ref={sec2Ref}>
