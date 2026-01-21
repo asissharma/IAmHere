@@ -10,7 +10,7 @@ const TurntableBrick = () => {
     // - Added 'min-h-screen' to ensure full background coverage
     // - Changed 'justify-center' to 'justify-start' for Left Alignment
     // - Increased padding to 'p-20' for nice spacing from the left edge
-    <div className="flex items-center justify-start bg-neutral-800 p-20">
+    <div className="w-full relative flex items-center justify-start overflow-hidden p-10">
       
       {/* THE BRICK BLOCK */}
       <div 
