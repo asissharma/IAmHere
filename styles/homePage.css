@@ -1,157 +1,221 @@
-body { margin: 0; font-family: sans-serif; background: #fff; overflow-x: hidden; }
+/* homePage.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-.hero, .sec2, .sec3 {
-  min-height: 100vh;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
+:root {
+  --terminal-width-desktop: 450px;
+  --terminal-height-desktop: 320px;
+  --header-height: 80px;
 }
 
-.hero { background: black; color: white; }
-.sec2 { background: white; color: black; }
-.sec3 { background: #f2f2f2; }
+body {
+  margin: 0;
+  background: #fff;
+  overflow-x: hidden;
+  width: 100%;
+}
 
-.imgWrap {
+/* --- SECTIONS --- */
+.hero, .sec2, .sec3 {
+  width: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hero {
+  background: black;
+  color: white;
+  min-height: 100vh;
+  padding: var(--header-height) 2rem 4rem 2rem; 
+  justify-content: center; 
+}
+
+.sec2 { 
+  background: white; 
+  color: black; 
+  min-height: 100vh;
+  justify-content: center;
+}
+
+.sec3 { 
+  background: #0f172a; 
+  padding-bottom: 4rem;
+}
+
+/* --- DESKTOP ANIMATED PROFILE --- */
+/* FIX: Added Explicit Width/Height so it doesn't collapse to 0x0 */
+.imgWrap-desktop {
   position: fixed;
-  left: 50vw;
-  top: 50vh;
-  transform: translate(-50%, -50%) scale(0.5);
-  transition: transform 0.1s linear;
+  left: 50%;
+  top: 50%;
   pointer-events: none;
-  z-index: 50;
+  z-index: 40;
   will-change: transform;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.founder {
-  width: 80%;
+.imgWrap-desktop.is-absolute {
+  position: absolute;
+}
+
+.founder-img {
+  width: 80%; /* Relative to the 500px container */
   height: 80%;
   object-fit: cover;
+  /* border-radius: 50%; Optional: Circular crop */
   position: relative;
 }
 
-.halo {
+/* --- HALO SYSTEM --- */
+.halo-container {
   position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 5;
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: none;
 }
 
 .haloItem {
   position: absolute;
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
+  background: white;
   border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  
+  /* Animation Vars */
   opacity: 0;
   transform: rotate(var(--angle)) translate(0px) rotate(calc(var(--angle) * -1)) scale(0);
-  transition: 
-    opacity 0.6s cubic-bezier(.12,.74,.36,1), 
-    transform 0.6s cubic-bezier(.12,.74,.36,1);
+  transition: opacity 0.6s cubic-bezier(.12,.74,.36,1), transform 0.6s cubic-bezier(.12,.74,.36,1);
 }
 
-.haloItem img { width: 100%; height: 100%; object-fit: cover; }
+.haloItem img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
 
-.halo-on .haloItem {
+.halo-active .haloItem {
   opacity: 1;
-  transform: rotate(var(--angle)) translate(var(--dist)) rotate(calc(var(--angle) * -1)) scale(var(--scale));
+  transform: rotate(var(--angle)) translate(200px) rotate(calc(var(--angle) * -1)) scale(1);
 }
-        
+
+/* --- TERMINAL (Refined) --- */
 .mac-terminal-container {
-position: absolute;
-bottom: 5rem;
-right: 1rem;
-width: 450px;
-max-width: 90vw;
-height: 320px;
-background-color: rgba(15, 15, 20, 0.95);
-backdrop-filter: blur(12px);
-border-radius: 12px;
-border: 1px solid rgba(255, 255, 255, 0.08);
-box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.2);
-overflow: hidden;
-font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-animation: slideUpFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-display: flex;
-flex-direction: column;
+  width: var(--terminal-width-desktop);
+  height: var(--terminal-height-desktop);
+  background-color: rgba(15, 15, 20, 0.95);
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  font-family: 'Menlo', 'Monaco', monospace;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 50;
+  
+  /* FIX: Removed Absolute positioning here. 
+     We let the parent Flex container handle placement. */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.mac-terminal-container:hover {
-transform: translateY(-4px);
-box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7);
-}
-
-/* --- HEADER --- */
 .mac-terminal-header {
-background: linear-gradient(to bottom, #333, #222);
-padding: 10px 16px;
-display: flex;
-align-items: center;
-border-bottom: 1px solid rgba(0, 0, 0, 0.6);
-flex-shrink: 0;
+  background: linear-gradient(to bottom, #333, #222);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.6);
+  flex-shrink: 0;
 }
-
 .traffic-lights { display: flex; gap: 8px; }
 .light { width: 12px; height: 12px; border-radius: 50%; }
-.red { background: #ff5f56; border: 1px solid #e0443e; }
-.yellow { background: #ffbd2e; border: 1px solid #dea123; }
-.green { background: #27c93f; border: 1px solid #1aab29; }
-.terminal-title {
-    margin-left: auto; margin-right: auto;
-    color: rgba(255,255,255,0.4); font-size: 12px; font-weight: 500;
+.red { background: #ff5f56; } 
+.yellow { background: #ffbd2e; } 
+.green { background: #27c93f; }
+.terminal-title { color: rgba(255,255,255,0.4); font-size: 12px; margin: 0 auto; }
+.mac-terminal-body { padding: 16px; color: #fff; font-size: 13px; line-height: 1.6; flex-grow: 1; overflow-y: auto; }
+.input-line { display: flex; align-items: center; margin-top: 4px; }
+.terminal-input { background: transparent; border: none; color: #fff; flex-grow: 1; outline: none; margin-left: 8px; font-size: 14px; }
+
+/* --- THOUGHT BRICK (Refined) --- */
+.brick-wrapper {
+  z-index: 45;
+  /* FIX: Removed Absolute positioning. Handled by Flexbox. */
 }
 
-/* --- BODY --- */
-.mac-terminal-body {
-padding: 16px;
-color: #fff;
-font-size: 13px;
-line-height: 1.6;
-flex-grow: 1;
-overflow-y: auto;
-cursor: text;
-scrollbar-width: none;
-}
-.mac-terminal-body::-webkit-scrollbar { display: none; }
+/* =========================================
+   MOBILE & TABLET OVERRIDES
+   ========================================= */
 
-/* --- LINES --- */
-.terminal-line { margin-bottom: 4px; word-break: break-all; }
-.terminal-line.text { color: #e0e0e0; }
-.terminal-line.system { color: #27c93f; text-shadow: 0 0 5px rgba(51, 255, 0, 0.3); }
-.terminal-line.error { color: #ff5f56; }
-.terminal-line.success { color: #27c93f; font-weight: bold; }
-
-/* --- INPUT --- */
-.input-line { display: flex; align-items: center; margin-top: 4px;}
-.prompt-symbol { color: #27c93f; margin-right: 8px; font-weight: bold; }
-.terminal-input {
-    background: transparent; border: none; color: #fff;
-    font-family: inherit; font-size: inherit; flex-grow: 1;
-    outline: none; caret-color: #27c93f;
+@media (max-width: 1024px) {
+  .mac-terminal-container {
+    width: 100%;
+    max-width: 500px;
+  }
 }
 
-@keyframes slideUpFade {
-from { opacity: 0; transform: translateY(20px); }
-to { opacity: 1; transform: translateY(0); }
-}
+@media (max-width: 768px) {
+  /* --- HERO LAYOUT --- */
+  .hero {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-top: 2rem;
+    height: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
 
-html {
-  scroll-behavior: smooth;
-}
+  /* Hide Desktop Profile */
+  .imgWrap-desktop { display: none !important; }
 
-.hero, .sec2, .imgWrap, .founder, .halo {
-  will-change: transform; 
-  transform-style: preserve-3d; 
-  backface-visibility: hidden; 
-}
+  /* Mobile Profile Settings */
+  .mobile-profile-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 2rem 0;
+    position: relative;
+    z-index: 10;
+  }
 
-.imgWrap {
-  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1); 
+  .mobile-founder-img {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40%;
+    height: 40%;
+    object-fit: cover;
+  }
+
+  /* Static Mobile Layout */
+  .mac-terminal-container {
+    width: 100%;
+    height: 300px;
+    margin-top: 2rem;
+  }
+
+  .brick-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+  
+  .haloItem {
+    width: 40px; height: 40px;
+  }
 }

@@ -59,7 +59,7 @@ marked.setOptions({
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'POST') {
-      const { message, history, systemInstruction } = req.body;
+      const { message, history, systemInstruction,notFormattedResponse = false } = req.body;
       if (!message) {
         return res.status(400).json({ error: 'Message is required' });
       }
@@ -78,7 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         let role ="Your name is Kaala Sharma, and you provide insightful, precise, and professional responses."
         const fullInstruction = `${InstructionForSystem} ${role}`;
         const model = genAI.getGenerativeModel({
-          model: "gemini-1.5-flash",
+          model: "gemini-3-flash-preview",
           systemInstruction: fullInstruction,
         });
 
@@ -91,13 +91,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const result = await chatSession.sendMessage(message);
         
         const responseText = result.response.text();
-        const formattedResponse = await marked(responseText);
-        const styledResponse = formattedResponse.replace(
-          /<pre><code class="/g, 
-          `<pre style="border: 0.5px solid #555; background-color: #1E1E1E; color: #D4D4D4; border-radius: 30px; padding: 25px; margin-bottom: 16px; box-shadow: 0 4px 12px rgb(255 255 255); width: 100%; max-width: 100%; overflow-x: auto; scrollbar-width: thin; scrollbar-color: rgba(0, 0, 0, 0.4) rgba(0, 0, 0, 0.1);"><code style="color: inherit; display: block;" class="`
-        );
-        
-        res.status(200).json({ response: styledResponse });
+        if(notFormattedResponse == true){
+          res.status(200).json({ response: responseText });
+        }else{
+          const formattedResponse = await marked(responseText);
+          const styledResponse = formattedResponse.replace(
+            /<pre><code class="/g, 
+            `<pre style="border: 0.5px solid #555; background-color: #1E1E1E; color: #D4D4D4; border-radius: 30px; padding: 25px; margin-bottom: 16px; box-shadow: 0 4px 12px rgb(255 255 255); width: 100%; max-width: 100%; overflow-x: auto; scrollbar-width: thin; scrollbar-color: rgba(0, 0, 0, 0.4) rgba(0, 0, 0, 0.1);"><code style="color: inherit; display: block;" class="`
+          );
+          
+          res.status(200).json({ response: styledResponse });
+        }
       } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to process the request' });

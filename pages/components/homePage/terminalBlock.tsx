@@ -167,7 +167,7 @@ const TerminalBlock: React.FC<TerminalProps> = ({ onNavigate }) => {
         <div className="terminal-title">Kaala Sharma</div>
       </div>
       
-      <div className="mac-terminal-body" ref={bodyRef}>
+      <div className="mac-terminal-body" ref={bodyRef} onClick={() => inputRef.current?.focus()}>
         {/* HISTORY */}
         {history.map((line, index) => (
           <div key={index} className={`terminal-line ${line.type}`}>
@@ -177,11 +177,11 @@ const TerminalBlock: React.FC<TerminalProps> = ({ onNavigate }) => {
 
         {/* INPUT AREA */}
         <div className="input-line">
-          <span className="prompt-symbol">{'>'}</span>
+          <span className="prompt-symbol text-green-500 mr-2">{'>'}</span>
           <input
             ref={inputRef}
             type="text"
-            className="terminal-input"
+            className="terminal-input w-full bg-transparent border-none text-white focus:outline-none font-mono"
             value={inputVal}
             onChange={(e) => {
                 setInputVal(e.target.value);
