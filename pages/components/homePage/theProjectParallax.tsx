@@ -74,17 +74,8 @@ const BouncyCardStack: React.FC = () => {
       const rect = container.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
 
-      // 1. Calculate how far we've scrolled INTO the container
-      // value is negative when container is below view, positive when entered
       const distFromTop = -rect.top;
-      
-      // 2. Define the "Scroll Zone" per card. 
-      // We want each card to take up exactly 1 viewport height of scrolling effort.
       const scrollPerCard = viewportHeight;
-
-      // 3. Calculate raw index (float)
-      // We add a small offset (viewportHeight * 0.2) so the first card change happens 
-      // a bit after the user starts scrolling, not immediately.
       const rawIndex = (distFromTop + (viewportHeight * 0.2)) / scrollPerCard;
 
       // 4. Determine Active Index
@@ -93,8 +84,6 @@ const BouncyCardStack: React.FC = () => {
         Math.max(0, Math.floor(rawIndex))
       );
 
-      // 5. Determine if we are past the stack (for footer handling)
-      // If the bottom of the container is visible, we are done.
       const finished = rect.bottom <= viewportHeight;
 
       if (clampedIndex !== activeCardIndex) {
@@ -106,7 +95,7 @@ const BouncyCardStack: React.FC = () => {
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Initial check
+    handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, [activeCardIndex, isFinished]);
 
@@ -116,16 +105,13 @@ const BouncyCardStack: React.FC = () => {
       <div 
         ref={containerRef}
         className="relative w-full px-4 md:px-8"
-        // THE MAGIC NUMBER:
-        // Height = (Number of Cards * 100vh) + 50vh buffer.
-        // This ensures precise 1-to-1 mapping of scroll-to-card-change.
         style={{ height: `${(cards.length * 100) + 50}vh` }}
       >
         
         {/* Sticky Header - Fades out as you scroll deep */}
-        <div className="sticky top-12 z-0 text-center mb-10 transition-opacity duration-300"
+        <div className="sticky mt-5 z-0 text-center transition-opacity duration-300"
              style={{ opacity: isFinished ? 0 : 1 }}>
-          <h2 className="text-xs md:text-sm font-mono text-white/40 tracking-[0.2em] uppercase mb-4">
+          <h2 className="text-xs md:text-sm font-mono text-white/40 tracking-[0.2em] uppercase mb-1">
             System Architecture
           </h2>
           <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold text-white tracking-tight">
@@ -133,22 +119,14 @@ const BouncyCardStack: React.FC = () => {
           </h1>
         </div>
 
-        {/* The Stack Wrapper */}
         <div className="max-w-5xl mx-auto relative">
           {cards.map((card, index) => {
-            
-            // Logic:
-            // Active: The card currently being viewed.
-            // Past: Cards we've scrolled past (they go up and scale down).
-            // Future: Cards waiting to enter (they sit below and scale up).
             const isActive = activeCardIndex === index;
             const isPast = activeCardIndex > index;
             const isFuture = activeCardIndex < index;
-
-            // Dynamic Styles Calculation
             let cardStyle: React.CSSProperties = {
                 zIndex: index + 10,
-                transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)', // The "Bounce" Bezier
+                transition: 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
             };
 
             if (isActive) {
@@ -161,16 +139,14 @@ const BouncyCardStack: React.FC = () => {
             } else if (isPast) {
                 cardStyle = {
                     ...cardStyle,
-                    // Push up, scale down, tilt backward slightly
                     transform: 'scale(0.9) translateY(-100px) rotateX(5deg)',
-                    opacity: 0, // Fade out completely so they don't clutter
+                    opacity: 0,
                     filter: 'blur(8px)',
                     pointerEvents: 'none'
                 };
             } else if (isFuture) {
                 cardStyle = {
                     ...cardStyle,
-                    // Push down, scale up slightly (creates depth), invisible
                     transform: 'scale(1.1) translateY(150px) rotateX(-5deg)',
                     opacity: 0,
                     filter: 'blur(4px)',
@@ -179,10 +155,10 @@ const BouncyCardStack: React.FC = () => {
             }
 
             return (
-              // Sticky wrapper: This holds the card in the viewport center
+
               <div 
                 key={card.id}
-                className="sticky top-0 h-screen flex items-center justify-center overflow-hidden"
+                className="sticky h-screen flex items-center justify-center overflow-hidden"
               >
                 <div 
                   className={`
@@ -192,15 +168,11 @@ const BouncyCardStack: React.FC = () => {
                   `}
                   style={cardStyle}
                 >
-                  {/* Grain/Noise Texture */}
                   <div className="absolute inset-0 opacity-20 pointer-events-none mix-blend-overlay"
                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.4'/%3E%3C/svg%3E")` }} 
                   />
-
-                  {/* Card Layout */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 relative z-10">
                     
-                    {/* Left: Text Content */}
                     <div className="flex flex-col justify-center text-left">
                       <div className="inline-flex items-center gap-3 mb-6">
                         <span className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 text-white/90 text-xs font-mono border border-white/10 shadow-inner">
@@ -232,9 +204,7 @@ const BouncyCardStack: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Right: Metric/Visual */}
                     <div className="hidden lg:flex items-center justify-center relative">
-                      {/* Abstract circular glow behind the metric */}
                       <div className="absolute w-64 h-64 bg-white/10 rounded-full blur-[80px]" />
                       
                       <div className="relative w-full aspect-square max-w-sm bg-gradient-to-b from-white/10 to-transparent rounded-2xl border border-white/10 p-1 flex flex-col items-center justify-center shadow-2xl">
