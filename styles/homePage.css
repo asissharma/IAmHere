@@ -40,10 +40,6 @@ body {
   justify-content: center;
 }
 
-.sec3 { 
-  background: #0f172a; 
-  padding-bottom: 4rem;
-}
 
 /* --- DESKTOP ANIMATED PROFILE --- */
 /* FIX: Added Explicit Width/Height so it doesn't collapse to 0x0 */
