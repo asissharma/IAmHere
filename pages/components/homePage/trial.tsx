@@ -25,7 +25,7 @@ export default function HomePage({ onNavigate }: TrialProps) {
     github: "https://github.com/asissharma",
     linkedin: "https://linkedin.com/in/your-profile",
     twitter: "https://twitter.com/your-handle",
-    resume: "/Asis Sharma.pdf"
+    resume: "/Asis_Sharma.pdf"
   };
 
   const haloImages: string[] = [
@@ -195,7 +195,7 @@ export default function HomePage({ onNavigate }: TrialProps) {
 
                 {/* --- COMMAND CENTER ROW (Calendar + System Health) --- */}
                 {/* Parent: items-stretch ensures both children are the exact same height */}
-                <div className="flex flex-col lg:flex-row gap-6 w-full mb-6 items-stretch">
+                <div className="flex flex-col lg:flex-row gap-3 w-full mb-1 items-stretch">
                     
                     {/* 2. System Health (Takes 30% width) */}
                     {/* Removed min-h-[280px], it will now inherit height from the calendar */}
@@ -211,10 +211,10 @@ export default function HomePage({ onNavigate }: TrialProps) {
                 </div>
 
                   {/* --- BENTO GRID (Architecture + Details) --- */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full lg:h-[450px]">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 w-full lg:h-[450px]">
                       
                       {/* Left: Vertical Stack (Takes 2 columns = 66% width) */}
-                      <div className="lg:col-span-2 flex flex-col gap-6 h-full">
+                      <div className="lg:col-span-2 flex flex-col gap-3 h-full">
                           <div className="flex-1 min-h-[200px]">
                               <SyllabusBlock />
                           </div>
