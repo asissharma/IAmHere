@@ -1,4 +1,11 @@
-import { ShieldCheck, Zap, Cpu, Database, Globe, Server, Layers, Radio, ArrowDownToLine, Lock, GitBranch } from 'lucide-react';
+import { 
+  ShieldCheck, Zap, Cpu, Database, Globe, Server, Layers, Radio, 
+  ArrowDownToLine, Lock, GitBranch, Cloud, HardDrive, Share2, 
+  Activity, BarChart, FileText, Mail, Bell, Search, Users, 
+  Workflow, Container, Box, Boxes, Network, Timer, RefreshCw,
+  TrendingUp, Shield, Key, CheckCircle, XCircle, AlertTriangle,
+  Smartphone, Monitor, Wifi, CloudRain, Box as Cube, Cog
+} from 'lucide-react';
 
 export const SYSTEM_SCENARIOS = [
   {
@@ -117,6 +124,338 @@ export const SYSTEM_SCENARIOS = [
     edges: [
       { from: "lb", to: "s1", color: "#e11d48" },
       { from: "lb", to: "s2", color: "#e11d48", delay: 0.2 },
+    ]
+  },
+  {
+    id: "loadbalancer",
+    title: "Load Balancer Distribution",
+    desc: "Round-robin traffic across server pool.",
+    accent: "bg-indigo-500",
+    color: "text-indigo-400",
+    icon: Share2,
+    nodes: [
+      { id: "client", label: "Client", icon: Globe, x: "50%", y: "10%", color: "bg-blue-500" },
+      { id: "lb", label: "Load Balancer", icon: Share2, x: "50%", y: "35%", color: "bg-indigo-500" },
+      { id: "srv1", label: "Server 1", icon: Server, x: "20%", y: "65%", color: "bg-slate-700" },
+      { id: "srv2", label: "Server 2", icon: Server, x: "50%", y: "65%", color: "bg-slate-700" },
+      { id: "srv3", label: "Server 3", icon: Server, x: "80%", y: "65%", color: "bg-slate-700" },
+      { id: "db", label: "Database", icon: Database, x: "50%", y: "90%", color: "bg-emerald-600" },
+    ],
+    edges: [
+      { from: "client", to: "lb", color: "#6366f1" },
+      { from: "lb", to: "srv1", color: "#6366f1", delay: 0.3 },
+      { from: "lb", to: "srv2", color: "#6366f1", delay: 0.4 },
+      { from: "lb", to: "srv3", color: "#6366f1", delay: 0.5 },
+      { from: "srv1", to: "db", color: "#10b981", delay: 0.8 },
+      { from: "srv2", to: "db", color: "#10b981", delay: 0.9 },
+      { from: "srv3", to: "db", color: "#10b981", delay: 1.0 },
+    ]
+  },
+  {
+    id: "circuitbreaker",
+    title: "Circuit Breaker Pattern",
+    desc: "Fault tolerance with graceful degradation.",
+    accent: "bg-orange-500",
+    color: "text-orange-400",
+    icon: Shield,
+    nodes: [
+      { id: "service", label: "Service A", icon: Server, x: "20%", y: "50%", color: "bg-blue-500" },
+      { id: "breaker", label: "Circuit", icon: Shield, x: "50%", y: "50%", color: "bg-orange-500" },
+      { id: "healthy", label: "Healthy", icon: CheckCircle, x: "80%", y: "30%", color: "bg-emerald-500" },
+      { id: "failed", label: "Failed", icon: XCircle, x: "80%", y: "50%", color: "bg-red-500" },
+      { id: "fallback", label: "Fallback", icon: AlertTriangle, x: "80%", y: "70%", color: "bg-yellow-500" },
+    ],
+    edges: [
+      { from: "service", to: "breaker", color: "#f97316" },
+      { from: "breaker", to: "healthy", color: "#10b981", delay: 0.4 },
+      { from: "breaker", to: "failed", color: "#ef4444", delay: 0.5 },
+      { from: "breaker", to: "fallback", color: "#eab308", delay: 0.6 },
+    ]
+  },
+  {
+    id: "messagequeue",
+    title: "Message Queue Processing",
+    desc: "Async task processing with RabbitMQ.",
+    accent: "bg-violet-500",
+    color: "text-violet-400",
+    icon: Layers,
+    nodes: [
+      { id: "api", label: "API", icon: Server, x: "15%", y: "50%", color: "bg-blue-500" },
+      { id: "queue", label: "Queue", icon: Layers, x: "40%", y: "50%", color: "bg-violet-500" },
+      { id: "w1", label: "Worker 1", icon: Cog, x: "70%", y: "30%", color: "bg-slate-700" },
+      { id: "w2", label: "Worker 2", icon: Cog, x: "70%", y: "50%", color: "bg-slate-700" },
+      { id: "w3", label: "Worker 3", icon: Cog, x: "70%", y: "70%", color: "bg-slate-700" },
+    ],
+    edges: [
+      { from: "api", to: "queue", color: "#8b5cf6" },
+      { from: "queue", to: "w1", color: "#8b5cf6", delay: 0.5 },
+      { from: "queue", to: "w2", color: "#8b5cf6", delay: 0.7 },
+      { from: "queue", to: "w3", color: "#8b5cf6", delay: 0.9 },
+    ]
+  },
+  {
+    id: "oauth",
+    title: "OAuth 2.0 Flow",
+    desc: "Secure authorization with token exchange.",
+    accent: "bg-pink-500",
+    color: "text-pink-400",
+    icon: Key,
+    nodes: [
+      { id: "user", label: "User", icon: Users, x: "15%", y: "50%", color: "bg-blue-500" },
+      { id: "app", label: "Client App", icon: Smartphone, x: "40%", y: "50%", color: "bg-slate-600" },
+      { id: "auth", label: "Auth Server", icon: Key, x: "65%", y: "30%", color: "bg-pink-500" },
+      { id: "resource", label: "Resource API", icon: Server, x: "65%", y: "70%", color: "bg-emerald-600" },
+    ],
+    edges: [
+      { from: "user", to: "app", color: "#ec4899" },
+      { from: "app", to: "auth", color: "#ec4899", delay: 0.3 },
+      { from: "auth", to: "app", color: "#10b981", delay: 0.6 },
+      { from: "app", to: "resource", color: "#10b981", delay: 0.9 },
+    ]
+  },
+  {
+    id: "saga",
+    title: "Saga Transaction Pattern",
+    desc: "Distributed transactions with compensation.",
+    accent: "bg-teal-500",
+    color: "text-teal-400",
+    icon: Workflow,
+    nodes: [
+      { id: "orchestrator", label: "Orchestrator", icon: Workflow, x: "50%", y: "15%", color: "bg-teal-500" },
+      { id: "order", label: "Order Svc", icon: Server, x: "20%", y: "45%", color: "bg-slate-700" },
+      { id: "payment", label: "Payment Svc", icon: Server, x: "50%", y: "45%", color: "bg-slate-700" },
+      { id: "inventory", label: "Inventory", icon: Server, x: "80%", y: "45%", color: "bg-slate-700" },
+      { id: "success", label: "Commit", icon: CheckCircle, x: "35%", y: "75%", color: "bg-emerald-500" },
+      { id: "rollback", label: "Rollback", icon: RefreshCw, x: "65%", y: "75%", color: "bg-red-500" },
+    ],
+    edges: [
+      { from: "orchestrator", to: "order", color: "#14b8a6", delay: 0.2 },
+      { from: "orchestrator", to: "payment", color: "#14b8a6", delay: 0.4 },
+      { from: "orchestrator", to: "inventory", color: "#14b8a6", delay: 0.6 },
+      { from: "order", to: "success", color: "#10b981", delay: 0.9 },
+      { from: "payment", to: "rollback", color: "#ef4444", delay: 1.0 },
+    ]
+  },
+  {
+    id: "cqrs",
+    title: "CQRS Architecture",
+    desc: "Separate read and write data models.",
+    accent: "bg-sky-500",
+    color: "text-sky-400",
+    icon: GitBranch,
+    nodes: [
+      { id: "client", label: "Client", icon: Globe, x: "50%", y: "10%", color: "bg-blue-500" },
+      { id: "command", label: "Command", icon: Server, x: "25%", y: "40%", color: "bg-orange-500" },
+      { id: "query", label: "Query", icon: Search, x: "75%", y: "40%", color: "bg-sky-500" },
+      { id: "writedb", label: "Write DB", icon: Database, x: "25%", y: "70%", color: "bg-emerald-600" },
+      { id: "readdb", label: "Read DB", icon: Database, x: "75%", y: "70%", color: "bg-blue-600" },
+    ],
+    edges: [
+      { from: "client", to: "command", color: "#f97316", delay: 0.2 },
+      { from: "client", to: "query", color: "#0ea5e9", delay: 0.3 },
+      { from: "command", to: "writedb", color: "#10b981", delay: 0.6 },
+      { from: "writedb", to: "readdb", color: "#6366f1", delay: 0.9 },
+      { from: "query", to: "readdb", color: "#0ea5e9", delay: 0.7 },
+    ]
+  },
+  {
+    id: "streaming",
+    title: "Real-time Streaming Pipeline",
+    desc: "Apache Kafka to Apache Flink processing.",
+    accent: "bg-fuchsia-500",
+    color: "text-fuchsia-400",
+    icon: Activity,
+    nodes: [
+      { id: "source", label: "Data Source", icon: Zap, x: "15%", y: "50%", color: "bg-yellow-500" },
+      { id: "kafka", label: "Kafka", icon: Layers, x: "35%", y: "50%", color: "bg-purple-600" },
+      { id: "flink", label: "Flink", icon: Activity, x: "55%", y: "50%", color: "bg-fuchsia-500" },
+      { id: "sink", label: "Data Lake", icon: Database, x: "75%", y: "35%", color: "bg-blue-600" },
+      { id: "dashboard", label: "Dashboard", icon: BarChart, x: "75%", y: "65%", color: "bg-emerald-500" },
+    ],
+    edges: [
+      { from: "source", to: "kafka", color: "#a855f7" },
+      { from: "kafka", to: "flink", color: "#d946ef", delay: 0.3 },
+      { from: "flink", to: "sink", color: "#3b82f6", delay: 0.6 },
+      { from: "flink", to: "dashboard", color: "#10b981", delay: 0.7 },
+    ]
+  },
+  {
+    id: "elasticsearch",
+    title: "Search Architecture",
+    desc: "Full-text search with Elasticsearch cluster.",
+    accent: "bg-lime-500",
+    color: "text-lime-400",
+    icon: Search,
+    nodes: [
+      { id: "app", label: "Application", icon: Server, x: "50%", y: "15%", color: "bg-blue-500" },
+      { id: "lb", label: "Load Balancer", icon: Share2, x: "50%", y: "40%", color: "bg-indigo-500" },
+      { id: "es1", label: "ES Node 1", icon: Search, x: "25%", y: "70%", color: "bg-lime-500" },
+      { id: "es2", label: "ES Node 2", icon: Search, x: "50%", y: "70%", color: "bg-lime-500" },
+      { id: "es3", label: "ES Node 3", icon: Search, x: "75%", y: "70%", color: "bg-lime-500" },
+    ],
+    edges: [
+      { from: "app", to: "lb", color: "#84cc16" },
+      { from: "lb", to: "es1", color: "#84cc16", delay: 0.4 },
+      { from: "lb", to: "es2", color: "#84cc16", delay: 0.5 },
+      { from: "lb", to: "es3", color: "#84cc16", delay: 0.6 },
+    ]
+  },
+  {
+    id: "graphql",
+    title: "GraphQL Federation",
+    desc: "Unified schema across microservices.",
+    accent: "bg-pink-600",
+    color: "text-pink-400",
+    icon: Network,
+    nodes: [
+      { id: "client", label: "Client", icon: Globe, x: "50%", y: "10%", color: "bg-blue-500" },
+      { id: "gateway", label: "Apollo Gateway", icon: Network, x: "50%", y: "35%", color: "bg-pink-600" },
+      { id: "users", label: "Users Graph", icon: Users, x: "20%", y: "65%", color: "bg-slate-700" },
+      { id: "products", label: "Products", icon: Box, x: "50%", y: "65%", color: "bg-slate-700" },
+      { id: "reviews", label: "Reviews", icon: FileText, x: "80%", y: "65%", color: "bg-slate-700" },
+    ],
+    edges: [
+      { from: "client", to: "gateway", color: "#db2777" },
+      { from: "gateway", to: "users", color: "#db2777", delay: 0.4 },
+      { from: "gateway", to: "products", color: "#db2777", delay: 0.5 },
+      { from: "gateway", to: "reviews", color: "#db2777", delay: 0.6 },
+    ]
+  },
+  {
+    id: "kubernetes",
+    title: "Kubernetes Orchestration",
+    desc: "Container orchestration with auto-scaling.",
+    accent: "bg-blue-600",
+    color: "text-blue-400",
+    icon: Container,
+    nodes: [
+      { id: "ingress", label: "Ingress", icon: Globe, x: "50%", y: "10%", color: "bg-blue-500" },
+      { id: "service", label: "Service", icon: Share2, x: "50%", y: "30%", color: "bg-indigo-500" },
+      { id: "pod1", label: "Pod 1", icon: Container, x: "20%", y: "55%", color: "bg-blue-600" },
+      { id: "pod2", label: "Pod 2", icon: Container, x: "50%", y: "55%", color: "bg-blue-600" },
+      { id: "pod3", label: "Pod 3", icon: Container, x: "80%", y: "55%", color: "bg-blue-600" },
+      { id: "pvc", label: "Persistent Storage", icon: HardDrive, x: "50%", y: "80%", color: "bg-emerald-600" },
+    ],
+    edges: [
+      { from: "ingress", to: "service", color: "#2563eb" },
+      { from: "service", to: "pod1", color: "#2563eb", delay: 0.3 },
+      { from: "service", to: "pod2", color: "#2563eb", delay: 0.4 },
+      { from: "service", to: "pod3", color: "#2563eb", delay: 0.5 },
+      { from: "pod1", to: "pvc", color: "#10b981", delay: 0.8 },
+      { from: "pod2", to: "pvc", color: "#10b981", delay: 0.9 },
+    ]
+  },
+  {
+    id: "webhooks",
+    title: "Webhook Event System",
+    desc: "Event-driven notifications to subscribers.",
+    accent: "bg-cyan-600",
+    color: "text-cyan-400",
+    icon: Bell,
+    nodes: [
+      { id: "platform", label: "Platform", icon: Server, x: "50%", y: "20%", color: "bg-cyan-600" },
+      { id: "queue", label: "Event Queue", icon: Layers, x: "50%", y: "45%", color: "bg-purple-600" },
+      { id: "sub1", label: "Subscriber A", icon: Bell, x: "20%", y: "75%", color: "bg-slate-700" },
+      { id: "sub2", label: "Subscriber B", icon: Bell, x: "50%", y: "75%", color: "bg-slate-700" },
+      { id: "sub3", label: "Subscriber C", icon: Bell, x: "80%", y: "75%", color: "bg-slate-700" },
+    ],
+    edges: [
+      { from: "platform", to: "queue", color: "#0891b2" },
+      { from: "queue", to: "sub1", color: "#0891b2", delay: 0.5 },
+      { from: "queue", to: "sub2", color: "#0891b2", delay: 0.6 },
+      { from: "queue", to: "sub3", color: "#0891b2", delay: 0.7 },
+    ]
+  },
+  {
+    id: "etl",
+    title: "ETL Data Pipeline",
+    desc: "Extract, Transform, Load with Airflow.",
+    accent: "bg-green-600",
+    color: "text-green-400",
+    icon: Workflow,
+    nodes: [
+      { id: "sources", label: "Data Sources", icon: Database, x: "15%", y: "50%", color: "bg-slate-600" },
+      { id: "extract", label: "Extract", icon: ArrowDownToLine, x: "35%", y: "50%", color: "bg-blue-500" },
+      { id: "transform", label: "Transform", icon: Cog, x: "55%", y: "50%", color: "bg-green-600" },
+      { id: "load", label: "Load", icon: Database, x: "75%", y: "35%", color: "bg-purple-600" },
+      { id: "bi", label: "Analytics", icon: BarChart, x: "75%", y: "65%", color: "bg-emerald-500" },
+    ],
+    edges: [
+      { from: "sources", to: "extract", color: "#3b82f6" },
+      { from: "extract", to: "transform", color: "#16a34a", delay: 0.3 },
+      { from: "transform", to: "load", color: "#9333ea", delay: 0.6 },
+      { from: "load", to: "bi", color: "#10b981", delay: 0.9 },
+    ]
+  },
+  {
+    id: "serverless",
+    title: "Serverless Architecture",
+    desc: "Event-driven AWS Lambda functions.",
+    accent: "bg-orange-600",
+    color: "text-orange-400",
+    icon: Cloud,
+    nodes: [
+      { id: "api", label: "API Gateway", icon: Globe, x: "50%", y: "15%", color: "bg-blue-500" },
+      { id: "lambda1", label: "Lambda Auth", icon: Cloud, x: "20%", y: "45%", color: "bg-orange-600" },
+      { id: "lambda2", label: "Lambda CRUD", icon: Cloud, x: "50%", y: "45%", color: "bg-orange-600" },
+      { id: "lambda3", label: "Lambda Notify", icon: Cloud, x: "80%", y: "45%", color: "bg-orange-600" },
+      { id: "dynamo", label: "DynamoDB", icon: Database, x: "35%", y: "75%", color: "bg-blue-600" },
+      { id: "s3", label: "S3 Bucket", icon: HardDrive, x: "65%", y: "75%", color: "bg-emerald-600" },
+    ],
+    edges: [
+      { from: "api", to: "lambda1", color: "#ea580c", delay: 0.2 },
+      { from: "api", to: "lambda2", color: "#ea580c", delay: 0.3 },
+      { from: "api", to: "lambda3", color: "#ea580c", delay: 0.4 },
+      { from: "lambda2", to: "dynamo", color: "#3b82f6", delay: 0.7 },
+      { from: "lambda3", to: "s3", color: "#10b981", delay: 0.8 },
+    ]
+  },
+  {
+    id: "multiregion",
+    title: "Multi-Region Deployment",
+    desc: "Global active-active failover strategy.",
+    accent: "bg-purple-600",
+    color: "text-purple-400",
+    icon: Globe,
+    nodes: [
+      { id: "dns", label: "Global DNS", icon: Globe, x: "50%", y: "10%", color: "bg-blue-500" },
+      { id: "us", label: "US-East", icon: Server, x: "20%", y: "40%", color: "bg-purple-600" },
+      { id: "eu", label: "EU-West", icon: Server, x: "50%", y: "40%", color: "bg-purple-600" },
+      { id: "asia", label: "AP-South", icon: Server, x: "80%", y: "40%", color: "bg-purple-600" },
+      { id: "db1", label: "DB Primary", icon: Database, x: "20%", y: "70%", color: "bg-emerald-600" },
+      { id: "db2", label: "DB Replica", icon: Database, x: "50%", y: "70%", color: "bg-blue-600" },
+      { id: "db3", label: "DB Replica", icon: Database, x: "80%", y: "70%", color: "bg-blue-600" },
+    ],
+    edges: [
+      { from: "dns", to: "us", color: "#9333ea", delay: 0.2 },
+      { from: "dns", to: "eu", color: "#9333ea", delay: 0.3 },
+      { from: "dns", to: "asia", color: "#9333ea", delay: 0.4 },
+      { from: "us", to: "db1", color: "#10b981", delay: 0.6 },
+      { from: "eu", to: "db2", color: "#3b82f6", delay: 0.7 },
+      { from: "asia", to: "db3", color: "#3b82f6", delay: 0.8 },
+    ]
+  },
+  {
+    id: "observability",
+    title: "Observability Stack",
+    desc: "Metrics, logs, traces with Prometheus & Grafana.",
+    accent: "bg-red-600",
+    color: "text-red-400",
+    icon: Activity,
+    nodes: [
+      { id: "apps", label: "Services", icon: Server, x: "15%", y: "50%", color: "bg-blue-500" },
+      { id: "prometheus", label: "Prometheus", icon: Activity, x: "40%", y: "30%", color: "bg-red-600" },
+      { id: "loki", label: "Loki", icon: FileText, x: "40%", y: "50%", color: "bg-orange-500" },
+      { id: "jaeger", label: "Jaeger", icon: Share2, x: "40%", y: "70%", color: "bg-cyan-500" },
+      { id: "grafana", label: "Grafana", icon: BarChart, x: "75%", y: "50%", color: "bg-violet-500" },
+    ],
+    edges: [
+      { from: "apps", to: "prometheus", color: "#dc2626", delay: 0.3 },
+      { from: "apps", to: "loki", color: "#f97316", delay: 0.4 },
+      { from: "apps", to: "jaeger", color: "#06b6d4", delay: 0.5 },
+      { from: "prometheus", to: "grafana", color: "#8b5cf6", delay: 0.8 },
+      { from: "loki", to: "grafana", color: "#8b5cf6", delay: 0.9 },
+      { from: "jaeger", to: "grafana", color: "#8b5cf6", delay: 1.0 },
     ]
   }
 ];
