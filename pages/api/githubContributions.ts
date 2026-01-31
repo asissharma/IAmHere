@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-// REPLACE THIS WITH YOUR ACTUAL GITHUB USERNAME
 const GITHUB_USERNAME = process.env.GITHUB_USERNAME; 
 
 // --- QUERY DEFINITIONS ---
@@ -96,7 +95,18 @@ export default async function handler(
       }
       
       const events = await restResponse.json();
-      
+      const recentCommits = events
+          .filter((event: any) => event.type === 'PushEvent')
+          .slice(0, 5)
+          .map((event: any) => ({
+            message: event.payload.commits[0].message,
+            date: event.created_at,
+            repo: event.repo.name.split('/')[1],
+            sha: event.payload.commits[0].sha.substring(0, 7)
+          }));
+
+      // 2. Log the actual array of commits to verify data
+      console.log("Fetched Commits:", recentCommits);
       // Filter for PushEvents that strictly have commits
       const pushEvents = events.filter((e: any) => 
         e.type === 'PushEvent' && 

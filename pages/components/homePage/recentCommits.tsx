@@ -37,7 +37,6 @@ const RealRecentCommitsBlock = () => {
         if (!res.ok) throw new Error('Failed');
         const data = await res.json();
         setCommits(data);
-        console.log(data);
       } catch (e) {
         console.error(e);
       } finally {

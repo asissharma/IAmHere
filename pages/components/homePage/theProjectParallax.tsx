@@ -75,7 +75,7 @@ const ProjectParallax = () => {
     <div className="w-full bg-[#050505] relative pb-40 border-t border-white/5">
       
       {/* Sticky Header */}
-      <div className="sticky top-0 z-0 py-12 bg-[#050505]/90 backdrop-blur-xl border-b border-white/5 mb-20 transition-all duration-500">
+      <div className="sticky top-0 z-0 py-2 bg-[#050505]/90 backdrop-blur-xl border-b border-white/5 mb-2 transition-all duration-500">
         <div className="max-w-[90%] xl:max-w-7xl mx-auto flex items-end justify-between px-4">
             <div>
                 <h2 className="text-xs font-mono text-emerald-500 tracking-[0.2em] uppercase mb-2">
@@ -122,7 +122,7 @@ const RepoCard = ({ card, index, total }: { card: RepoData; index: number; total
   // --- 2. PERFECT STACKING ---
   // We use a FIXED top offset for everyone (180px).
   // This ensures they stack perfectly ON TOP of each other, hiding the previous one completely.
-  const stickyTop = 180; 
+  const stickyTop = 150; 
 
   return (
     <div 
@@ -148,10 +148,10 @@ const RepoCard = ({ card, index, total }: { card: RepoData; index: number; total
         
         {/* ================= FRONT SIDE ================= */}
         <div className="absolute inset-0 backface-hidden">
-          <div className="w-full h-full rounded-3xl overflow-hidden bg-[#0A0A0A] border border-white/10 shadow-2xl flex flex-col relative group">
+          <div className="w-full h-full rounded-3xl overflow-hidden bg-[#aaaaaa] border border-white/10 shadow-2xl flex flex-col relative group">
              
              {/* Giant Faded Watermark */}
-             <div className="absolute -right-10 -top-10 text-[10rem] font-bold text-white/[0.02] pointer-events-none select-none whitespace-nowrap">
+             <div className="absolute -right-10 -top-10 text-[10rem] font-bold text-black/[0.1] pointer-events-none select-none whitespace-nowrap">
                 {card.name}
              </div>
              
