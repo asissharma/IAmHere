@@ -21,16 +21,26 @@ const ThoughtBrick = () => {
       setIsLoading(true);
       
       const { data } = await axios.post('/api/chat', {
-        message: "Generate a new thought.", 
-        systemInstruction: `
-          You are "The Apex." Generate a single "Insight of the Day".
+        message: `Find a new thought.
+        You are "The Apex." Find a single "Insight of the Day".
           CRITICAL: The output must be VERY short (max 15 words) to fit a ticker-tape UI.
           
           **Output Format:**
           Return ONLY a single valid JSON object.
           {
             "quote": "Short raw insight.",
-            "author": "Author Name"
+            "author": "the Real Author Name"
+          }        
+        `, 
+        systemInstruction: `
+          You are "The Apex." Find a single "Insight of the Day".
+          CRITICAL: The output must be VERY short (max 15 words) to fit a ticker-tape UI.
+          
+          **Output Format:**
+          Return ONLY a single valid JSON object.
+          {
+            "quote": "Short raw insight.",
+            "author": "the Real Author Name"
           }
         `,
         notFormattedResponse : true
