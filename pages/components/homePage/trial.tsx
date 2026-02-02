@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion, Variants } from "framer-motion";
 import Marquee, { marqueeItems } from './marquee';
 import TheProjectParallax from './theProjectParallax';
 import TerminalBlock from './terminalBlock';
@@ -245,7 +246,7 @@ export default function HomePage({ onNavigate }: TrialProps) {
           </div>
         </div>
 
-        <div className="w-full bg-white py-8 border-t border-slate-100">
+        <div className="w-full bg-orange-400 py-2 border-t border-slate-100">
           <Marquee items={marqueeItems} duration={50} gap="2rem"/>
         </div>
 

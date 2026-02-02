@@ -1,9 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const GITHUB_USERNAME = process.env.GITHUB_USERNAME; 
+const GITHUB_USERNAME = process.env.GITHUB_USERNAME;
 
-// --- QUERY DEFINITIONS ---
 const GRAPHQL_QUERIES = {
   calendar: `
     query($userName:String!) {
@@ -64,71 +63,53 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // 1. Security Check
-  if (!GITHUB_TOKEN) {
-    return res.status(500).json({ error: 'GitHub token missing in environment variables' });
+  if (!GITHUB_TOKEN || !GITHUB_USERNAME) {
+    return res.status(500).json({ error: 'GitHub credentials missing' });
   }
 
   const mode = (req.query.mode as string) || 'calendar';
 
   try {
-    let payload;
+    let payload: any;
 
     // ============================================================
-    // MODE: COMMITS (REST API)
+    // MODE: COMMITS (Now using Search API)
     // ============================================================
     if (mode === 'commits') {
-      // FIX: Correct URL structure (added /users/)
-      const endpoint = `https://api.github.com/users/${GITHUB_USERNAME}/events?per_page=100`;
+      // We search for commits authored by the user, sorted by date (newest first)
+      const query = encodeURIComponent(`author:${GITHUB_USERNAME} sort:author-date-desc`);
+      const endpoint = `https://api.github.com/search/commits?q=${query}&per_page=10`;
       
       const restResponse = await fetch(endpoint, {
         headers: {
           Authorization: `Bearer ${GITHUB_TOKEN}`,
-          'Accept': 'application/vnd.github.v3+json',
+          // This specific header is often required for the Search Commits API
+          'Accept': 'application/vnd.github.v3+json', 
         },
-        cache: 'no-store' // Always fetch fresh from GitHub to server
+        cache: 'no-store'
       });
 
       if (!restResponse.ok) {
-         const errText = await restResponse.text();
-         throw new Error(`GitHub REST API Error: ${restResponse.status} ${errText}`);
+        const errText = await restResponse.text();
+        // If search fails, we might want to degrade gracefully, but for now throw error
+        throw new Error(`GitHub Search API Error: ${restResponse.status} ${errText}`);
       }
       
-      const events = await restResponse.json();
-      const recentCommits = events
-          .filter((event: any) => event.type === 'PushEvent')
-          .slice(0, 5)
-          .map((event: any) => ({
-            message: event.payload.commits[0].message,
-            date: event.created_at,
-            repo: event.repo.name.split('/')[1],
-            sha: event.payload.commits[0].sha.substring(0, 7)
-          }));
-
-      // 2. Log the actual array of commits to verify data
-      console.log("Fetched Commits:", recentCommits);
-      // Filter for PushEvents that strictly have commits
-      const pushEvents = events.filter((e: any) => 
-        e.type === 'PushEvent' && 
-        e.payload && 
-        Array.isArray(e.payload.commits) &&
-        e.payload.commits.length > 0
-      );
+      const data = await restResponse.json();
       
-      const commits = pushEvents.flatMap((event: any) => {
-        const isPrivate = event.public === false; 
-        const repoName = event.repo?.name ? event.repo.name.split('/')[1] : 'unknown';
-
-        return event.payload.commits.map((commit: any) => ({
-          msg: commit.message || "No message",
-          date: event.created_at, 
-          hash: commit.sha ? commit.sha.substring(0, 7) : 'xxxxxx',
-          repo: isPrivate ? "confidential/module" : repoName 
-        })).reverse(); 
+      // The Search API returns an 'items' array
+      payload = data.items.map((item: any) => {
+        const repoFullName = item.repository ? item.repository.full_name : 'unknown/repo';
+        const isPrivate = item.repository ? item.repository.private : false;
+        
+        return {
+          msg: item.commit.message.split('\n')[0], // Only take the first line of the message
+          date: item.commit.author.date,
+          hash: item.sha.substring(0, 7),
+          repo: isPrivate ? "confidential/module" : repoFullName.split('/')[1] 
+        };
       });
 
-      payload = commits.slice(0, 5);
-    
     // ============================================================
     // MODE: GRAPHQL (Calendar, Stats, Pinned)
     // ============================================================
@@ -157,7 +138,8 @@ export default async function handler(
         throw new Error("GitHub GraphQL Query Failed");
       }
 
-      const user = data.data.user;
+      const user = data.data?.user;
+      if (!user) throw new Error("User not found");
 
       switch (mode) {
         case 'pinned':
@@ -178,10 +160,9 @@ export default async function handler(
       }
     }
 
-    // FIX: INTELLIGENT CACHING
-    // If we have valid data, cache it for 10 minutes to save API quota.
-    // If data is empty or null, DO NOT cache (so you can retry immediately).
-    if (payload && (Array.isArray(payload) ? payload.length > 0 : true)) {
+    // Cache success response
+    const hasData = Array.isArray(payload) ? payload.length > 0 : !!payload;
+    if (hasData) {
         res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate');
     } else {
         res.setHeader('Cache-Control', 'no-store');
@@ -191,7 +172,6 @@ export default async function handler(
 
   } catch (error: any) {
     console.error("FULL API ERROR:", error);
-    // Never cache an error response
     res.setHeader('Cache-Control', 'no-store');
     return res.status(500).json({ 
       error: 'Failed to fetch GitHub data', 

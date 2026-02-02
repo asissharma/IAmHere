@@ -1,10 +1,9 @@
-// components/RealRecentCommitsBlock.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 interface Commit {
   msg: string;
-  time: string; 
-  date: string; 
+  time: string;
+  date: string;
   hash: string;
   repo: string;
 }
@@ -12,28 +11,27 @@ interface Commit {
 const RealRecentCommitsBlock = () => {
   const [commits, setCommits] = useState<Commit[]>([]);
   const [loading, setLoading] = useState(true);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isHovering, setIsHovering] = useState(false);
+  
+  // Use a ref to persist scroll position across effect re-runs
+  const scrollPosRef = useRef(0);
 
-  // --- Helper: Relative Time (e.g., "2h ago") ---
   const formatTimeAgo = (dateString: string) => {
     const now = new Date();
     const past = new Date(dateString);
-    const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
-
-    if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
-    const diffInMinutes = Math.floor(diffInSeconds / 60);
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours}h ago`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    return `${diffInDays}d ago`;
+    const diff = Math.floor((now.getTime() - past.getTime()) / 1000);
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+    return `${Math.floor(diff / 604800)}w ago`;
   };
 
   useEffect(() => {
     const fetchCommits = async () => {
       try {
-        // --- UPDATED URL HERE ---
         const res = await fetch('/api/githubContributions?mode=commits');
-        
         if (!res.ok) throw new Error('Failed');
         const data = await res.json();
         setCommits(data);
@@ -46,106 +44,212 @@ const RealRecentCommitsBlock = () => {
     fetchCommits();
   }, []);
 
+  // Auto-scroll effect
+  useEffect(() => {
+    if (loading || !scrollContainerRef.current || commits.length === 0 || isHovering) return;
+
+    const container = scrollContainerRef.current;
+    let direction = 1; // 1 for down, -1 for up
+    let pauseTimer: NodeJS.Timeout | null = null;
+    let isPaused = false;
+
+    // Sync ref with current DOM position initially
+    if (scrollPosRef.current === 0 && container.scrollTop > 0) {
+        scrollPosRef.current = container.scrollTop;
+    }
+
+    const scroll = () => {
+      if (!container || isHovering) return;
+
+      const maxScroll = container.scrollHeight - container.clientHeight;
+      
+      // If content doesn't overflow, don't scroll
+      if (maxScroll <= 0) return;
+      
+      if (isPaused) return;
+
+      scrollPosRef.current += direction * 0.5;
+
+      // Reverse direction at boundaries with pause
+      if (scrollPosRef.current >= maxScroll) {
+        scrollPosRef.current = maxScroll;
+        direction = -1;
+        isPaused = true;
+        if (pauseTimer) clearTimeout(pauseTimer);
+        pauseTimer = setTimeout(() => {
+          isPaused = false;
+        }, 2000);
+      } else if (scrollPosRef.current <= 0) {
+        scrollPosRef.current = 0;
+        direction = 1;
+        isPaused = true;
+        if (pauseTimer) clearTimeout(pauseTimer);
+        pauseTimer = setTimeout(() => {
+          isPaused = false;
+        }, 2000);
+      }
+
+      container.scrollTop = scrollPosRef.current;
+    };
+
+    const interval = setInterval(scroll, 30);
+    
+    return () => {
+      clearInterval(interval);
+      if (pauseTimer) clearTimeout(pauseTimer);
+    };
+  }, [loading, commits.length, isHovering]);
+
   return (
-    <div className="bg-slate-900 text-slate-200 p-6 rounded-xl border border-slate-800 shadow-lg h-full font-mono text-sm flex flex-col">
-      <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-white">
-        <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        Recent Commits
-      </h3>
+    <div className="commits-gem commits-container relative h-[218px] rounded-xl w-full overflow-hidden">
+      {/* Premium Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#f9f7f4] via-[#f5e6d3] to-[#ede4d1]" />
 
-      {/* LIST CONTAINER */}
-      <ul className="space-y-4 flex-1 overflow-hidden">
+      {/* Subtle Noise Texture */}
+      <div 
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' fill='%23000' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+          backgroundRepeat: 'repeat',
+        }}
+      />
+
+      {/* Content Container */}
+      <div className="relative h-full flex flex-col">
         
-        {/* LOADING STATE */}
-        {loading && Array.from({ length: 4 }).map((_, i) => (
-           <li key={i} className="flex gap-3 items-start animate-pulse">
-             <div className="mt-1.5 min-w-[6px] h-[6px] rounded-full bg-slate-700"></div>
-             <div className="flex-1 space-y-2">
-                <div className="h-3 bg-slate-800 rounded w-3/4"></div>
-                <div className="flex justify-between">
-                   <div className="h-2 bg-slate-800 rounded w-12"></div>
-                   <div className="h-2 bg-slate-800 rounded w-8"></div>
+        {/* Header */}
+        <div className="py-1 px-2 border-b border-[#d4a373]/20 flex-shrink-0">
+          <div className="flex items-baseline gap-2">
+            <h6 className="text-xl font-bold" style={{ fontFamily: 'Bricolage Grotesque', color: '#2a2520' }}>
+              Recent Activity
+            </h6>
+            <span className="text-sm tracking-widest uppercase" style={{ color: '#8b7355', fontWeight: 500 }}>
+              Push Log
+            </span>
+            <p className="text-[8px] mt-1" style={{ color: '#a89b88' }}>Latest commits across your repositories</p>
+          </div>
+        </div>
+
+        {/* Commits List with Auto-Scroll */}
+        <div 
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto p-2 transition-opacity duration-300"
+          style={{ 
+            opacity: isHovering ? 1 : 1,
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#d4a373 transparent'
+          }}
+          onMouseEnter={() => setIsHovering(true)}
+          onMouseLeave={() => setIsHovering(false)}
+        >
+          
+          {/* Loading State */}
+          {loading && (
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="space-y-2">
+                  <div 
+                    className="h-4 rounded-full animate-pulse"
+                    style={{ backgroundColor: '#e8dcc8', width: `${85 + Math.random() * 15}%` }}
+                  />
+                  <div 
+                    className="h-3 rounded-full animate-pulse"
+                    style={{ backgroundColor: '#ede4d1', width: `${60 + Math.random() * 30}%` }}
+                  />
                 </div>
-             </div>
-           </li>
-        ))}
+              ))}
+            </div>
+          )}
 
-        {/* DATA STATE */}
-        {!loading && commits.map((c, i) => (
-          <li key={i} className="flex gap-3 items-start group">
-            {/* The Blue Dot */}
-            <div className="mt-1.5 min-w-[6px] h-[6px] rounded-full bg-blue-500 group-hover:bg-blue-400 group-hover:shadow-[0_0_8px_rgba(96,165,250,0.6)] transition-all"></div>
-            
-            <div className="flex-1 min-w-0">
-              
-              {/* Repo Name */}
-              <div className="text-[10px] text-slate-500 mb-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                {c.repo}
-              </div>
+          {/* Commit Items */}
+          {!loading && commits.length > 0 && commits.map((c, i) => (
+            <div 
+              key={i}
+              className="commit-item group px-3 py-2 rounded-xl transition-all duration-300 hover:shadow-md cursor-pointer mb-1"
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                border: '1px solid rgba(212, 163, 115, 0.15)',
+              }}
+            >
+              <div className="">
+                {/* Top Row: Message & Time */}
+                <div className="flex items-start justify-between gap-1">
+                  <p 
+                    className="font-medium text-sm flex-1 line-clamp-1 group-hover:text-[#d4a373] transition-colors"
+                    style={{ 
+                      fontFamily: 'JetBrains Mono', 
+                      color: '#2a2520',
+                      fontSize: '13px',
+                      lineHeight: '1.4'
+                    }}
+                  >
+                    {c.msg || 'Update'}
+                  </p>
+                  <span 
+                    className="text-xs font-medium whitespace-nowrap group-hover:opacity-100 transition-opacity"
+                    style={{ color: '#d4a373' }}
+                  >
+                    {formatTimeAgo(c.date || c.time)}
+                  </span>
+                </div>
 
-              {/* Commit Message */}
-              <div className="text-slate-300 group-hover:text-white transition-colors truncate" title={c.msg}>
-                {c.msg}
-              </div>
-              
-              {/* Meta Row: Time & Hash */}
-              <div className="flex justify-between mt-1 text-xs text-slate-500">
-                <span>{formatTimeAgo(c.date || c.time)}</span>
-                <span className="font-mono bg-slate-800 px-1.5 py-0.5 rounded text-slate-400 group-hover:text-blue-300 transition-colors">
-                    #{c.hash}
-                </span>
+                {/* Bottom Row: Repo & Hash */}
+                <div className="flex items-center justify-between gap-1">
+                  <span 
+                    className="text-xs font-semibold uppercase tracking-wider group-hover:text-[#d4a373] transition-colors"
+                    style={{ color: '#8b7355' }}
+                  >
+                    {c.repo}
+                  </span>
+                  <code 
+                    className="text-[11px] rounded bg-[#d4a373]/8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ color: '#d4a373', fontFamily: 'JetBrains Mono' }}
+                  >
+                    {c.hash?.slice(0, 7) || '—'}
+                  </code>
+                </div>
               </div>
             </div>
-          </li>
-        ))}
+          ))}
 
-        {/* EMPTY STATE */}
-        {!loading && commits.length === 0 && (
-           <li className="text-slate-500 text-center italic mt-10">
-              No public commits found recently.
-              <br/><span className="text-xs">Time to push code.</span>
-           </li>
-        )}
-      </ul>
+          {/* Empty State */}
+          {!loading && commits.length === 0 && (
+            <div className="flex items-center justify-center h-32">
+              <p style={{ color: '#a89b88' }} className="text-sm">No recent commits</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Gradient Fade at Bottom */}
+      <div 
+        className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none"
+        style={{
+          background: 'linear-gradient(to bottom, transparent, rgba(245, 230, 211, 0.8))'
+        }}
+      />
+      
+      {/* Custom Scrollbar Styles */}
+      <style jsx>{`
+        .commits-gem ::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .commits-gem ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        .commits-gem ::-webkit-scrollbar-thumb {
+          background: #d4a373;
+          border-radius: 3px;
+        }
+        
+        .commits-gem ::-webkit-scrollbar-thumb:hover {
+          background: #c49363;
+        }
+      `}</style>
     </div>
   );
 };
 
 export default RealRecentCommitsBlock;
-
-
-// const RecentCommitsBlock = () => {
-//   const commits = [
-//     { msg: "feat: async crawler integration", time: "2h ago", hash: "8a2f9d" },
-//     { msg: "fix: docker memory leak", time: "5h ago", hash: "4b3c2e" },
-//     { msg: "chore: update portfolio assets", time: "1d ago", hash: "9f8e1a" },
-//     { msg: "refactor: redis caching layer", time: "2d ago", hash: "1d2c3b" },
-//   ];
-
-//   return (
-//     <div className="bg-slate-900 text-slate-200 p-6 rounded-xl border border-slate-800 shadow-lg h-full font-mono text-sm flex flex-col">
-//       <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-white">
-//         <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-//         Recent Commits
-//       </h3>
-//       <ul className="space-y-4 flex-1">
-//         {commits.map((c, i) => (
-//           <li key={i} className="flex gap-3 items-start group">
-//             <div className="mt-1.5 min-w-[6px] h-[6px] rounded-full bg-blue-500 group-hover:bg-blue-400"></div>
-//             <div className="flex-1">
-//               <div className="text-slate-300 group-hover:text-white transition-colors truncate">
-//                 {c.msg}
-//               </div>
-//               <div className="flex justify-between mt-1 text-xs text-slate-500">
-//                 <span>{c.time}</span>
-//                 <span className="font-mono bg-slate-800 px-1 rounded text-slate-400">#{c.hash}</span>
-//               </div>
-//             </div>
-//           </li>
-//         ))}
-//       </ul>
-//     </div>
-//   );
-// };
