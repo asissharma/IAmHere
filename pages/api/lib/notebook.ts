@@ -4,12 +4,20 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 interface INotebook extends Document {
   nodeId: string;
   title: string;
-  type: "syllabus"|"folder" | "file"; // Restrict to 'folder' or 'file'
-  resourceType?: "text" | "pdf" | "url" | "quiz"|"fileAnalysis"; // Specific to files
+  type: "syllabus" | "folder" | "file"; // Restrict to 'folder' or 'file'
+  resourceType?: "text" | "pdf" | "url" | "quiz" | "fileAnalysis"; // Specific to files
   content?: string; // For text content, PDFs, or external links
   progress?: number; // For tracking completion (0-100)
   parentId?: string | null; // Parent ID for hierarchical structure
-  generated?: false;
+  generated?: boolean;
+
+  // New Enhanced Fields
+  tags: string[];          // User-defined tags
+  pinned: boolean;         // Pin to top of list
+  lastViewed: Date;        // Track recent access
+  aiSummary?: string;      // Auto-generated summary
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Schema definition for the notebook model
@@ -21,15 +29,21 @@ const NotebookSchema: Schema = new Schema(
       default: () => new mongoose.Types.ObjectId().toString(),
     },
     title: { type: String, required: true },
-    type: { type: String, required: true, enum: ["syllabus","folder", "file"] },
+    type: { type: String, required: true, enum: ["syllabus", "folder", "file"] },
     resourceType: {
       type: String,
-      enum: ["text", "pdf", "url", "quiz","fileAnalysis"],
+      enum: ["text", "pdf", "url", "quiz", "fileAnalysis"],
     },
     content: { type: String }, // Store text, URLs, or relevant file links
     progress: { type: Number, min: 0, max: 100, default: 0 }, // Default progress is 0
     parentId: { type: String, default: null }, // Null for root-level nodes
-    generated: { type: Boolean, default: false }, // Null for root-level nodes
+    generated: { type: Boolean, default: false },
+
+    // New Fields
+    tags: { type: [String], default: [] },
+    pinned: { type: Boolean, default: false },
+    lastViewed: { type: Date, default: Date.now },
+    aiSummary: { type: String },
   },
   {
     timestamps: true, // Automatically add createdAt and updatedAt fields

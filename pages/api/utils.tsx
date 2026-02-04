@@ -26,10 +26,12 @@ type Node = {
   nodeId: string;
   id: string;
   title: string;
-  type: "syllabus"|"folder" | "file";
+  type: "syllabus" | "folder" | "file";
   parentId: string | null;
   content?: string;
   children: Node[];
+  tags?: string[];
+  pinned?: boolean;
 };
 
 export const fetchMindMap = async (parentId: string) => {
@@ -38,6 +40,15 @@ export const fetchMindMap = async (parentId: string) => {
     return await apiRequest("/api/notes", "GET", { parentId, identifier });
   } catch (error) {
     throw new Error("Failed to generate data. Please try again.");
+  }
+};
+
+export const fetchGlobalMindMap = async () => {
+  try {
+    const identifier = "fetchGlobalMindMap";
+    return await apiRequest("/api/notes", "GET", { identifier });
+  } catch (error) {
+    throw new Error("Failed to fetch global mind map.");
   }
 };
 export const handleGenerateData = async (parentId: string) => {
@@ -59,10 +70,10 @@ export const fetchNodes = async () => {
   }
 };
 
-export const addNode = async (title: string, type: "syllabus"|"folder" | "file", parentId: string | null) => {
+export const addNode = async (title: string, type: "syllabus" | "folder" | "file", parentId: string | null, tags?: string[], pinned?: boolean) => {
   const identifier = "addNode";
   try {
-    return await apiRequest("/api/notes", "POST", { title, type, parentId, identifier });
+    return await apiRequest("/api/notes", "POST", { title, type, parentId, identifier, tags, pinned });
   } catch (error) {
     console.error("Error adding node:", error);
     throw error;
@@ -79,12 +90,22 @@ export const deleteNode = async (nodeId: string) => {
   }
 };
 
-export const saveContent = async (nodeId: string, content: string,resourceType: string) => {
+export const saveContent = async (nodeId: string, content: string, resourceType: string) => {
   const identifier = "saveContent";
   try {
     return await apiRequest("/api/notes", "PUT", { nodeId, content, resourceType, identifier });
   } catch (error) {
     console.error("Error saving content:", error);
+    throw error;
+  }
+};
+
+export const updateNode = async (nodeId: string, updates: { title?: string, tags?: string[], pinned?: boolean, aiSummary?: string }) => {
+  const identifier = "saveContent";
+  try {
+    return await apiRequest("/api/notes", "PUT", { nodeId, identifier, ...updates });
+  } catch (error) {
+    console.error("Error updating node:", error);
     throw error;
   }
 };

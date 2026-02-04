@@ -1,10 +1,11 @@
 import "react-quill/dist/quill.snow.css";
 import "react-toastify/dist/ReactToastify.css";
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
-import TurndownService from "turndown"; // For converting HTML to markdown
+import { useEffect, useState, useCallback, useMemo } from "react";
+import TurndownService from "turndown";
 import MonacoEditor from "@monaco-editor/react";
-import { AiOutlineFileText, AiOutlineCode, AiOutlineSave, AiOutlineEye } from "react-icons/ai";
+import { AiOutlineSave, AiOutlineSwap } from "react-icons/ai";
+import { FaCode, FaAlignLeft, FaEye, FaMarkdown } from "react-icons/fa";
 import FileAnalysis from "./fileRipper";
 import ProEditorWrapper from "../editor/Editor";
 
@@ -14,7 +15,7 @@ export type Node = {
   nodeId: string;
   id: string;
   title: string;
-  type: "syllabus"|"folder" | "file";
+  type: "syllabus" | "folder" | "file";
   parentId: string | null;
   content?: string;
   children: Node[];
@@ -24,153 +25,172 @@ export type Node = {
 
 const NodeEditor: React.FC<{
   node: Node | null;
-  onSaveContent: (nodeId: string, content: string,resourceType: string) => void;
+  onSaveContent: (nodeId: string, content: string, resourceType: string) => void;
 }> = ({ node, onSaveContent }) => {
-  const [htmlContent, setHtmlContent] = useState(node?.content || ""); // For ReactQuill
-  const [markdownContent, setMarkdownContent] = useState(""); // For Monaco
-  const [editorMode, setEditorMode] = useState<"quill" | "monaco" | "fileAnalysis">("quill"); // Editor modes: quill, monaco, or fileAnalysis
-  const [analysedContent, setAnalysedContent] = useState(""); // State for analyzed content
-
   const turndownService = new TurndownService();
 
-  useEffect(() => {
-    if (node) {
-      const content = node.content || "";
-      setHtmlContent(content);
-      setMarkdownContent(turndownService.turndown(content));
-      
-      // Set editorMode based on resourceType
-      if (node.resourceType === "fileAnalysis") {
-        setEditorMode("fileAnalysis");
-      } else {
-        setEditorMode("quill"); // Default mode
-      }
-    }
-  }, [node]);
+  // Helper to determine mode synchronously
+  const getInitialMode = (n: Node | null): "quill" | "monaco" | "fileAnalysis" => {
+    if (!n) return "quill";
+    if (n.resourceType === "fileAnalysis") return "fileAnalysis";
 
-  const handleSave = () => {
-    let saveContent = editorMode === "monaco" ? markdownContent : htmlContent;
-    let resourceType = '';
-    if(editorMode == "fileAnalysis"){
-      resourceType = 'fileAnalysis'; 
-      saveContent = analysedContent;
+    const codeExtensions = [".js", ".ts", ".tsx", ".jsx", ".py", ".json", ".css", ".html", ".java", ".cpp", ".c", ".go", ".rs", ".php"];
+    if (codeExtensions.some(ext => n.title.toLowerCase().endsWith(ext))) {
+      return "monaco";
     }
-    onSaveContent(node?.id || "", saveContent,resourceType);
+    return "quill";
   };
 
-  const handleEditorModeChange = (mode: "quill" | "monaco" | "fileAnalysis") => {
-    if (mode === "monaco" && editorMode !== "monaco") {
-      // Convert current HTML content to markdown before switching to Monaco
+  // State initialization (Synchronous)
+  const [htmlContent, setHtmlContent] = useState(node?.content || "");
+  const [markdownContent, setMarkdownContent] = useState(() => node?.content ? turndownService.turndown(node.content) : "");
+  const [editorMode, setEditorMode] = useState<"quill" | "monaco" | "fileAnalysis">(() => getInitialMode(node));
+  const [analysedContent, setAnalysedContent] = useState("");
+
+  // Update effect if node reference changes (in case component is NOT remounted, though it should be)
+  useEffect(() => {
+    if (node) {
+      setHtmlContent(node.content || "");
+      setMarkdownContent(node.content ? turndownService.turndown(node.content) : "");
+      setEditorMode(getInitialMode(node));
+    }
+  }, [node]); // Dependencies simplified since we just reset on node change
+
+  // Calculate available modes (for UI)
+  const availableModes = useMemo(() => {
+    if (!node) return [];
+    if (node.resourceType === "fileAnalysis") return ["fileAnalysis"];
+
+    const codeExtensions = [".js", ".ts", ".tsx", ".jsx", ".py", ".json", ".css", ".html", ".java", ".cpp", ".c", ".go", ".rs", ".php"];
+    if (codeExtensions.some(ext => node.title.toLowerCase().endsWith(ext))) return ["monaco"];
+
+    return ["quill", "monaco"];
+  }, [node]);
+
+  const handleSave = useCallback(() => {
+    let saveContent = editorMode === "monaco" ? markdownContent : htmlContent;
+    let resourceType = node?.resourceType || '';
+    if (editorMode == "fileAnalysis") {
+      resourceType = 'fileAnalysis';
+      saveContent = analysedContent;
+    }
+    onSaveContent(node?.id || "", saveContent, resourceType);
+  }, [editorMode, markdownContent, htmlContent, analysedContent, node, onSaveContent]);
+
+  // Keyboard shortcut for save
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleSave]);
+
+  const toggleMode = () => {
+    if (editorMode === "quill") {
+      // To Monaco
+      // If content works, great. If plain text, turndown might wrap it.
       const markdown = turndownService.turndown(htmlContent || "");
       setMarkdownContent(markdown);
+      setEditorMode("monaco");
+    } else {
+      // To Quill
+      // Assuming markdownContent is simple text or actual markdown
+      setEditorMode("quill");
+      // Note: We don't verify MD->HTML here, relying on Quill to handle text or previous HTML
     }
-    setEditorMode(mode);
   };
 
   if (!node) {
     return (
-      <div className="flex-1 flex items-center justify-center text-gray-500">
-        <h2 className="text-xl font-semibold mb-1">Select a node to edit</h2>
+      <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
+        Select a file to edit
       </div>
     );
   }
 
   return (
-    <div className="h-full flex-1 bg-white p-2 rounded-lg shadow-lg overflow-y-scroll scrollabler">
-      {/* Header: Title and Action Buttons */}
-      <div className="text-xl font-semibold mb-2 flex items-center justify-between">
-        <div className="flex-1 text-center">
-          <h1>{node.title}</h1>
-        </div>
+    <div className="h-full flex flex-col bg-white dark:bg-gray-950 p-0 rounded-none overflow-hidden relative group">
+      {/* Header */}
+      <div className="flex-none h-8 flex items-center justify-between px-3 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 z-10 w-full select-none">
+        <h1 className="text-sm font-semibold text-gray-700 dark:text-gray-300 truncate max-w-[70%] flex items-center gap-2" title={node.title}>
+          {node.title}
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-400">
+            {editorMode === 'monaco' ? 'Code' : editorMode === 'fileAnalysis' ? 'Analysis' : 'Note'}
+          </span>
+        </h1>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => handleEditorModeChange("quill")}
-            className={`transition bg-gray-200 p-2 rounded hover:bg-gray-300 ${
-              editorMode === "quill" && "bg-gray-400"
-            }`}
-          >
-            <AiOutlineFileText size={24} title="Switch to ReactQuill" />
-          </button>
-          <button
-            onClick={() => handleEditorModeChange("monaco")}
-            className={`transition bg-gray-200 p-2 rounded hover:bg-gray-300 ${
-              editorMode === "monaco" && "bg-gray-400"
-            }`}
-          >
-            <AiOutlineCode size={24} title="Switch to Monaco" />
-          </button>
-          <button
-            onClick={() => handleEditorModeChange("fileAnalysis")}
-            className={`transition bg-gray-200 p-2 rounded hover:bg-gray-300 ${
-              editorMode === "fileAnalysis" && "bg-gray-400"
-            }`}
-          >
-            <AiOutlineEye size={24} title="Switch to File Analysis" />
-          </button>
+          {/* Direct Toggle */}
+          {availableModes.length > 1 && (
+            <button
+              onClick={toggleMode}
+              className="group/toggle flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gray-50 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-400 hover:text-blue-600 transition-all cursor-pointer"
+              title={`Switch to ${editorMode === 'quill' ? 'Code View' : 'Rich Text'}`}
+            >
+              {editorMode === 'quill' ? <FaCode size={12} /> : <FaAlignLeft size={12} />}
+              <span className="text-[10px] font-medium max-w-0 overflow-hidden group-hover/toggle:max-w-xs transition-all duration-300 whitespace-nowrap">
+                {editorMode === 'quill' ? 'Code View' : 'Rich Text'}
+              </span>
+            </button>
+          )}
+
+          {/* Save */}
           <button
             onClick={handleSave}
-            className="transition bg-primary p-2 rounded text-white hover:bg-primary-dark"
+            title="Save (Ctrl+S)"
+            className="p-1.5 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-full text-gray-300 hover:text-green-600 transition-colors"
           >
-            <AiOutlineSave size={24} title="Save Content" />
+            <AiOutlineSave size={14} />
           </button>
         </div>
       </div>
 
-      {/* Editor Modes */}
-      {node.type === "file" ? (
-        editorMode === "monaco" ? (
-          <MonacoEditor
-            height="600px"
-            language="markdown"
-            theme="vs-dark"
-            value={markdownContent}
-            onChange={(newValue) => setMarkdownContent(newValue || "")}
-            options={{
-              selectOnLineNumbers: true,
-            }}
-          />
-        ) : editorMode === "quill" ? (
-          <ProEditorWrapper
-            initialContent={htmlContent}
-            onChange={(html) => setHtmlContent(html|| "")}
-            storageKey={undefined}
-            className=""
-          />
-          // <ReactQuill
-          //   theme="snow"
-          //   value={htmlContent}
-          //   onChange={(value) => setHtmlContent(value || "")}
-          //   modules={{
-          //     toolbar: [
-          //       [{ header: "1" }, { header: "2" }, { font: [] }],
-          //       [{ list: "ordered" }, { list: "bullet" }],
-          //       ["bold", "italic", "underline"],
-          //       ["link", "image"],
-          //       [{ align: [] }],
-          //       ["clean"],
-          //     ],
-          //   }}
-          //   formats={[
-          //     "header",
-          //     "font",
-          //     "bold",
-          //     "italic",
-          //     "underline",
-          //     "list",
-          //     "bullet",
-          //     "link",
-          //     "image",
-          //     "align",
-          //   ]}
-          //   style={{ height: "400px" }}
-          // />
-        ) : editorMode === "fileAnalysis" ? (
-          <FileAnalysis analysedContent={node.content || null} setAnalysedContent={setAnalysedContent}/>
-        ) : null
-      ) : (
-        <p>Select a file to edit its content</p>
-      )}
+      {/* Content */}
+      <div className="flex-1 overflow-hidden relative text-sm">
+        {node.type === "file" ? (
+          editorMode === "monaco" ? (
+            <MonacoEditor
+              height="100%"
+              language={
+                node.title.endsWith(".js") ? "javascript" :
+                  node.title.endsWith(".ts") ? "typescript" :
+                    node.title.endsWith(".json") ? "json" :
+                      node.title.endsWith(".py") ? "python" :
+                        "markdown"
+              }
+              theme="vs-light"
+              value={markdownContent}
+              onChange={(newValue) => setMarkdownContent(newValue || "")}
+              options={{
+                selectOnLineNumbers: true,
+                minimap: { enabled: false },
+                padding: { top: 8, bottom: 8 },
+                fontSize: 13,
+                fontFamily: "'JetBrains Mono', monospace",
+                scrollBeyondLastLine: false,
+                wordWrap: "on"
+              }}
+            />
+          ) : editorMode === "quill" ? (
+            <ProEditorWrapper
+              initialContent={htmlContent}
+              onChange={(html) => setHtmlContent(html || "")}
+              storageKey={undefined}
+              className="h-full border-none"
+            />
+          ) : editorMode === "fileAnalysis" ? (
+            <div className="p-4 h-full overflow-y-auto custom-scrollbar">
+              <FileAnalysis analysedContent={node.content || null} setAnalysedContent={setAnalysedContent} />
+            </div>
+          ) : null
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-400">Select a file</div>
+        )}
+      </div>
     </div>
   );
 };

@@ -1,242 +1,304 @@
 import React, { useState, useEffect, useCallback } from "react";
 import ReactFlow, {
-  ReactFlowProvider,
-  useNodesState,
-  useEdgesState,
-  addEdge,
-  Background,
+    ReactFlowProvider,
+    useNodesState,
+    useEdgesState,
+    addEdge,
+    Background,
+    Controls,
+    MiniMap,
+    Panel,
+    Node,
+    Edge
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { fetchMindMap } from "@/pages/api/utils";
-import { AiFillCloseCircle } from "react-icons/ai";
+import { fetchMindMap, fetchGlobalMindMap, fetchNodes } from "@/pages/api/utils";
+import { AiFillCloseCircle, AiOutlineGlobal, AiOutlineCluster } from "react-icons/ai";
+import { FaTags, FaProjectDiagram, FaExpand, FaCompress } from "react-icons/fa";
 
 type TreeNode = {
-  nodeId: string;
-  title: string;
-  type: string;
-  parentId: string | null;
-  content?: string;
-  children: TreeNode[];
+    nodeId: string;
+    title: string;
+    type: string;
+    parentId: string | null;
+    content?: string;
+    children: TreeNode[];
+    tags?: string[];
+    pinned?: boolean;
 };
 
 type MindMapProps = {
-  parentId: string;
-  onClose: () => void;
+    parentId: string;
+    onClose: () => void;
+    onNavigate?: (nodeId: string) => void;
 };
 
-const MindMap: React.FC<MindMapProps> = ({ parentId, onClose }) => {
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [fileNodeDetails, setFileNodeDetails] = useState<TreeNode | null>(null); // Renamed `selectedNode`
+const MindMap: React.FC<MindMapProps> = ({ parentId, onClose, onNavigate }) => {
+    const [nodes, setNodes, onNodesChange] = useNodesState([]);
+    const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+    const [loading, setLoading] = useState(true);
+    const [mode, setMode] = useState<"tree" | "global">("tree");
+    const [showTags, setShowTags] = useState(false);
+    const [selectedNodeData, setSelectedNodeData] = useState<any>(null);
+    const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
 
-  const handleFileNodeClick = (event: React.MouseEvent, node: any) => { // Renamed `onNodeClick`
-    if (node.type === "file") {
-      const foundNode = nodes.find((n: any) => n.id === node.id);
-      setFileNodeDetails({
-        nodeId: node.id,
-        title: foundNode?.data.label || "",
-        type: "file",
-        parentId: null,
-        content: foundNode?.data.content || "No content available",
-        children: [],
-      });
-    }
-  };
+    // Colors for depth/types
+    const getNodeStyle = (type: string, isExpanded: boolean) => {
+        let bg = '#ffffff';
+        if (type === 'syllabus') bg = '#e0e7ff'; // Indigo 100
+        if (type === 'folder') bg = '#fef3c7'; // Amber 100
 
-  const onConnect = useCallback(
-    (params: any) => setEdges((eds) => addEdge(params, eds)),
-    []
-  );
-
-  const getNodeColor = (depth: number) => {
-    const pastelColors = [
-      "#f7c6d7", "#f9e1a3", "#c0e2b4", "#a2c2ea", "#f7a1b1", "#a8e0ff", "#f6d8d8",
-      "#c1e6c5", "#fbe2a7", "#d8a3e7",
-    ];
-    return pastelColors[depth % pastelColors.length];
-  };
-
-  const fetchAndTransformData = async () => {
-    try {
-      setLoading(true);
-      const res = await fetchMindMap(parentId);
-      const treeData: TreeNode[] = res;
-
-      const nodes: any[] = [];
-      const edges: any[] = [];
-      const occupiedPositions = new Set<string>();
-
-      const traverseTree = (
-        node: TreeNode,
-        parentId: string | null,
-        depth: number,
-        angleStart: number,
-        angleEnd: number,
-        radiusMultiplier: number
-      ) => {
-        let radius = depth * radiusMultiplier; // Adjust radius per level
-        const angle = (angleStart + angleEnd) / 2; // Calculate node angle
-        let x = radius * Math.cos(angle);
-        let y = radius * Math.sin(angle);
-
-        const findFreePosition = (x: number, y: number) => {
-          let spiralRadius = 5;
-          let spiralAngle = 0;
-          while (occupiedPositions.has(`${Math.round(x)},${Math.round(y)}`)) {
-            x += spiralRadius * Math.cos(spiralAngle);
-            y += spiralRadius * Math.sin(spiralAngle);
-            spiralAngle += Math.PI / 4;
-            spiralRadius += 2;
-          }
-          return { x, y };
+        return {
+            background: bg,
+            border: isExpanded ? '2px solid #6366f1' : '1px dashed #cbd5e1',
+            borderRadius: type === 'file' ? '6px' : '20px',
+            width: 160,
+            fontSize: 12,
+            padding: 8,
         };
+    };
 
-        const adjustedPosition = findFreePosition(x, y);
-        x = adjustedPosition.x;
-        y = adjustedPosition.y;
+    // --- Layout Helper ---
+    // Simple radial layout for new nodes around a center
+    const getRadialPosition = (cx: number, cy: number, index: number, total: number, radius: number) => {
+        if (total === 0) return { x: cx, y: cy };
+        const angle = (index / total) * 2 * Math.PI;
+        return {
+            x: cx + Math.cos(angle) * radius,
+            y: cy + Math.sin(angle) * radius
+        };
+    };
 
-        occupiedPositions.add(`${Math.round(x)},${Math.round(y)}`);
+    const handleNodeClick = async (event: React.MouseEvent, node: Node) => {
+        setSelectedNodeData(node.data);
+        if (mode === 'global' || node.type === 'file') return;
 
-        nodes.push({
-          id: node.nodeId,
-          data: { label: node.title, content: node.content },
-          position: { x, y },
-          style: { backgroundColor: getNodeColor(depth), color: "#333", borderRadius: "8px" },
-          type: node.type,
-        });
-
-        if (parentId) {
-          edges.push({
-            id: `${parentId}-${node.nodeId}`,
-            source: parentId,
-            target: node.nodeId,
-            animated: true,
-          });
+        // Lazy Loading Logic for Tree Mode
+        if (expandedNodes.has(node.id)) {
+            // Collapse (remove children) - Optional, maybe just leave open?
+            return;
         }
 
-        const childrenCount = node.children.length;
-        const angleStep = (angleEnd - angleStart) / Math.max(childrenCount, 1);
+        try {
+            // Using fetchMindMap effectively fetches subtree. We can use it.
+            const res = await fetchMindMap(node.id);
+            const treeRoot = Array.isArray(res) ? res.find(n => n.nodeId === node.id) : res;
 
-        node.children.forEach((child, index) => {
-          traverseTree(
-            child,
-            node.nodeId,
-            depth + 1,
-            angleStart + index * angleStep,
-            angleStart + (index + 1) * angleStep,
-            radiusMultiplier
-          );
-        });
-      };
+            if (!treeRoot || !treeRoot.children) return;
 
-      const initialRadiusMultiplier = 200;
-      treeData.forEach((rootNode, index) => {
-        traverseTree(
-          rootNode,
-          null,
-          1,
-          (2 * Math.PI * index) / treeData.length,
-          (2 * Math.PI * (index + 1)) / treeData.length,
-          initialRadiusMultiplier
-        );
-      });
+            const newNodes: Node[] = [];
+            const newEdges: Edge[] = [];
+            const children = treeRoot.children;
+            const radius = 250;
 
-      setNodes(nodes);
-      setEdges(edges);
-    } catch (err: any) {
-      console.error("Error fetching or processing mind map data:", err);
-      setError("Failed to load mind map.");
-    } finally {
-      setLoading(false);
-    }
-  };
+            children.forEach((child: TreeNode, i: number) => {
+                // Check if node exists
+                if (nodes.some(n => n.id === child.nodeId)) return;
 
-  useEffect(() => {
-    fetchAndTransformData();
-  }, [parentId]);
+                const pos = getRadialPosition(node.position.x, node.position.y, i, children.length, radius);
 
-  if (loading) {
+                newNodes.push({
+                    id: child.nodeId,
+                    type: 'default', // Using default for now, can be custom
+                    data: { label: child.title, ...child },
+                    position: pos,
+                    style: getNodeStyle(child.type, false),
+                });
+
+                newEdges.push({
+                    id: `${node.id}-${child.nodeId}`,
+                    source: node.id,
+                    target: child.nodeId,
+                    style: { stroke: '#cbd5e1' },
+                    type: 'smoothstep'
+                });
+            });
+
+            setNodes((nds) => nds.concat(newNodes));
+            setEdges((eds) => eds.concat(newEdges));
+            setExpandedNodes(prev => new Set(prev).add(node.id));
+
+            // Update style of clicked node to indicate expanded
+            setNodes((nds) => nds.map(n => {
+                if (n.id === node.id) {
+                    return { ...n, style: getNodeStyle(n.data.type, true) };
+                }
+                return n;
+            }));
+
+        } catch (err) {
+            console.error("Failed to expand node", err);
+        }
+    };
+
+    const initGraph = async () => {
+        setLoading(true);
+        setNodes([]);
+        setEdges([]);
+        setExpandedNodes(new Set());
+
+        try {
+            if (mode === "global") {
+                const data = await fetchGlobalMindMap();
+                const gNodes: any[] = [];
+                const gEdges: any[] = [];
+                const roots = data.filter((n: any) => !n.parentId);
+                const childMap = new Map();
+                data.forEach((n: any) => { if (n.parentId) { if (!childMap.has(n.parentId)) childMap.set(n.parentId, []); childMap.get(n.parentId).push(n); } });
+
+                const traverse = (node: any, cx: number, cy: number, angleRange: any, level: number) => {
+                    gNodes.push({
+                        id: node.nodeId,
+                        data: { label: node.title, ...node },
+                        position: { x: cx, y: cy },
+                        style: getNodeStyle(node.type, false)
+                    });
+                    const children = childMap.get(node.nodeId) || [];
+                    if (children.length === 0) return;
+                    const step = (angleRange.end - angleRange.start) / children.length;
+                    children.forEach((c: any, i: number) => {
+                        const angle = angleRange.start + (i * step) + step / 2;
+                        const r = 200 - level * 20;
+                        const nx = cx + Math.cos(angle) * Math.max(r, 50);
+                        const ny = cy + Math.sin(angle) * Math.max(r, 50);
+                        gEdges.push({ id: `${node.nodeId}-${c.nodeId}`, source: node.nodeId, target: c.nodeId, style: { stroke: '#ddd' } });
+                        traverse(c, nx, ny, { start: angle - step / 2, end: angle + step / 2 }, level + 1);
+                    });
+                };
+
+                roots.forEach((r: any, i: number) => {
+                    const a = (i / roots.length) * 2 * Math.PI;
+                    traverse(r, Math.cos(a) * 500, Math.sin(a) * 500, { start: 0, end: 2 * Math.PI }, 0);
+                });
+                setNodes(gNodes);
+                setEdges(gEdges);
+
+            } else {
+                // Lazy Tree Mode: Only load root + direct children
+                const res = await fetchMindMap(parentId);
+
+                // Flatten first level
+                const rootTree = Array.isArray(res) ? res[0] : res;
+                if (!rootTree) return; // Error or empty
+
+                const initNodes: Node[] = [];
+                const initEdges: Edge[] = [];
+
+                // Root
+                initNodes.push({
+                    id: rootTree.nodeId,
+                    data: { label: rootTree.title, ...rootTree },
+                    position: { x: 0, y: 0 },
+                    style: getNodeStyle(rootTree.type, true), // Root starts expanded-ish visually
+                    type: 'input'
+                });
+                setExpandedNodes(new Set([rootTree.nodeId]));
+
+                // Direct children
+                if (rootTree.children) {
+                    rootTree.children.forEach((child: TreeNode, i: number) => {
+                        const pos = getRadialPosition(0, 0, i, rootTree.children.length, 250);
+                        initNodes.push({
+                            id: child.nodeId,
+                            data: { label: child.title, ...child },
+                            position: pos,
+                            style: getNodeStyle(child.type, false) // Children start collapsed
+                        });
+                        initEdges.push({
+                            id: `${rootTree.nodeId}-${child.nodeId}`,
+                            source: rootTree.nodeId,
+                            target: child.nodeId,
+                            style: { stroke: '#cbd5e1' }
+                        });
+                    });
+                }
+                setNodes(initNodes);
+                setEdges(initEdges);
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        initGraph();
+    }, [mode, parentId]);
+
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div role="status" className="flex flex-col items-center space-y-2">
-          <span>Loading Mind Map...</span>
-        </div>
-      </div>
-    );
-  }
+        <div className="w-full h-full bg-gray-50 relative">
+            <ReactFlowProvider>
+                <ReactFlow
+                    nodes={nodes}
+                    edges={edges}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    onNodeClick={handleNodeClick}
+                    fitView
+                    className="bg-gray-50 dark:bg-gray-900"
+                >
+                    <Background color="#ccc" gap={20} />
+                    <Controls />
+                    <MiniMap />
 
-  if (error) {
-    return (
-      <div className="flex flex-col items-center p-6 text-center">
-        <p className="mb-4 text-red-500">Error: {error}</p>
-        <button
-          className="px-4 py-2 text-white bg-blue-600 rounded"
-          onClick={() => window.location.reload()}
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
+                    <Panel position="top-left" className="bg-white dark:bg-gray-800 p-2 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 flex gap-2">
+                        <button
+                            onClick={() => setMode(mode === 'tree' ? 'global' : 'tree')}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${mode === 'global' ? 'bg-indigo-100 text-indigo-700' : 'hover:bg-gray-100 text-gray-700'}`}
+                        >
+                            <AiOutlineGlobal /> {mode === 'global' ? 'Global View' : 'Tree View'}
+                        </button>
+                        <div className="w-px bg-gray-200 h-6 mx-1"></div>
+                        <button onClick={initGraph} className="p-2 hover:bg-gray-100 rounded-full" title="Refresh">
+                            <FaProjectDiagram />
+                        </button>
+                    </Panel>
 
-  return (
-    <div style={{ height: "90vh", position: "relative", display: "flex" }}>
-      <ReactFlowProvider>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onNodeClick={handleFileNodeClick}
-          fitView
-          style={{ backgroundColor: "#F7F9FB" }}
-        >
-          <Background />
-        </ReactFlow>
-      </ReactFlowProvider>
-      <AiFillCloseCircle
-        onClick={onClose}
-        style={{
-          position: "absolute",
-          top: "10px",
-          right: "10px",
-          fontSize: "24px",
-          cursor: "pointer",
-          color: "red",
-        }}
-      />
-      {fileNodeDetails && (
-        <div className="fixed relative top-0 right-0 z-10 w-1/2 scrollabler rounded-lg bg-slate-300 shadow-xl flex items-center justify-center">
-          <div className="bg-white rounded-lg h-96 p-4 w-full overflow-x-hidden overflow-y-scroll scrollabler relative">
-            <button 
-              onClick={() => setFileNodeDetails(null)} 
-              className="absolute top-4 right-4 text-black"
+                </ReactFlow>
+            </ReactFlowProvider>
+
+            <button
+                onClick={onClose}
+                className="absolute top-4 right-4 z-50 p-2 bg-white dark:bg-gray-800 rounded-full shadow-lg hover:bg-gray-100 text-gray-500"
             >
-              ×
+                <AiFillCloseCircle size={24} className="text-red-500" />
             </button>
-            <div>
-                <div className="w-full space-y-2">
-                  <p>
-                    <strong>{fileNodeDetails.title}</strong> 
-                  </p>
-                  <p> 
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: fileNodeDetails.content || "Solution will appear here...",
-                      }}
-                      className="p-4 whitespace-normal break-words"
-                    />
-                  </p>
+
+            {/* Detail Overlay */}
+            {selectedNodeData && (
+                <div className="absolute top-20 right-4 w-80 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50">
+                    <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-bold text-lg text-gray-900 dark:text-white truncate pr-4">{selectedNodeData.label}</h3>
+                        <button onClick={() => setSelectedNodeData(null)} className="text-gray-400 hover:text-gray-600">×</button>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2 mb-3">
+                        {onNavigate && (
+                            <button
+                                onClick={() => {
+                                    onNavigate(selectedNodeData.nodeId);
+                                    onClose(); // Close mindmap to show content
+                                }}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded transition-colors"
+                            >
+                                Open in Editor
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="text-sm text-gray-600 dark:text-gray-300 max-h-60 overflow-y-auto custom-scrollbar">
+                        {selectedNodeData.content ? (
+                            <div dangerouslySetInnerHTML={{ __html: selectedNodeData.content }} />
+                        ) : (
+                            <p className="italic text-gray-400">Double click to expand if folder.</p>
+                        )}
+                    </div>
                 </div>
-            </div>
-          </div>
+            )}
         </div>
-      )}
-    </div>
-  );
+    );
 };
 
 export default MindMap;

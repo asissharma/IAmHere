@@ -14,12 +14,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   await connectToDatabase();
 
   const { method } = req;
-  let { nodeId, title, type, content, parentId, identifier,resourceType } = req.body; // From the request body
+  let { nodeId, title, type, content, parentId, identifier, resourceType, tags, pinned, aiSummary } = req.body; // From the request body
   const { identifier: queryIdentifier, parentId: queryParentId } = req.query; // From the query parameters
   const actualIdentifier = identifier || queryIdentifier; // Prefer body identifier over query
   const actualParentId = parentId || queryParentId; // Prefer body identifier over query
 
-  console.log(actualIdentifier); 
+  console.log(actualIdentifier);
 
   try {
     switch (method) {
@@ -27,33 +27,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (!actualIdentifier) {
           return res.status(400).json({ error: "Identifier is required for GET requests" });
         }
-        
+
         switch (actualIdentifier) {
           case "fetchNodes":
-            const nodes = await Notebook.find({ parentId: null });
+            const nodes = await Notebook.find({ parentId: null }).sort({ pinned: -1, updatedAt: -1 });
             return res.status(200).json(nodes);
 
           case "fetchDescendants":
             if (!actualParentId) {
               return res.status(400).json({ error: "Parent ID is required for descendants" });
             }
-            const descendants = await Notebook.find({ parentId : actualParentId });
+            const descendants = await Notebook.find({ parentId: actualParentId }).sort({ pinned: -1, updatedAt: -1 });
             return res.status(200).json(descendants);
-            
-            case "fetchMindMap":
-                const { parentId } = req.query;
-            
-                // Fetch nodes from the database
-                const notebooks = await Notebook.find({}).lean();
-            
-                if (!notebooks) {
-                  return res.status(404).json({ message: "No data found" });
-                }
-            
-                // Build the tree for the requested parentId
-                const treeData = buildTree(notebooks, parentId as string | null);
-            
-                return res.status(200).json(treeData);
+
+          case "fetchMindMap":
+            const { parentId } = req.query;
+
+            // Fetch nodes from the database
+            const notebooks = await Notebook.find({}).lean();
+
+            if (!notebooks) {
+              return res.status(404).json({ message: "No data found" });
+            }
+
+            // Build the tree for the requested parentId
+            const treeData = buildTree(notebooks, parentId as string | null);
+
+            return res.status(200).json(treeData);
+
+          case "fetchGlobalMindMap":
+            // Fetch ALL nodes for the global graph
+            const allNodes = await Notebook.find({}).lean();
+            // Return flat list - client will handle layout and connections
+            return res.status(200).json(allNodes);
+
           default:
             return res.status(404).json({ error: "Identifier not found" });
         }
@@ -67,6 +74,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             type,
             content: type === "file" ? content : undefined,
             parentId: actualParentId || null,
+            tags: tags || [],
+            pinned: pinned || false,
           });
           await newNode.save();
           return res.status(201).json(newNode);
@@ -76,12 +85,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       case "PUT":
         if (actualIdentifier === "saveContent") {
           if (!nodeId) return res.status(400).json({ error: "Node ID is required" });
-          if(resourceType === ''){
+          if (resourceType === '') {
             resourceType = undefined;
           }
+          // Build update object dynamically
+          const updateData: any = {};
+          if (title !== undefined) updateData.title = title;
+          if (type !== undefined) updateData.type = type;
+          if (content !== undefined) updateData.content = content;
+          if (resourceType !== undefined) updateData.resourceType = resourceType;
+          if (tags !== undefined) updateData.tags = tags;
+          if (pinned !== undefined) updateData.pinned = pinned;
+          if (aiSummary !== undefined) updateData.aiSummary = aiSummary;
+          updateData.lastViewed = new Date();
+
           const updatedNode = await Notebook.findOneAndUpdate(
             { nodeId },
-            { title, type, content,resourceType },
+            updateData,
             { new: true }
           );
 
@@ -117,16 +137,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 }
 
 // Helper: Retrieve all descendants of a node
+// Helper: Retrieve all descendants of a node
 async function getDescendants(parentId: string): Promise<any[]> {
-  const nodes = await Notebook.find();
-  const results = [];
-  for (const node of nodes) {
-    results.push(node);
-    const childDescendants = await getDescendants(node.nodeId);
-    results.push(...childDescendants);
+  const children = await Notebook.find({ parentId });
+  let descendants = [...children];
+  for (const child of children) {
+    const childDescendants = await getDescendants(child.nodeId);
+    descendants = descendants.concat(childDescendants);
   }
-
-  return results;
+  return descendants;
 }
 
 async function getNestedDescendants(parentId: string, notes: any[]): Promise<any[]> {
@@ -138,7 +157,7 @@ async function getNestedDescendants(parentId: string, notes: any[]): Promise<any
   const parentNode = notes.find((node) => node.nodeId === parentId);
   if (parentNode) {
     console.log(count++);
-    results.push(parentNode); 
+    results.push(parentNode);
   }
 
   for (const node of nodes) {
