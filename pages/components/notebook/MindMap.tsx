@@ -25,6 +25,7 @@ type TreeNode = {
     children: TreeNode[];
     tags?: string[];
     pinned?: boolean;
+    prerequisites?: string[];
 };
 
 type MindMapProps = {
@@ -212,6 +213,29 @@ const MindMap: React.FC<MindMapProps> = ({ parentId, onClose, onNavigate }) => {
                         });
                     });
                 }
+
+                // --- Added: Prerequisite Edges ---
+                // We optimize by looping through initNodes we just created
+                initNodes.forEach(node => {
+                    if (node.data.prerequisites && Array.isArray(node.data.prerequisites)) {
+                        node.data.prerequisites.forEach((reqId: string) => {
+                            // Only draw if target exists in current graph
+                            if (initNodes.some(n => n.id === reqId)) {
+                                initEdges.push({
+                                    id: `req-${reqId}-${node.id}`,
+                                    source: reqId,
+                                    target: node.id,
+                                    animated: true,
+                                    style: { stroke: '#f87171', strokeDasharray: '5 5' },
+                                    label: 'Prerequisite',
+                                    labelStyle: { fill: '#f87171', fontSize: 10 },
+                                    type: 'straight'
+                                });
+                            }
+                        });
+                    }
+                });
+
                 setNodes(initNodes);
                 setEdges(initEdges);
             }
@@ -287,6 +311,21 @@ const MindMap: React.FC<MindMapProps> = ({ parentId, onClose, onNavigate }) => {
                             </button>
                         )}
                     </div>
+
+                    {/* Prerequisites List */}
+                    {selectedNodeData.prerequisites && selectedNodeData.prerequisites.length > 0 && (
+                        <div className="mb-3">
+                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Prerequisites</h4>
+                            <div className="flex flex-wrap gap-1">
+                                {selectedNodeData.prerequisites.map((reqId: string) => (
+                                    <span key={reqId} className="px-2 py-0.5 bg-red-50 text-red-600 text-[10px] rounded border border-red-100 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800">
+                                        {/* Ideally we look up title, but ID is fallback */}
+                                        {nodes.find(n => n.id === reqId)?.data.label || reqId}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     <div className="text-sm text-gray-600 dark:text-gray-300 max-h-60 overflow-y-auto custom-scrollbar">
                         {selectedNodeData.content ? (

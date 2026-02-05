@@ -1,12 +1,14 @@
 import React from "react";
 import { FaBook, FaFolder, FaFile, FaPlus } from "react-icons/fa";
 import { motion } from "framer-motion";
+import ActivityHeatmap from "./ActivityHeatmap";
 
 interface WelcomeViewProps {
     onAdd: (parentId: string | null, type: "syllabus" | "folder" | "file") => void;
+    onImport: () => void;
 }
 
-const WelcomeView: React.FC<WelcomeViewProps> = ({ onAdd }) => {
+const WelcomeView: React.FC<WelcomeViewProps> = ({ onAdd, onImport }) => {
     return (
         <div className="h-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900/50 p-6 text-center">
             <motion.div
@@ -15,41 +17,53 @@ const WelcomeView: React.FC<WelcomeViewProps> = ({ onAdd }) => {
                 transition={{ duration: 0.5 }}
                 className="max-w-2xl w-full"
             >
+                {/* ... Header ... */}
                 <div className="mb-8">
                     <div className="w-20 h-20 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-3xl mx-auto flex items-center justify-center shadow-xl shadow-blue-500/20 mb-6">
                         <span className="text-4xl text-white font-bold">N</span>
                     </div>
                     <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">Welcome to Notebook 2.0</h1>
                     <p className="text-lg text-gray-500 dark:text-gray-400">
-                        Your personal knowledge base. Select a note from the sidebar or create something new to get started.
+                        Your personal knowledge base. Select a note from the sidebar or create something new.
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+                <div className="mb-8">
+                    <ActivityHeatmap />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
                     <ActionButton
                         icon={<FaBook />}
                         label="New Syllabus"
-                        desc="Create a structured course"
+                        desc="Create empty course"
                         color="bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
                         onClick={() => onAdd(null, "syllabus")}
                     />
                     <ActionButton
+                        icon={<FaPlus />} // Change icon to Import icon if available, using Plus for now or FileUpload
+                        label="Import Data"
+                        desc="from CSV / Excel"
+                        color="bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400"
+                        onClick={onImport}
+                    />
+                    <ActionButton
                         icon={<FaFolder />}
                         label="New Folder"
-                        desc="Organize your notes"
+                        desc="Organize notes"
                         color="bg-yellow-50 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400"
                         onClick={() => onAdd(null, "folder")}
                     />
                     <ActionButton
                         icon={<FaFile />}
                         label="New File"
-                        desc="Write a quick note"
+                        desc="Quick note"
                         color="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
                         onClick={() => onAdd(null, "file")}
                     />
                 </div>
 
-                {/* Tip or Quote */}
+                {/* Tip */}
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
                     <p className="text-gray-600 dark:text-gray-300 italic">
                         "The best way to predict the future is to invent it."

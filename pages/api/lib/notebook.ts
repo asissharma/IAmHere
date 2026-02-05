@@ -18,6 +18,17 @@ interface INotebook extends Document {
   aiSummary?: string;      // Auto-generated summary
   createdAt: Date;
   updatedAt: Date;
+
+  // Import Metadata
+  sourceFile?: string;
+  importedAt?: Date;
+  externalLinks?: { type: string; url: string; label?: string }[];
+  metadata?: {
+    author?: string;
+    difficulty?: string;
+    estimatedTime?: string;
+    [key: string]: any;
+  };
 }
 
 // Schema definition for the notebook model
@@ -44,6 +55,24 @@ const NotebookSchema: Schema = new Schema(
     pinned: { type: Boolean, default: false },
     lastViewed: { type: Date, default: Date.now },
     aiSummary: { type: String },
+
+    // Import Metadata
+    sourceFile: { type: String },
+    importedAt: { type: Date },
+    externalLinks: [{
+      type: { type: String }, // e.g., 'youtube', 'article'
+      url: { type: String },
+      label: { type: String }
+    }],
+    metadata: {
+      author: String,
+      difficulty: String,
+      estimatedTime: String
+    },
+
+    // Engagement
+    studyTime: { type: Number, default: 0 }, // Seconds
+    lastStudied: { type: Date }
   },
   {
     timestamps: true, // Automatically add createdAt and updatedAt fields

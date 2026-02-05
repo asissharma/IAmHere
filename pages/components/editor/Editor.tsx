@@ -53,10 +53,10 @@ const Editor: React.FC<EditorProps> = ({
   );
 
   useEffect(() => {
-    if (initialContent !== "") {
-      setLoading(false);
-    }
+    // Set loading to false once component mounts, empty content is valid
+    setLoading(false);
   }, [initialContent]);
+
 
   if (loading) {
     return <>{skeleton ?? <DefaultSkeleton />}</>;

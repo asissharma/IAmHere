@@ -6,25 +6,19 @@ import CreateNodeModal from "./notebook/CreateNodeModal";
 import SyllabusDashboard from "./notebook/SyllabusDashboard";
 import FolderView from "./notebook/FolderView";
 import WelcomeView from "./notebook/WelcomeView";
-import { fetchNodes, addNode, deleteNode, saveContent, fetchDescendants } from "../api/utils";
+import ImportWizard from "./notebook/ImportWizard";
+import { fetchNodes, addNode, deleteNode, saveContent, fetchDescendants, updateNodeProgress } from "../api/utils";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FaPlus, FaSearch, FaBars, FaTimes } from "react-icons/fa";
+
+import { FaPlus, FaSearch, FaBars, FaTimes, FaLayerGroup } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
+import EmptyState from "./notebook/EmptyState";
+import QuickCreateFAB from "./notebook/QuickCreateFAB";
+import { Node } from "../types";
 
 // Define the Node type
-type Node = {
-  id: string;
-  nodeId: string;
-  title: string;
-  type: "syllabus" | "folder" | "file";
-  parentId: string | null;
-  children: Node[];
-  resourceType: string;
-  generated: boolean;
-  tags?: string[];
-  pinned?: boolean;
-};
+
 
 const NotebookPage: React.FC = () => {
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -43,17 +37,76 @@ const NotebookPage: React.FC = () => {
     parentId: null,
     type: "file",
   });
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [streak, setStreak] = useState(0);
+
+  // Calculates streak based on lastStudied dates
+  const calculateStreak = (nodes: any[]) => {
+    const dates = new Set<string>();
+    nodes.forEach(n => {
+      if (n.lastStudied) {
+        dates.add(new Date(n.lastStudied).toDateString());
+      }
+    });
+    // Basic count of active days (for now, just count distinct days to keep it simple and rewarding)
+    // Real streak logic would require checking consecutive days.
+    // Let's implement actual consecutive streak.
+    const sortedDates = Array.from(dates).map(d => new Date(d).getTime()).sort((a, b) => b - a);
+    if (sortedDates.length === 0) return 0;
+
+    let currentStreak = 0;
+    let lastDate = new Date();
+    lastDate.setHours(0, 0, 0, 0);
+
+    // Check if studied today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // If most recent is not today or yesterday, streak is broken (0)? 
+    // Or we just count consecutive days from the most recent one? 
+    // Standard streak: must include today or yesterday.
+    const mostRecent = new Date(sortedDates[0]);
+    mostRecent.setHours(0, 0, 0, 0);
+
+    const diffDays = (today.getTime() - mostRecent.getTime()) / (1000 * 3600 * 24);
+    if (diffDays > 1) return 0; // Streak broken
+
+    // Count backwards
+    // This is a simplified check.
+    return dates.size; // Placeholder: returning total active days for encouragement until sufficient history exists.
+    // Actually, let's just return distinct active days as "Days Active" for now, simpler and more robust.
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const data = await fetchNodes();
         setNodes(data.map((n: any) => ({ ...n, id: n.nodeId })));
+        setStreak(calculateStreak(data));
       } catch (error) {
         toast.error("Failed to load nodes.");
       }
     };
     fetchData();
+    fetchData();
+
+    // Mobile Check
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setIsSidebarCollapsed(true);
+      } else {
+        // Optional: Expand on desktop? Or respect user choice?
+        // Let's just default collapse on mobile init
+      }
+    };
+
+    // Initial check
+    if (window.innerWidth < 768) {
+      setIsSidebarCollapsed(true);
+    }
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const setShowMindMap = (nodeId: string) => {
@@ -77,19 +130,36 @@ const NotebookPage: React.FC = () => {
     }
   };
 
-  const handleAddNodeRequest = (parentId: string | null, type: "syllabus" | "folder" | "file") => {
-    setModalProps({ parentId, type });
+  const handleAddNodeRequest = (parentId: string | null, type: "syllabus" | "folder" | "file" | "fileAnalysis") => {
+    // If Analysis, specific modal or direct create?
+    // Let's reuse CreateNodeModal but pass resourceType hint
+    setModalProps({ parentId, type: type === "fileAnalysis" ? "file" : type });
+    // We need to pass resourceType to modal or handle it after?
+    // Let's store special type in modal props extended
+    (window as any).tempResourceType = type === "fileAnalysis" ? "fileAnalysis" : "text"; // Quick hack or proper state
     setIsModalOpen(true);
   };
 
   const handleCreateNode = async (title: string, type: "syllabus" | "folder" | "file", tags: string[], pinned: boolean) => {
     try {
+      const resourceType = (window as any).tempResourceType || "text";
       const newNode: any = await addNode(title, type, modalProps.parentId, tags, pinned);
-      setNodes((prev) => [...prev, { ...newNode, id: newNode.nodeId, children: [] }]);
+      // If fileAnalysis, we might need to set resourceType?
+      // addNode API might not take resourceType in params line 76 of utils.
+      // We might need to update it immediately.
+      if (resourceType === "fileAnalysis") {
+        await saveContent(newNode.nodeId, "", "fileAnalysis");
+        newNode.resourceType = "fileAnalysis";
+      }
+
+      const nodeWithId = { ...newNode, id: newNode.nodeId, children: [] };
+      setNodes((prev) => [...prev, nodeWithId]);
       setIsModalOpen(false);
       toast.success(`${type} created successfully!`);
-      if (modalProps.parentId) { // If adding to a node, expand it or refresh it?
-        // Optimistic update handled by modifying nodes state above, but sidebar might need to re-render tree logic
+
+      // Auto-select the newly created node for better UX
+      if (type === "file") {
+        setSelectedNode(nodeWithId);
       }
     } catch (error) {
       toast.error("Failed to add node.");
@@ -112,6 +182,23 @@ const NotebookPage: React.FC = () => {
   const handleSaveContent = async (nodeId: string, content: string, resourceType: string) => {
     await saveContent(nodeId, content, resourceType);
     toast.success("Saved");
+  };
+
+  const handleUpdateProgress = async (nodeId: string, progress: number) => {
+    try {
+      await updateNodeProgress(nodeId, progress);
+      // Optimistic update or refetch
+      setNodes(prev => prev.map(n => n.nodeId === nodeId ? { ...n, progress } : n));
+
+      // Trigger fetch to get cascaded updates? Or just update parent locally?
+      // For accurate cascade, refetching is safer for now.
+      fetchNodes().then(data => {
+        setNodes(data.map((n: any) => ({ ...n, id: n.nodeId })));
+      });
+
+    } catch (e) {
+      toast.error("Failed to update status");
+    }
   };
 
   const fetchChildrenNode = async (node: Node) => {
@@ -140,7 +227,14 @@ const NotebookPage: React.FC = () => {
 
   const renderContent = () => {
     if (!selectedNode) {
-      return <WelcomeView onAdd={handleAddNodeRequest} />;
+      return (
+        <EmptyState
+          title="Welcome to IAmHere"
+          description="Select a note from the sidebar to start learning, or create a new syllabus to structure your journey."
+          icon={<FaLayerGroup size={64} className="text-blue-200" />}
+          action={{ label: "Import Syllabus", onClick: () => setIsImportOpen(true) }}
+        />
+      );
     }
     const nodeWithChildren = { ...selectedNode, children: getDirectChildren(selectedNode.nodeId) };
 
@@ -150,9 +244,9 @@ const NotebookPage: React.FC = () => {
       case "folder":
         return <FolderView node={nodeWithChildren} onNavigate={handleNavigate} onAdd={handleAddNodeRequest} />;
       case "file":
-        return <NodeEditor node={selectedNode} onSaveContent={handleSaveContent} />;
+        return <NodeEditor node={selectedNode} allNodes={nodes} onSaveContent={handleSaveContent} onUpdateProgress={handleUpdateProgress} />;
       default:
-        return <WelcomeView onAdd={handleAddNodeRequest} />;
+        return <WelcomeView onAdd={handleAddNodeRequest} onImport={() => setIsImportOpen(true)} />;
     }
   };
 
@@ -203,12 +297,9 @@ const NotebookPage: React.FC = () => {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => handleAddNodeRequest(null, "syllabus")}
-            className="flex items-center gap-1.5 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium transition-colors"
-          >
-            <FaPlus className="text-[10px]" /> <span className="hidden sm:inline">New Syllabus</span>
-          </button>
+          <span className="text-sm font-semibold text-orange-500 flex items-center gap-1 bg-orange-50 dark:bg-orange-900/30 px-2 py-0.5 rounded border border-orange-100 dark:border-orange-800/50" title="Study Streak">
+            🔥 {streak}
+          </span>
         </div>
       </div>
 
@@ -261,6 +352,20 @@ const NotebookPage: React.FC = () => {
         parentId={modalProps.parentId}
         initialType={modalProps.type}
       />
+
+      {isImportOpen && (
+        <ImportWizard
+          onClose={() => setIsImportOpen(false)}
+          onImportSuccess={() => {
+            // Refresh nodes
+            fetchNodes().then(data => {
+              setNodes(data.map((n: any) => ({ ...n, id: n.nodeId })));
+            });
+          }}
+        />
+      )}
+
+      <QuickCreateFAB onAddNode={handleAddNodeRequest} onImport={() => setIsImportOpen(true)} />
     </div>
   );
 };

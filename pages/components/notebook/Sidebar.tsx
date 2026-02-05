@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
+import { motion } from "framer-motion";
 import {
   FaFolder,
   FaFolderOpen,
@@ -11,19 +12,20 @@ import {
 } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { handleGenerateData, updateNode } from "../../api/utils";
+import { Node } from "../../types";
 
-export type Node = {
-  nodeId: string;
-  id: string;
-  title: string;
-  type: "syllabus" | "folder" | "file";
-  parentId: string | null;
-  children: Node[];
-  resourceType: string;
-  generated: boolean;
-  tags?: string[];
-  pinned?: boolean;
-};
+const MenuItem = ({ label, onClick, danger = false }: { label: string, onClick: () => void, danger?: boolean }) => (
+  <button
+    className={`w-full text-left px-3 py-1.5 text-xs transition-colors block
+      ${danger
+        ? "text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+        : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"}
+    `}
+    onClick={(e) => { e.stopPropagation(); onClick(); }}
+  >
+    {label}
+  </button>
+);
 
 const Sidebar: React.FC<{
   tree: Node[];
@@ -49,20 +51,34 @@ const Sidebar: React.FC<{
 
   const handleNodeClick = (node: Node) => {
     setSelectedId(node.nodeId);
-    if (node.type === "folder" || node.type === "syllabus") {
-      toggleExpand(node.id);
-    }
     onSelectNode(node);
   };
 
+  // Search Logic
+  const isSearching = !!searchQuery;
+  const searchResults = useMemo(() => {
+    if (!isSearching) return [];
+
+    const flatten = (list: Node[]): Node[] => {
+      return list.reduce((acc, node) => {
+        const children = node.children ? flatten(node.children) : [];
+        return [...acc, { ...node, children: [] }, ...children];
+      }, [] as Node[]);
+    };
+
+    const allNodes = flatten(tree);
+    return allNodes.filter(n =>
+      n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      n.tags?.some(t => t.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (n.content && n.content.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+  }, [tree, searchQuery, isSearching]);
+
   const renderTree = useCallback(
     (nodes: Node[], level = 0) => {
-      const nodesToRender = searchQuery
-        ? nodes.filter(n =>
-          n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          n.tags?.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()))
-        )
-        : nodes;
+      if (isSearching) return null; // Don't use tree renderer for search
+
+      const nodesToRender = nodes;
 
       if (!nodesToRender || nodesToRender.length === 0) return null;
 
@@ -75,7 +91,13 @@ const Sidebar: React.FC<{
         const paddingLeft = level * 8 + 8; // Reduced from 12
 
         return (
-          <div key={node.id} className="relative select-none">
+          <motion.div
+            key={node.id}
+            className="relative select-none"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: level * 0.05 + 0.05 }}
+          >
             {/* Tree Guide Line */}
             {level > 0 && (
               <div
@@ -111,6 +133,11 @@ const Sidebar: React.FC<{
               {/* Title */}
               <span className="flex-1 truncate text-xs font-medium leading-loose pt-0.5">
                 {node.title}
+                {(node.progress || 0) > 0 && (
+                  <div className="h-0.5 bg-gray-200 dark:bg-gray-700 w-12 mt-0.5 rounded-full overflow-hidden">
+                    <div className="h-full bg-green-500" style={{ width: `${node.progress}%` }}></div>
+                  </div>
+                )}
               </span>
 
               {/* Actions */}
@@ -136,14 +163,6 @@ const Sidebar: React.FC<{
                         </>
                       )}
 
-                      {node.generated !== true && (
-                        <MenuItem onClick={async () => {
-                          setActiveMenu(null);
-                          try { await handleGenerateData(node.nodeId); await onSelectNode(node); }
-                          catch (e) { console.error(e); }
-                        }} label="Generate" />
-                      )}
-
                       <MenuItem onClick={() => {
                         setActiveMenu(null);
                         updateNode(node.nodeId, { pinned: !node.pinned }).then(() => window.location.reload());
@@ -161,9 +180,16 @@ const Sidebar: React.FC<{
             </div>
 
             {isExpanded && node.children && (
-              <div>{renderTree(node.children, level + 1)}</div>
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {renderTree(node.children, level + 1)}
+              </motion.div>
             )}
-          </div>
+          </motion.div>
         );
       });
     },
@@ -171,38 +197,36 @@ const Sidebar: React.FC<{
   );
 
   return (
-    <div
-      className={`h-full flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 
-        ${isCollapsed ? "w-0 opacity-0 overflow-hidden" : "w-56 opacity-100"} 
-        transition-all duration-300 ease-in-out`}
-    >
-      <div className="flex-1 overflow-y-auto py-1 custom-scrollbar">
-        {searchQuery && (
-          <div className="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 mb-1">
-            Found
-          </div>
-        )}
-        {tree && tree.length > 0 ? renderTree(tree) : (
-          <div className="px-4 py-8 text-center text-gray-300 text-xs">
-            Not found
-          </div>
-        )}
+    <>
+      {/* Mobile Backdrop */}
+      {!isCollapsed && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden backdrop-blur-sm"
+          onClick={toggleSidebar}
+        />
+      )}
+
+      <div
+        className={`h-full bg-white dark:bg-gray-900 flex flex-col border-r border-gray-200 dark:border-gray-800 transition-all duration-300 
+          fixed md:relative z-40 top-0 left-0
+          ${isCollapsed ? "-translate-x-full md:translate-x-0 md:w-12 overflow-hidden" : "translate-x-0 w-64 shadow-2xl md:shadow-none"}
+        `}
+      >
+        <div className="flex-1 overflow-y-auto py-1 custom-scrollbar">
+          {searchQuery && (
+            <div className="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 mb-1">
+              Found
+            </div>
+          )}
+          {tree && tree.length > 0 ? renderTree(tree) : (
+            <div className="px-4 py-8 text-center text-gray-300 text-xs">
+              Not found
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
-
-const MenuItem = ({ label, onClick, danger = false }: { label: string, onClick: () => void, danger?: boolean }) => (
-  <button
-    className={`w-full text-left px-3 py-1.5 text-xs transition-colors block
-      ${danger
-        ? "text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-        : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"}
-    `}
-    onClick={(e) => { e.stopPropagation(); onClick(); }}
-  >
-    {label}
-  </button>
-);
 
 export default Sidebar;

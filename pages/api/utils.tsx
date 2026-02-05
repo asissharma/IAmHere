@@ -21,18 +21,7 @@ export const apiRequest = async (url: string, method: "GET" | "POST" | "PUT" | "
   }
 };
 
-// Define Node type
-type Node = {
-  nodeId: string;
-  id: string;
-  title: string;
-  type: "syllabus" | "folder" | "file";
-  parentId: string | null;
-  content?: string;
-  children: Node[];
-  tags?: string[];
-  pinned?: boolean;
-};
+import { Node } from "../types";
 
 export const fetchMindMap = async (parentId: string) => {
   try {
@@ -100,13 +89,34 @@ export const saveContent = async (nodeId: string, content: string, resourceType:
   }
 };
 
-export const updateNode = async (nodeId: string, updates: { title?: string, tags?: string[], pinned?: boolean, aiSummary?: string }) => {
+export const updateNode = async (nodeId: string, updates: { title?: string, tags?: string[], pinned?: boolean, aiSummary?: string, prerequisites?: string[] }) => {
   const identifier = "saveContent";
   try {
     return await apiRequest("/api/notes", "PUT", { nodeId, identifier, ...updates });
   } catch (error) {
     console.error("Error updating node:", error);
     throw error;
+  }
+};
+
+export const updateNodeProgress = async (nodeId: string, progress: number) => {
+  const identifier = "updateProgress";
+  try {
+    return await apiRequest("/api/notes", "PUT", { nodeId, progress, identifier });
+  } catch (error) {
+    console.error("Error updating progress:", error);
+    throw error;
+  }
+};
+
+
+
+export const logActivity = async (nodeId: string, duration: number) => {
+  const identifier = "logActivity";
+  try {
+    return await apiRequest("/api/notes", "PUT", { nodeId, duration, identifier });
+  } catch (error) {
+    console.error("Error logging activity:", error);
   }
 };
 
@@ -120,5 +130,15 @@ export const fetchDescendants = async (node: Node) => {
   } catch (err) {
     console.error("Failed to fetch descendants:", err);
     throw err;
+  }
+};
+
+export const performSmartAction = async (action: string, text: string, context?: string) => {
+  const identifier = "smartAction";
+  try {
+    return await apiRequest("/api/smartNotes", "POST", { action, text, context, identifier });
+  } catch (error) {
+    console.error("Smart Action failed:", error);
+    throw error;
   }
 };

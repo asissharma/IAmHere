@@ -19,7 +19,7 @@ const ThoughtBrick = () => {
   const fetchThought = async () => {
     try {
       setIsLoading(true);
-      
+
       const { data } = await axios.post('/api/chat', {
         message: `Find a new thought.
         You are "The Apex." Find a single "Insight of the Day".
@@ -31,7 +31,7 @@ const ThoughtBrick = () => {
             "quote": "Short raw insight.",
             "author": "the Real Author Name"
           }        
-        `, 
+        `,
         systemInstruction: `
           You are "The Apex." Find a single "Insight of the Day".
           CRITICAL: The output must be VERY short (max 15 words) to fit a ticker-tape UI.
@@ -43,11 +43,11 @@ const ThoughtBrick = () => {
             "author": "the Real Author Name"
           }
         `,
-        notFormattedResponse : true
+        notFormattedResponse: true
       });
 
       const parsedData = JSON.parse(cleanJSON(data.response));
-      
+
       setContent({
         quote: parsedData.quote,
         author: parsedData.author
@@ -110,7 +110,7 @@ const ThoughtBrick = () => {
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
       `}</style>
 
-      <div 
+      <div
         className="relative w-full h-full md:perspective-[1200px] brick-container group"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -119,36 +119,20 @@ const ThoughtBrick = () => {
         <div className="hidden md:block absolute -bottom-3 left-1/2 -translate-x-1/2 w-[90%] h-3 bg-black rounded-[50%] blur-sm opacity-20 transition-all duration-300 group-hover:scale-90 group-hover:opacity-10"></div>
 
         {/* BRICK BODY */}
-        <div 
-          className="
-            max-w-sm md:max-w-[500px] mx-auto 
-            bg-zinc-800 
-            rounded-md
-            absolute -bottom-60 -left-5
-            transition-all duration-300 ease-out
-            border-t border-zinc-700
-            animate-float
-            transform-none
-            shadow-md
-            md:rotate-x-6 md:rotate-y-3
-            md:group-hover:translate-y-[-4px] 
-            md:group-hover:rotate-x-[6deg] 
-            md:group-hover:rotate-y-[3deg]
-            md:shadow-[0px_4px_0px_#18181b]
-            md:group-hover:shadow-[0px_8px_0px_#18181b,0px_15px_15px_rgba(0,0,0,0.5)]
-          "
+        <div
+          className="max-w-sm md:max-w-[500px] mx-auto bg-zinc-800 rounded-md absolute -bottom-60 -left-5 transition-all duration-300 ease-out border-t border-zinc-700 animate-float transform-none shadow-md md:rotate-x-6 md:rotate-y-3 md:group-hover:translate-y-[-4px] md:group-hover:rotate-x-[6deg] md:group-hover:rotate-y-[3deg] md:shadow-[0px_4px_0px_#18181b] md:group-hover:shadow-[0px_8px_0px_#18181b,0px_15px_15px_rgba(0,0,0,0.5)]"
         >
-        
+
           {/* FACEPLATE - Ultra Compact Vertical Padding */}
-          <div className="p-1.5 pb-2"> 
+          <div className="p-1.5 pb-2">
             <div className="bg-[#111] rounded border border-zinc-900 shadow-[inset_0_2px_10px_rgba(0,0,0,1)] p-2 relative overflow-hidden min-h-[55px] flex flex-col justify-center">
-              
+
               {/* GLARE */}
               <div className="absolute top-0 right-0 bottom-0 left-0 bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none"></div>
 
               {/* TOP ROW: Status AND Author (Combined to save vertical space) */}
               <div className="flex items-center justify-between border-b border-zinc-800/50 pb-1 mb-1 relative z-10">
-                
+
                 {/* Left: Status */}
                 <div className="flex items-center gap-2">
                   <div className={`w-1.5 h-1.5 rounded-full border border-zinc-950 shadow-inner

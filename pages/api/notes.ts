@@ -108,6 +108,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           if (!updatedNode) return res.status(404).json({ error: "Node not found" });
           return res.status(200).json(updatedNode);
         }
+        if (actualIdentifier === "updateProgress") {
+          const { nodeId, progress } = req.body;
+          if (!nodeId) return res.status(400).json({ error: "Node ID is required" });
+
+          const updatedNode = await Notebook.findOneAndUpdate(
+            { nodeId },
+            { progress: progress, lastViewed: new Date() },
+            { new: true }
+          );
+
+          if (!updatedNode) return res.status(404).json({ error: "Node not found" });
+
+          // Cascade update to parent
+          if (updatedNode.parentId) {
+            await updateParentProgress(updatedNode.parentId);
+          }
+
+          return res.status(200).json(updatedNode);
+        }
+
+        if (actualIdentifier === "logActivity") {
+          const { nodeId, duration } = req.body;
+          if (!nodeId) return res.status(400).json({ error: "Node ID is required" });
+
+          const updatedNode = await Notebook.findOneAndUpdate(
+            { nodeId },
+            {
+              $inc: { studyTime: duration || 0 },
+              lastStudied: new Date(),
+              lastViewed: new Date()
+            },
+            { new: true }
+          );
+          return res.status(200).json(updatedNode);
+        }
         return res.status(405).json({ error: "Method Not Allowed" });
 
       case "DELETE":
@@ -220,3 +255,27 @@ const buildTree = (data: any[], parentId: string | null): any[] => {
 //   }
 //   return tree;
 // };
+
+// Helper: Recursively update parent progress
+async function updateParentProgress(parentId: string) {
+  const parent = await Notebook.findOne({ nodeId: parentId });
+  if (!parent) return;
+
+  // Get all children
+  const children = await Notebook.find({ parentId: parentId });
+  if (children.length === 0) return;
+
+  // Calculate average
+  const totalProgress = children.reduce((sum, child) => sum + (child.progress || 0), 0);
+  const avgProgress = Math.round(totalProgress / children.length);
+
+  // Update parent if changed
+  if (avgProgress !== parent.progress) {
+    await Notebook.findOneAndUpdate({ nodeId: parentId }, { progress: avgProgress });
+
+    // Recurse up
+    if (parent.parentId) {
+      await updateParentProgress(parent.parentId);
+    }
+  }
+}
