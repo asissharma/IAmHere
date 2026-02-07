@@ -8,32 +8,46 @@ type CommandOutput = {
 // 1. Define the Prop for Navigation
 interface TerminalProps {
   onNavigate: (section: string) => void;
+  onUnlock?: () => void;  // Called when correct password is entered
 }
 
-const TerminalBlock: React.FC<TerminalProps> = ({ onNavigate }) => {
+const TerminalBlock: React.FC<TerminalProps> = ({ onNavigate, onUnlock }) => {
   const [history, setHistory] = useState<CommandOutput[]>([]);
   const [inputVal, setInputVal] = useState('');
   const [isBooting, setIsBooting] = useState(true);
-  
+  const [isPasswordMode, setIsPasswordMode] = useState(false);
+
   const bodyRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const timeouts = useRef<NodeJS.Timeout[]>([]);
+
+  const MASTER_CODE = 'iamhere';  // The unlock code
 
   // --- 1. CONFIGURATION: COMMANDS & NAVIGATION ---
   const commandRegistry: { [key: string]: () => CommandOutput } = {
     help: () => ({
       type: 'system',
-      content: 'COMMANDS: [dashboard] [playground] [notebook] [upload] [trial] [clear]',
+      content: 'COMMANDS: [dashboard] [playground] [notebook] [upload] [trial] [access] [clear]',
     }),
     '/': () => ({
-        type: 'system',
-        content: 'ACCESS GRANTED. TYPE SECTION NAME TO NAVIGATE.',
-      }),
+      type: 'system',
+      content: 'ACCESS GRANTED. TYPE SECTION NAME TO NAVIGATE.',
+    }),
     about: () => ({
       type: 'text',
       content: 'Backend Architect focused on scalable systems and high-performance APIs.',
     }),
-    
+
+    // --- ACCESS COMMAND ---
+    access: () => {
+      setIsPasswordMode(true);
+      return { type: 'system', content: '>> SECURITY_PROTOCOL_INITIATED. ENTER_PASSCODE:' };
+    },
+    code: () => {
+      setIsPasswordMode(true);
+      return { type: 'system', content: '>> SECURITY_PROTOCOL_INITIATED. ENTER_PASSCODE:' };
+    },
+
     // --- NAVIGATION COMMANDS (Trigger the Prop) ---
     dashboard: () => {
       onNavigate('dashboard');
@@ -52,14 +66,14 @@ const TerminalBlock: React.FC<TerminalProps> = ({ onNavigate }) => {
       return { type: 'success', content: '>> REFRESHING EXPERIMENTAL_BUILD...' };
     },
     upload: () => {
-        onNavigate('upload');
-        return { type: 'success', content: '>> INITIATING UPLOAD_PROTOCOL...' };
+      onNavigate('upload');
+      return { type: 'success', content: '>> INITIATING UPLOAD_PROTOCOL...' };
     },
     editor: () => {
-        onNavigate('editor');
-        return { type: 'success', content: '>> OPENING TEXT_EDITOR...' };
+      onNavigate('editor');
+      return { type: 'success', content: '>> OPENING TEXT_EDITOR...' };
     },
-    
+
     // --- UTILITIES ---
     clear: () => {
       setHistory([]);
@@ -84,13 +98,13 @@ const TerminalBlock: React.FC<TerminalProps> = ({ onNavigate }) => {
 
     lines.forEach((line, index) => {
       // Random typing delay for realism
-      const delay = Math.random() * 600 + 400; 
+      const delay = Math.random() * 600 + 400;
       currentDelay += delay;
 
       const timeout = setTimeout(() => {
         if (!isBooting) return; // Stop if interrupted
         setHistory(prev => [...prev, { type: 'system', content: line }]);
-        
+
         if (index === lines.length - 1) {
           setIsBooting(false);
           setTimeout(() => inputRef.current?.focus(), 100);
@@ -118,7 +132,7 @@ const TerminalBlock: React.FC<TerminalProps> = ({ onNavigate }) => {
       timeouts.current.forEach(clearTimeout);
       setIsBooting(false);
       setHistory(prev => [
-        ...prev, 
+        ...prev,
         { type: 'success', content: "> BOOT_SEQUENCE_ABORTED. SYSTEM READY." },
         { type: 'system', content: "> TYPE '/' FOR CODES." }
       ]);
@@ -127,25 +141,64 @@ const TerminalBlock: React.FC<TerminalProps> = ({ onNavigate }) => {
   };
 
   // --- 5. HANDLE COMMAND EXECUTION ---
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (isBooting) {
-        stopBootSequence();
-        return;
+      stopBootSequence();
+      return;
     }
 
     if (e.key === 'Enter') {
-      const command = inputVal.trim().toLowerCase();
-      if (!command) return;
+      const input = inputVal.trim();
+      if (!input) return;
 
+      // --- PASSWORD MODE ---
+      if (isPasswordMode) {
+        const maskedEntry: CommandOutput = { type: 'text', content: `> ${'*'.repeat(input.length)}` };
+        setHistory(prev => [...prev, maskedEntry, { type: 'system', content: '>> VERIFYING...' }]);
+        setInputVal('');
+
+        try {
+          const res = await fetch('/api/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: input }),
+          });
+
+          if (res.ok) {
+            setHistory(prev => [
+              ...prev.slice(0, -1), // Remove "VERIFYING..."
+              { type: 'success', content: '>> ACCESS_GRANTED. UNLOCKING_SYSTEM...' }
+            ]);
+            setIsPasswordMode(false);
+            if (onUnlock) onUnlock();
+          } else {
+            setHistory(prev => [
+              ...prev.slice(0, -1),
+              { type: 'error', content: '>> ACCESS_DENIED. INVALID_TOKEN.' }
+            ]);
+            setIsPasswordMode(false);
+          }
+        } catch (err) {
+          setHistory(prev => [
+            ...prev.slice(0, -1),
+            { type: 'error', content: '>> ERROR: CONNECTION_LOST.' }
+          ]);
+          setIsPasswordMode(false);
+        }
+        return;
+      }
+
+      // --- NORMAL COMMAND MODE ---
+      const command = input.toLowerCase();
       const newEntry: CommandOutput = { type: 'text', content: `> ${inputVal}` };
-      
+
       let response: CommandOutput;
       if (commandRegistry[command]) {
         response = commandRegistry[command]();
         if (command === 'clear') {
-             setHistory([]); 
-             setInputVal('');
-             return; 
+          setHistory([]);
+          setInputVal('');
+          return;
         }
       } else {
         response = { type: 'error', content: `Err: Command '${command}' not found. Type 'help'.` };
@@ -166,7 +219,7 @@ const TerminalBlock: React.FC<TerminalProps> = ({ onNavigate }) => {
         </div>
         <div className="terminal-title">Kaala Sharma</div>
       </div>
-      
+
       <div className="mac-terminal-body" ref={bodyRef} onClick={() => inputRef.current?.focus()}>
         {/* HISTORY */}
         {history.map((line, index) => (
@@ -184,8 +237,8 @@ const TerminalBlock: React.FC<TerminalProps> = ({ onNavigate }) => {
             className="terminal-input w-full bg-transparent border-none text-white focus:outline-none font-mono"
             value={inputVal}
             onChange={(e) => {
-                setInputVal(e.target.value);
-                if (isBooting && e.target.value.length > 0) stopBootSequence();
+              setInputVal(e.target.value);
+              if (isBooting && e.target.value.length > 0) stopBootSequence();
             }}
             onKeyDown={handleKeyDown}
             autoFocus

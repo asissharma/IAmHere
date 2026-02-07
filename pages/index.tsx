@@ -1,26 +1,10 @@
-import { useState } from 'react';
 import type { NextPage } from 'next';
-import Auth from './components/auth'; // Adjust path as needed
-import HomeScreen from './components/homeScreen'; // Adjust path as needed
-import Home from './Home'; // Adjust path as needed
+import Home from './Home';
 
 const Index: NextPage = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-
-  // Handle successful authentication
-  const handleAuthenticationSuccess = () => {
-    setIsAuthenticated(true);
-  };
-
   return (
     <div>
-       {/* <HomeScreen></HomeScreen> */}
-      {/* {!isAuthenticated ? (
-        <Auth onSuccess={handleAuthenticationSuccess} />
-      ) : (
-        <Home />
-       )}    */}
-        <Home />
+      <Home />
     </div>
   );
 };

@@ -18,6 +18,7 @@ import TextEditor from "./components/TextEditor";
 import Dashboard from "./components/Dashboard";
 import DSAPlayground from "./components/DsaPrac";
 import Trial from "./components/homePage/trial";
+import Auth from "./components/auth"; // Import Auth component
 // import DumpYourThought from "./components/DumpYourThought";
 import LearningPathsAndGoals from "./components/LearningPathsAndGoals";
 import Notebook from "./components/notebook";
@@ -63,7 +64,7 @@ const Home: NextPage = () => {
     // learning: <Learning />,
     upload: <FileUpload />,
     editor: <TextEditor />,
-    trial: <Trial onNavigate={(section) => setActiveSection(section as SectionKeys)} />,
+    trial: <Trial onNavigate={(section) => handleNavigation(section as SectionKeys)} onUnlock={() => { setIsMenuUnlocked(true); setIsAuthenticated(true); }} />,
     // books: <Books />,
   };
 
@@ -74,6 +75,38 @@ const Home: NextPage = () => {
   const [darkMode, setDarkMode] = useState<boolean>(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showPing, setShowPing] = useState(true);
+
+  // --- ACCESS CONTROL STATE ---
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isMenuUnlocked, setIsMenuUnlocked] = useState(false);  // FAB visibility
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [pendingSection, setPendingSection] = useState<SectionKeys | null>(null);
+
+  const handleNavigation = (section: SectionKeys) => {
+    // If navigating to 'trial' (homepage), allow it always
+    if (section === 'trial') {
+      setActiveSection(section);
+      return;
+    }
+
+    // If already authenticated, allow
+    if (isAuthenticated) {
+      setActiveSection(section);
+    } else {
+      // Otherwise prompt for auth
+      setPendingSection(section);
+      setShowAuthModal(true);
+    }
+  };
+
+  const onAuthSuccess = () => {
+    setIsAuthenticated(true);
+    setShowAuthModal(false);
+    if (pendingSection) {
+      setActiveSection(pendingSection);
+      setPendingSection(null);
+    }
+  };
 
   // Set the dark mode preference in localStorage and apply it to the body
   useEffect(() => {
@@ -120,7 +153,7 @@ const Home: NextPage = () => {
       document.body.classList.remove("dark");
     }
   };
-   const iconForKey = (key: string) => {
+  const iconForKey = (key: string) => {
     if (key === "dashboard") return <FiFileText className="w-5 h-5" />;
     if (key === "playground") return <FiCode className="w-5 h-5" />;
     if (key === "learningpathsandgoals") return <FaIceCream className="w-5 h-5" />;
@@ -142,7 +175,7 @@ const Home: NextPage = () => {
       <nav className="sticky top-0 z-20 bg-opacity-90 backdrop-blur-lg shadow-md rounded-xl h-10">
         <div className="flex justify-between items-center h-full px-4">
           <h1 className="text-xl font-bold flex items-center justify-center pt-4">Hello Sweetie</h1>
-          
+
           <div>
             <PomodoroTimer />
           </div>
@@ -190,79 +223,80 @@ const Home: NextPage = () => {
         ))}
       </aside> */}
       {/* Floating signal button at bottom-right (menu above button, one-time ping) */}
-      <div className="fixed right-6 bottom-6 z-50">
-        <div className="flex flex-col items-end">
-          <AnimatePresence>
-            {menuOpen && (
-              <motion.div
-                className="mb-3 flex flex-col items-end"
-                initial="hidden"
-                animate="visible"
-                exit="hidden"
-                variants={containerVariants}
-                aria-hidden={!menuOpen}
-              >
-                {menuOrder.map((key) => (
-                  <motion.button
-                    key={key}
-                    variants={itemVariants}
-                    exit="exit"
-                    onClick={() => {
-                      setActiveSection(key);
-                      setMenuOpen(false);
-                    }}
-                    className={`flex items-center gap-3 mb-2 px-3 py-2 rounded-2xl shadow-md text-sm transition-all focus:outline-none focus:ring-2 focus:ring-orange-300 ${
-                      activeSection === key
+      {isMenuUnlocked && (
+        <div className="fixed right-6 bottom-6 z-50">
+          <div className="flex flex-col items-end">
+            <AnimatePresence>
+              {menuOpen && (
+                <motion.div
+                  className="mb-3 flex flex-col items-end"
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                  variants={containerVariants}
+                  aria-hidden={!menuOpen}
+                >
+                  {menuOrder.map((key) => (
+                    <motion.button
+                      key={key}
+                      variants={itemVariants}
+                      exit="exit"
+                      onClick={() => {
+                        handleNavigation(key as SectionKeys);
+                        setMenuOpen(false);
+                      }}
+                      className={`flex items-center gap-3 mb-2 px-3 py-2 rounded-2xl shadow-md text-sm transition-all focus:outline-none focus:ring-2 focus:ring-orange-300 ${activeSection === key
                         ? "bg-orange-600 text-white"
                         : "bg-gray-800/70 text-gray-100 hover:bg-gray-700/80"
-                    }`}
-                    aria-label={`Navigate to ${key}`}
-                    // ensure buttons aren't focusable if somehow menu re-renders during closing
-                    tabIndex={menuOpen ? 0 : -1}
-                  >
-                    <span className="flex items-center justify-center w-6 h-6">
-                      {iconForKey(key)}
-                    </span>
-                    <span className="pr-1">{key.charAt(0).toUpperCase() + key.slice(1)}</span>
-                  </motion.button>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+                        }`}
+                      aria-label={`Navigate to ${key}`}
+                      // ensure buttons aren't focusable if somehow menu re-renders during closing
+                      tabIndex={menuOpen ? 0 : -1}
+                    >
+                      <span className="flex items-center justify-center w-6 h-6">
+                        {iconForKey(key)}
+                      </span>
+                      <span className="pr-1">{key.charAt(0).toUpperCase() + key.slice(1)}</span>
+                    </motion.button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
 
-          {/* Signal button */}
-          <div className="relative">
-            {/* one-time ping */}
-            {showPing && (
-              <span
-                className="absolute inset-1 rounded-full bg-orange-500 opacity-75 animate-ping"
-                aria-hidden="true"
-              />
-            )}
-            <button
-              onClick={() => {
-                setMenuOpen((s) => !s);
-                setShowPing(false); // disable ping forever after first click
-              }}
-              aria-expanded={menuOpen}
-              aria-label={menuOpen ? "Close menu" : "Open menu"}
-              className="relative flex items-center justify-center w-14 h-14 rounded-full bg-orange-600 text-white shadow-2xl hover:scale-105 active:scale-95 transition-transform focus:outline-none"
-              title="Open quick menu"
-            >
-              {/* signal icon, rotates when open */}
-              <motion.span
-                initial={false}
-                animate={menuOpen ? { rotate: 45 } : { rotate: 0 }}
-                transition={{ type: "tween", stiffness: 500, damping: 30 }}
-                className="text-xl font-bold select-none"
+            {/* Signal button */}
+            <div className="relative">
+              {/* one-time ping */}
+              {showPing && (
+                <span
+                  className="absolute inset-1 rounded-full bg-orange-500 opacity-75 animate-ping"
+                  aria-hidden="true"
+                />
+              )}
+              <button
+                onClick={() => {
+                  setMenuOpen((s) => !s);
+                  setShowPing(false); // disable ping forever after first click
+                }}
+                aria-expanded={menuOpen}
+                aria-label={menuOpen ? "Close menu" : "Open menu"}
+                className="relative flex items-center justify-center w-14 h-14 rounded-full bg-orange-600 text-white shadow-2xl hover:scale-105 active:scale-95 transition-transform focus:outline-none"
+                title="Open quick menu"
               >
-                ⚡
-              </motion.span>
-            </button>
+                {/* signal icon, rotates when open */}
+                <motion.span
+                  initial={false}
+                  animate={menuOpen ? { rotate: 45 } : { rotate: 0 }}
+                  transition={{ type: "tween", stiffness: 500, damping: 30 }}
+                  className="text-xl font-bold select-none"
+                >
+                  ⚡
+                </motion.span>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
 
 
@@ -277,7 +311,30 @@ const Home: NextPage = () => {
           {sections[activeSection]}
         </motion.div>
       </main>
-    </motion.div>
+
+
+      {/* --- AUTH MODAL OVERLAY --- */}
+      <AnimatePresence>
+        {showAuthModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <div className="relative w-full max-w-md">
+              <button
+                onClick={() => setShowAuthModal(false)}
+                className="absolute top-2 right-2 text-slate-500 hover:text-white z-20"
+              >
+                ✕
+              </button>
+              <Auth onSuccess={onAuthSuccess} isModal={true} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div >
   );
 };
 
