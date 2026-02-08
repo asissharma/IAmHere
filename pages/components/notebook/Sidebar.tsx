@@ -12,7 +12,7 @@ import {
 } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { handleGenerateData, updateNode } from "../../api/utils";
-import { Node } from "../../types";
+import { Node } from "../../../types/types";
 
 const MenuItem = ({ label, onClick, danger = false }: { label: string, onClick: () => void, danger?: boolean }) => (
   <button

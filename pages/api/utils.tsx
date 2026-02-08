@@ -21,7 +21,7 @@ export const apiRequest = async (url: string, method: "GET" | "POST" | "PUT" | "
   }
 };
 
-import { Node } from "../types";
+import { Node } from "../../types/types";
 
 export const fetchMindMap = async (parentId: string) => {
   try {

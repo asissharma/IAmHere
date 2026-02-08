@@ -15,7 +15,7 @@ import { FaPlus, FaSearch, FaBars, FaTimes, FaLayerGroup } from "react-icons/fa"
 import { motion, AnimatePresence } from "framer-motion";
 import EmptyState from "./notebook/EmptyState";
 import QuickCreateFAB from "./notebook/QuickCreateFAB";
-import { Node } from "../types";
+import { Node } from "../../types/types";
 
 // Define the Node type
 
