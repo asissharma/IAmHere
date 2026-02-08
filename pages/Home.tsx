@@ -12,18 +12,18 @@ import {
 } from "react-icons/fi";
 import { FaIceCream } from "react-icons/fa";
 import { useState, useEffect } from "react";
-import PomodoroTimer from "./components/PomodoroTimer";
-import FileUpload from "./components/upload";
-import TextEditor from "./components/TextEditor";
-import Dashboard from "./components/Dashboard";
-import DSAPlayground from "./components/DsaPrac";
-import Trial from "./components/homePage/trial";
-import Auth from "./components/auth"; // Import Auth component
-// import DumpYourThought from "./components/DumpYourThought";
-import LearningPathsAndGoals from "./components/LearningPathsAndGoals";
-import Notebook from "./components/notebook";
-import Learning from "./components/learning";
-// import Books from "./components/books";
+import PomodoroTimer from "../components/PomodoroTimer";
+import FileUpload from "../components/upload";
+import TextEditor from "../components/TextEditor";
+import Dashboard from "../components/Dashboard";
+import DSAPlayground from "../components/DsaPrac";
+import Trial from "../components/homePage/trial";
+import Auth from "../components/auth"; // Import Auth component
+// import DumpYourThought from "../components/DumpYourThought";
+import LearningPathsAndGoals from "../components/LearningPathsAndGoals";
+import Notebook from "../components/notebook";
+import Learning from "../components/learning";
+// import Books from "../components/books";
 
 
 

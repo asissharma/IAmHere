@@ -7,7 +7,7 @@ import SyllabusDashboard from "./notebook/SyllabusDashboard";
 import FolderView from "./notebook/FolderView";
 import WelcomeView from "./notebook/WelcomeView";
 import ImportWizard from "./notebook/ImportWizard";
-import { fetchNodes, addNode, deleteNode, saveContent, fetchDescendants, updateNodeProgress } from "../api/utils";
+import { fetchNodes, addNode, deleteNode, saveContent, fetchDescendants, updateNodeProgress } from "../pages/api/utils";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -15,7 +15,7 @@ import { FaPlus, FaSearch, FaBars, FaTimes, FaLayerGroup } from "react-icons/fa"
 import { motion, AnimatePresence } from "framer-motion";
 import EmptyState from "./notebook/EmptyState";
 import QuickCreateFAB from "./notebook/QuickCreateFAB";
-import { Node } from "../../types/types";
+import { Node } from "../types/types";
 
 // Define the Node type
 

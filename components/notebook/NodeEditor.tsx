@@ -11,8 +11,8 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import FileAnalysis from "./fileRipper";
 import ProEditorWrapper from "../editor/Editor";
-import { logActivity, performSmartAction, updateNode } from "../../api/utils";
-import { Node } from "../../../types/types";
+import { logActivity, performSmartAction, updateNode } from "../../pages/api/utils";
+import { Node } from "../../types/types";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 

@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { FaUpload, FaFileCsv, FaFileExcel, FaArrowRight, FaCheck } from "react-icons/fa";
-import { parseFile, buildImportTree, ImportNode } from "../../../lib/importHelpers";
+import { parseFile, buildImportTree, ImportNode } from "../../lib/importHelpers";
 import { toast } from "react-toastify";
 
 // Define Mapping Fields
