@@ -1,3 +1,5 @@
+import { Node } from "../../types/types";
+
 export const apiRequest = async (url: string, method: "GET" | "POST" | "PUT" | "DELETE", body?: any) => {
   let options: RequestInit = {
     method,
@@ -21,7 +23,7 @@ export const apiRequest = async (url: string, method: "GET" | "POST" | "PUT" | "
   }
 };
 
-import { Node } from "../../types/types";
+
 
 export const fetchMindMap = async (parentId: string) => {
   try {

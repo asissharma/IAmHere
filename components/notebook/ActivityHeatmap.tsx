@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { apiRequest } from '../../api/utils';
+import { apiRequest } from '../../pages/api/utils';
 
 // Helper to get last 365 days or similar
 // For GitHub style: 52 weeks?
