@@ -172,7 +172,7 @@ export default function HomePage({ onNavigate, onUnlock }: TrialProps) {
               </div>
             </div>
             <div className="w-full md:w-auto flex justify-center md:justify-end">
-              <TerminalBlock onNavigate={onNavigate} />
+              <TerminalBlock onNavigate={onNavigate} onUnlock={onUnlock} />
             </div>
           </div>
         </div>
