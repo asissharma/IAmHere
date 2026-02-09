@@ -44,18 +44,18 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           offset: 0,
           sortBy: { column: 'name', order: 'asc' },
         });
-    
+
       if (error) throw error;
-    
+
       // Generate signed URLs for all files
       const files = await Promise.all(
         data.map(async (file) => {
           const { data: signedUrlData, error: signedUrlError } = await supabase.storage
             .from('IAmHere')
             .createSignedUrl(`public/${file.name}`, 60 * 60); // Expires in 1 hour
-    
+
           if (signedUrlError) throw signedUrlError;
-    
+
           return {
             name: file.name,
             url: signedUrlData.signedUrl,
@@ -65,13 +65,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           };
         })
       );
-    
+
       res.status(200).json(files);
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Error retrieving files from Supabase Storage' });
     }
-    
+
   } else if (method === 'POST') {
     try {
 
@@ -84,18 +84,18 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
       // Upload file to Supabase storage
       const { data, error } = await supabase.storage
-          .from('IAmHere')
-          .upload(`public/${file.originalname}`, file.buffer, {
-            contentType: file.mimetype,
-            upsert: false,
-          });
+        .from('IAmHere')
+        .upload(`public/${file.originalname}`, file.buffer, {
+          contentType: file.mimetype,
+          upsert: false,
+        });
 
-        if (error) {
-          console.error('Supabase Upload Error:', error);
-          throw error;
-        }
+      if (error) {
+        console.error('Supabase Upload Error:', error);
+        throw error;
+      }
 
-        console.log('Supabase Upload Success:', data);
+      // console.log('Supabase Upload Success:', data);
 
       // Save file metadata to MongoDB
       const newFile = new File({

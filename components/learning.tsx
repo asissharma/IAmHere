@@ -13,6 +13,7 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import "tailwindcss/tailwind.css"; // Ensure tailwind is properly imported
+import DOMPurify from 'dompurify';
 
 // Types for the document and topic structure
 interface IDocument {
@@ -61,7 +62,7 @@ const createNodesAndEdges = (
   const nodes: Node[] = [];
   const edges: Edge[] = [];
 
-  const levels = ["Beginner", "Intermediate", "Advanced","Extra"];
+  const levels = ["Beginner", "Intermediate", "Advanced", "Extra"];
 
   // Constants for positioning
   const TOPIC_RADIUS = 500; // Distance of levels from the center topic
@@ -146,7 +147,7 @@ const createNodesAndEdges = (
       });
     }
   });
-  
+
   return { nodes, edges };
 };
 
@@ -187,19 +188,19 @@ const SyllabusMap: React.FC = () => {
       const currentPage = 0;
       const response = await fetch(`/api/getTopicData?page=${currentPage}`);
       const data: ITopic[] = await response.json();
-  
+
       if (data.length > 0) {
         const firstTopic = data[0];
         setTopicName(firstTopic.title || "Learning Syllabus");
-  
+
         if (firstTopic.documents && firstTopic.documents.length > 0) {
           const firstDocument = firstTopic.documents[0];
-  
+
           if (firstDocument.content) {
             const documentContent = Array.isArray(firstDocument.content)
               ? firstDocument.content
               : [firstDocument.content];
-  
+
             const levels = ["Beginner", "Intermediate", "Advanced", "Extra"];
             const groupedContent = documentContent.reduce((acc: any, item: any) => {
               const level = item.metadata?.level || "Extra"; // Default to "extra" if no level exists
@@ -207,7 +208,7 @@ const SyllabusMap: React.FC = () => {
               acc[level].push(item);
               return acc;
             }, {});
-  
+
             // Ensure levels appear in the desired order
             const orderedContent = levels.reduce((acc: any, level) => {
               if (groupedContent[level]) {
@@ -215,9 +216,9 @@ const SyllabusMap: React.FC = () => {
               }
               return acc;
             }, {});
-  
+
             setInputData(orderedContent);
-            console.log(" found.",orderedContent);
+            console.log(" found.", orderedContent);
           } else {
             console.log("No valid content with metadata found.");
           }
@@ -232,7 +233,7 @@ const SyllabusMap: React.FC = () => {
       setLoading(false);
     }
   };
-  
+
 
   useEffect(() => {
     fetchTopic();
@@ -283,7 +284,7 @@ const SyllabusMap: React.FC = () => {
                     <strong>Content:</strong>
                     <div
                       dangerouslySetInnerHTML={{
-                        __html: JSON.parse(nodeData.content || JSON.stringify('solution will appear here...')),
+                        __html: DOMPurify.sanitize(JSON.parse(nodeData.content || JSON.stringify('solution will appear here...'))),
                       }}
                       className="p-4 whitespace-normal break-words"
                     />

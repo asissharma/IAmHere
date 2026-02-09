@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 
 interface Book {
   _id: string;
@@ -112,7 +113,7 @@ const Books = () => {
           {activeBook ? (
             <div className="book-reader">
               <h2>{activeBook.title}</h2>
-              <article dangerouslySetInnerHTML={{ __html: activeBook.content }}></article>
+              <article dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(activeBook.content) }}></article>
             </div>
           ) : (
             <p>Please select a book to read</p>

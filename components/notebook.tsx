@@ -87,8 +87,7 @@ const NotebookPage: React.FC = () => {
         toast.error("Failed to load nodes.");
       }
     };
-    fetchData();
-    fetchData();
+
 
     // Mobile Check
     const handleResize = () => {

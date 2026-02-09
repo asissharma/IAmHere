@@ -4,7 +4,7 @@ import moment from 'moment-timezone';
 // Handler function
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
     const { code } = req.body;
-    console.log(generateValidationCode(0));
+    // console.log(generateValidationCode(0));
     // Generate valid codes for the current minute, previous minute, and next minute
     const validCodes = [
         generateValidationCode(0),  // Current minute

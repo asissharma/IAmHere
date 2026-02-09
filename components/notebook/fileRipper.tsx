@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import axios from "axios";
+import DOMPurify from "dompurify";
 
 interface FileAnalysisProps {
   setAnalysedContent: (content: string) => void;
@@ -239,9 +240,8 @@ export default function FileAnalysis({ setAnalysedContent, analysedContent }: Fi
           <button
             onClick={handleFileUpload}
             disabled={isLoading}
-            className={`w-full bg-blue-500 text-white py-2 rounded ${
-              isLoading && "opacity-50 cursor-not-allowed"
-            }`}
+            className={`w-full bg-blue-500 text-white py-2 rounded ${isLoading && "opacity-50 cursor-not-allowed"
+              }`}
           >
             {isLoading ? "Processing..." : "Upload and Analyze"}
           </button>
@@ -257,16 +257,15 @@ export default function FileAnalysis({ setAnalysedContent, analysedContent }: Fi
                 className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-screen-md p-3 rounded-lg shadow-md text-sm ${
-                    msg.role === "user"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200 text-gray-800"
-                  }`}
+                  className={`max-w-screen-md p-3 rounded-lg shadow-md text-sm ${msg.role === "user"
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200 text-gray-800"
+                    }`}
                 >
                   {msg.role === "model" ? (
                     <div
                       dangerouslySetInnerHTML={{
-                        __html: msg.text,
+                        __html: DOMPurify.sanitize(msg.text),
                       }}
                     />
                   ) : (

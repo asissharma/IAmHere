@@ -7,12 +7,13 @@ import ResizableCard from './ResizableCard';
 import axios from 'axios';
 import { FiCopy, FiPlayCircle } from 'react-icons/fi';
 import MonacoEditor from '@monaco-editor/react';
+import DOMPurify from 'dompurify';
 // Define the interfaces for Document and Topic
 interface IDocument {
   _id: string;
   type: 'ai' | 'note';
   content: string;
-  name:string;
+  name: string;
 }
 
 interface ITopic {
@@ -67,25 +68,25 @@ const LearningPaths: React.FC = () => {
     const txt = document.createElement("textarea");
     txt.innerHTML = text;
     return txt.value;
-};
+  };
 
-const handleGenerateData = async (topicId: string) => {
-  if (!topic) {
-    toast.error('Topic is required');
-    return;
-  }
+  const handleGenerateData = async (topicId: string) => {
+    if (!topic) {
+      toast.error('Topic is required');
+      return;
+    }
 
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    const response = await axios.post('/api/generateTheData', { topic, topicId });
-    toast.success('generate the data');
-  } catch (error) {
-    toast.error('Failed to generate data. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      const response = await axios.post('/api/generateTheData', { topic, topicId });
+      toast.success('generate the data');
+    } catch (error) {
+      toast.error('Failed to generate data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Load content based on the provided content or URL
   const loadOnTheCard = (content: string, type?: string) => {
@@ -96,7 +97,7 @@ const handleGenerateData = async (topicId: string) => {
     const urlCheck = isContentUrl(content);
     setIsUrl(urlCheck);
     setSelectedDoc(content);
-    
+
     if (type) {
       setDocType(type); // Set the document type directly
       if (type === 'ai') {
@@ -117,76 +118,76 @@ const handleGenerateData = async (topicId: string) => {
     } else {
       setDocType(''); // Clear type if it's null
     }
-};
+  };
 
 
-// Fetch the topic data from the server
-const fetchTopic = async () => {
-  setLoading(true);
-  try {
-    const response = await fetch(`/api/getTopicData?page=${currentPage}`);
-    const data: ITopic[] = await response.json();
-    
-    if (data.length > 0) {
-      const firstTopic = data[0];
-      setTopic(firstTopic);
-      setSelectedDoc(firstTopic.resourceUrls?.[0] || ''); // Use the first resource URL if available
-      setResourceUrls(firstTopic.resourceUrls?.join('\n') || '');
-      // Ensure the topic has documents and at least one valid document
-      if (firstTopic.documents && firstTopic.documents.length > 0) {
-        const firstDocument = firstTopic.documents[0];
+  // Fetch the topic data from the server
+  const fetchTopic = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/getTopicData?page=${currentPage}`);
+      const data: ITopic[] = await response.json();
 
-        // Ensure 'content' exists in the document
-        if (firstDocument.content) {
-          // Convert content to an array if it's not already
-          const documentContent = Array.isArray(firstDocument.content)
-            ? firstDocument.content
-            : [firstDocument.content];
+      if (data.length > 0) {
+        const firstTopic = data[0];
+        setTopic(firstTopic);
+        setSelectedDoc(firstTopic.resourceUrls?.[0] || ''); // Use the first resource URL if available
+        setResourceUrls(firstTopic.resourceUrls?.join('\n') || '');
+        // Ensure the topic has documents and at least one valid document
+        if (firstTopic.documents && firstTopic.documents.length > 0) {
+          const firstDocument = firstTopic.documents[0];
 
-          // Filter out invalid entries (ensures items have metadata and level)
-          const filteredContent = documentContent.filter((item: any) => {
-            return typeof item === 'object' && item.metadata && item.metadata.level;
-          });
+          // Ensure 'content' exists in the document
+          if (firstDocument.content) {
+            // Convert content to an array if it's not already
+            const documentContent = Array.isArray(firstDocument.content)
+              ? firstDocument.content
+              : [firstDocument.content];
 
-          if (filteredContent.length > 0) {
-            // Sort by level
-            const levels = ["Beginner", "Intermediate", "Advanced"];
-            const sortedContent = [...filteredContent].sort((a, b) => {
-              return levels.indexOf(a.metadata.level) - levels.indexOf(b.metadata.level);
+            // Filter out invalid entries (ensures items have metadata and level)
+            const filteredContent = documentContent.filter((item: any) => {
+              return typeof item === 'object' && item.metadata && item.metadata.level;
             });
 
-            // Group content by level
-            const groupedContent = sortedContent.reduce((acc, item) => {
-              const level = item.metadata.level;
-              if (!acc[level]) {
-                acc[level] = [];
-              }
-              acc[level].push(item);
-              return acc;
-            }, {});
+            if (filteredContent.length > 0) {
+              // Sort by level
+              const levels = ["Beginner", "Intermediate", "Advanced"];
+              const sortedContent = [...filteredContent].sort((a, b) => {
+                return levels.indexOf(a.metadata.level) - levels.indexOf(b.metadata.level);
+              });
 
-            // Set state with grouped content
-            setTheExerciseLevel(groupedContent);
-            console.log("Grouped content:", groupedContent);
+              // Group content by level
+              const groupedContent = sortedContent.reduce((acc, item) => {
+                const level = item.metadata.level;
+                if (!acc[level]) {
+                  acc[level] = [];
+                }
+                acc[level].push(item);
+                return acc;
+              }, {});
+
+              // Set state with grouped content
+              setTheExerciseLevel(groupedContent);
+              console.log("Grouped content:", groupedContent);
+            } else {
+              console.log('No valid content with metadata and level found.');
+            }
           } else {
-            console.log('No valid content with metadata and level found.');
+            console.log('No content available in the first document.');
           }
         } else {
-          console.log('No content available in the first document.');
+          toast.info('No documents available for the topic.');
         }
       } else {
-        toast.info('No documents available for the topic.');
+        toast.info('No more topics available.');
       }
-    } else {
-      toast.info('No more topics available.');
+    } catch (error) {
+      console.error('Error fetching topic:', error);
+      toast.error('Failed to fetch topic.');
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('Error fetching topic:', error);
-    toast.error('Failed to fetch topic.');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
   // Mark the topic as completed
@@ -345,7 +346,7 @@ const fetchTopic = async () => {
 
   const copyChatHistory = () => {
     const chatContent = chatHistory.map(chat => chat.text || 'AI solution will appear here...').join('\n');
-    
+
     navigator.clipboard.writeText(chatContent)
       .then(() => {
         toast.success('Chat copied to clipboard!');
@@ -392,12 +393,12 @@ const fetchTopic = async () => {
           <h1 className="text-2xl font-bold text-center">No Topics Available</h1>
         )}
       </motion.div>
-      
+
       <div className="grid grid-cols-4 gap-6">
         <div className='col-span-1'>
-            {/* Documentation, Resource URLs */}
-            <div className="bg-green-200 mb-1 p-1 pt-2 h-96 max-h-96 overflow-y-scroll scrollabler scrollable-hover rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-              <div className="prose max-w-full">
+          {/* Documentation, Resource URLs */}
+          <div className="bg-green-200 mb-1 p-1 pt-2 h-96 max-h-96 overflow-y-scroll scrollabler scrollable-hover rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+            <div className="prose max-w-full">
               {resourceUrls ? (
                 <div>
                   <h3 className="text-md text-center font-semibold mb-2 border border-black rounded-md">Resource URLs</h3>
@@ -422,54 +423,54 @@ const fetchTopic = async () => {
               ) : null}
               {topic ? (
                 <div>
-                    {topic?.documents && topic.documents.length > 0 && (
-                      <div className="space-y-4 bg-white p-2 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-                        <h3 className="text-md text-center font-semibold mb-2 border border-black rounded-md">Custom Documentation</h3>
-                        {topic.documents.map((doc) => (
-                          <div
-                            key={doc._id}
-                            className=""
-                            onClick={() => loadOnTheCard(doc.content,doc.type)}
-                          >
-                            <span className="font-bold">- {doc.type} {doc.name}...</span> {/* Display a snippet of the document */}
-                          </div>
+                  {topic?.documents && topic.documents.length > 0 && (
+                    <div className="space-y-4 bg-white p-2 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+                      <h3 className="text-md text-center font-semibold mb-2 border border-black rounded-md">Custom Documentation</h3>
+                      {topic.documents.map((doc) => (
+                        <div
+                          key={doc._id}
+                          className=""
+                          onClick={() => loadOnTheCard(doc.content, doc.type)}
+                        >
+                          <span className="font-bold">- {doc.type} {doc.name}...</span> {/* Display a snippet of the document */}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : null}
+              {theExerciseLevel ? (
+                <div>
+                  <div className="bg-white p-4 mt-1 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <h3 className="text-md text-center font-semibold mb-2 border border-black rounded-md">The AI Content</h3>
+                    {Object.keys(theExerciseLevel).length > 0 ? (
+                      <ul className="list-disc pl-5">
+                        {Object.entries(theExerciseLevel).map(([level, items]) => (
+                          <li key={level} className="mb-2">
+                            <strong className="text-lg border-b border-black">{level}</strong>
+                            <ul className="list-inside list-decimal pl-4">
+                              {items.map((item: any) => (
+                                <li
+                                  key={item._id}
+                                  onClick={() => loadOnTheCard(item.content, 'aiGenerated')}
+                                  className="cursor-pointer hover:text-blue-600 transition duration-200"
+                                >
+                                  {item.type} {/* Display any other item metadata if needed */}
+                                </li>
+                              ))}
+                            </ul>
+                          </li>
                         ))}
-                      </div>
+                      </ul>
+                    ) : (
+                      <p className="text-gray-500 text-center">No exercises available.</p>
                     )}
                   </div>
-                ) : null}
-                {theExerciseLevel ? (
-                  <div>
-                    <div className="bg-white p-4 mt-1 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
-                      <h3 className="text-md text-center font-semibold mb-2 border border-black rounded-md">The AI Content</h3>
-                      {Object.keys(theExerciseLevel).length > 0 ? (
-                        <ul className="list-disc pl-5">
-                          {Object.entries(theExerciseLevel).map(([level, items]) => (
-                            <li key={level} className="mb-2">
-                              <strong className="text-lg border-b border-black">{level}</strong>
-                              <ul className="list-inside list-decimal pl-4">
-                                {items.map((item: any) => (
-                                  <li
-                                    key={item._id}
-                                    onClick={() => loadOnTheCard(item.content, 'aiGenerated')}
-                                    className="cursor-pointer hover:text-blue-600 transition duration-200"
-                                  >
-                                    {item.type} {/* Display any other item metadata if needed */}
-                                  </li>
-                                ))}
-                              </ul>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="text-gray-500 text-center">No exercises available.</p>
-                      )}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
+                </div>
+              ) : null}
             </div>
-            {/* <div className="bg-gray-200 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+          </div>
+          {/* <div className="bg-gray-200 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
               <h2 className="text-lg font-semibold mb-4 text-gray-800">Resource URLs</h2>
               <textarea
                 value={resourceUrls}
@@ -488,37 +489,37 @@ const fetchTopic = async () => {
         </div>
         <div className='col-span-2 max-h-min overflow-y-scroll scrollabler scrollable-hover bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300'>
           <ResizableCard>
-          <div className="bg-white rounded-lg h-96 p-4 w-full overflow-y-scroll scrollabler relative wordwrap">
-            <div className="overflow-auto">
-              <h2 className="text-xl mb-4">Content</h2>
-              {isUrl && selectedDoc ? (
-                <iframe
-                  src={selectedDoc}
-                  title="Webview"
-                  className="w-full h-96 border-0 rounded"
-                  sandbox="allow-same-origin allow-scripts allow-popups"
-                />
-              ) : docType === "ai" ? (
-                <div className="ai-doc-rendering">
-                  {aiHistoryArray.map((chat: any, index: any) => (
-                    <div
-                      key={index}
-                      className={`p-2 rounded-lg mb-2 ${chat.role === 'user' ? 'bg-blue-100 self-end' : 'bg-gray-100 self-start'}`}
-                      dangerouslySetInnerHTML={{ __html: chat.text || 'AI solution will appear here...' }}
-                    />
-                  ))}
-                </div>
-              ) : docType === "aiGenerated" ? (
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: JSON.parse(selectedDoc || JSON.stringify('AI solution will appear here...')),
-                  }}
-                />
-              ) : (
-                <pre className="whitespace-pre-wrap">{selectedDoc}</pre> // Render the content directly if it's not a URL
-              )}
+            <div className="bg-white rounded-lg h-96 p-4 w-full overflow-y-scroll scrollabler relative wordwrap">
+              <div className="overflow-auto">
+                <h2 className="text-xl mb-4">Content</h2>
+                {isUrl && selectedDoc ? (
+                  <iframe
+                    src={selectedDoc}
+                    title="Webview"
+                    className="w-full h-96 border-0 rounded"
+                    sandbox="allow-same-origin allow-scripts allow-popups"
+                  />
+                ) : docType === "ai" ? (
+                  <div className="ai-doc-rendering">
+                    {aiHistoryArray.map((chat: any, index: any) => (
+                      <div
+                        key={index}
+                        className={`p-2 rounded-lg mb-2 ${chat.role === 'user' ? 'bg-blue-100 self-end' : 'bg-gray-100 self-start'}`}
+                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(chat.text || 'AI solution will appear here...') }}
+                      />
+                    ))}
+                  </div>
+                ) : docType === "aiGenerated" ? (
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(JSON.parse(selectedDoc || JSON.stringify('AI solution will appear here...'))),
+                    }}
+                  />
+                ) : (
+                  <pre className="whitespace-pre-wrap">{selectedDoc}</pre> // Render the content directly if it's not a URL
+                )}
+              </div>
             </div>
-          </div>
           </ResizableCard>
         </div>
         <div className='col-span-1'>
@@ -526,7 +527,7 @@ const fetchTopic = async () => {
           {/* AI Assistant Chat */}
           <ResizableCard> {/* Set the parent to relative */}
             <div className="relative mb-1 max-h-96 h-48 scrollable overflow-y-scroll wordwrap bg-white p-4 rounded-lg shadow-md flex flex-col h-96">
-              
+
               {/* Chat Header */}
               <div className="flex items-center text-center border border-black rounded-md font-semibold text-gray-800 pr-1 pl-1 mb-5">
                 <span className="mr-1">Chat with AI</span>
@@ -556,7 +557,7 @@ const fetchTopic = async () => {
                     <div
                       key={index}
                       className={`p-2 rounded-lg mb-2 ${chat.role === 'user' ? 'bg-blue-100 self-end' : 'bg-gray-100 self-start'}`}
-                      dangerouslySetInnerHTML={{ __html: chat.text }}
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(chat.text) }}
                     />
                   ))
                 ) : (
@@ -608,8 +609,8 @@ const fetchTopic = async () => {
 
             {/* Note Name Input */}
             <div className="mb-2 flex items-center w-full">
-              <label 
-                htmlFor="documentName" 
+              <label
+                htmlFor="documentName"
                 className="block text-sm font-semibold text-gray-700 m-2"
               >
                 Note Name:
@@ -676,7 +677,7 @@ const fetchTopic = async () => {
             onClick={() => markAsCompleted(topic._id)}
             className="bg-green-500 text-white p-1 rounded-full shadow-lg hover:bg-green-600 transition-colors duration-300"
           >
-            <img src="/completedTask.svg" alt="Completed Task" width={40} height={40}/>
+            <img src="/completedTask.svg" alt="Completed Task" width={40} height={40} />
           </button>
           {!theExerciseLevel || Object.keys(theExerciseLevel).length === 0 && (
             <button

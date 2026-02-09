@@ -9,7 +9,7 @@ const saveDocument = async (req: NextApiRequest, res: NextApiResponse) => {
 
   if (req.method === 'POST') {
     try {
-      const { title,topicId, content, type, name } = req.body;
+      const { title, topicId, content, type, name } = req.body;
 
       // Sanitize inputs
       const sanitizedContent = validator.escape(content);
@@ -22,11 +22,11 @@ const saveDocument = async (req: NextApiRequest, res: NextApiResponse) => {
       // Handle "note" type: Check if a document with the same topicId already exists
       if (type === 'note') {
         const existingDocument = await DocumentModel.findOne({ topicId });
-        
+
         if (existingDocument) {
           // Update the existing document by appending the new content
-          console.log('updated');
-          existingDocument.content.push({ title,type, content: sanitizedContent });
+          // console.log('updated');
+          existingDocument.content.push({ title, type, content: sanitizedContent });
           await existingDocument.save();
           return res.status(200).json(existingDocument);
         }

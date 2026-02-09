@@ -4,6 +4,7 @@ import 'react-quill/dist/quill.snow.css'; // Add the default theme for ReactQuil
 import dynamic from 'next/dynamic';
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import DOMPurify from 'dompurify';
 interface Thought {
   _id: string;
   topicId: string;
@@ -128,7 +129,7 @@ const DumpYourThought = () => {
                 </p>
               ) : null}
 
-              <p className="text-lg text-gray-700" dangerouslySetInnerHTML={{ __html: thought.content[0]?.content?.slice(0, 50)}} />
+              <p className="text-lg text-gray-700" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(thought.content[0]?.content?.slice(0, 50)) }} />
             </motion.li>
           ))}
         </motion.ul>

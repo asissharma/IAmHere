@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       { upsert: true }         // Create the document if it doesn't exist
     );
 
-    console.log('Update result:', result); // Debugging info
+    // console.log('Update result:', result); // Debugging info
     return res.status(200).json({ message: 'Content saved successfully' });
   } catch (error) {
     console.error('Error saving content:', error); // Detailed error logging

@@ -4,7 +4,8 @@ import { FiPlayCircle, FiSave } from 'react-icons/fi';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import ResizableCard from './ResizableCard';
-import {Doughnut} from 'react-chartjs-2';
+import { Doughnut } from 'react-chartjs-2';
+import DOMPurify from 'dompurify';
 
 interface Question {
   _id: string;
@@ -67,7 +68,11 @@ const DSAPlayground: React.FC = () => {
   const runJavaScriptCode = async (code: string) => {
     try {
       const asyncWrapper = `(async () => { ${code} })()`;
-      const result = await eval(asyncWrapper);
+      // SECURITY NOTE: Executing arbitrary code is inherently risky.
+      // Ideally, this should be run in a Web Worker or sandboxed iframe.
+      // Using new Function() is slightly safer than eval() direct access to local scope.
+      const executor = new Function(`return (async () => { ${code} })()`);
+      const result = await executor();
       setOutput(result !== undefined ? result.toString() : 'No output');
     } catch (err) {
       setOutput(err instanceof Error ? err.message : 'Error executing code');
@@ -171,59 +176,59 @@ const DSAPlayground: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <div className="flex space-x-6">
           <div className="flex-1">
-          <div className='flex flex-row w-full space-x-4 p-2'> {/* Use space-x-4 for spacing between cards */}
-            <motion.div
-              key={currentQuestionIndex}
-              initial={{ opacity: 0, rotateY: 90 }}
-              animate={{ opacity: 1, rotateY: 0 }}
-              exit={{ opacity: 0, rotateY: -90 }}
-              transition={{ duration: 0.5 }}
-              className="flex-1 mb-6 p-6 bg-white shadow-lg rounded-md" // Use flex-1 to make the question card larger
-            >
-              <h2 className="text-xl font-semibold text-gray-800 mb-2">Today's Question</h2>
-              <div className="mb-3">
-                <label className="block text-sm font-medium text-gray-700">Question</label>
-                <input
-                  className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={dailyQuestions[currentQuestionIndex]?.problem || 'Loading...'}
-                  readOnly
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4 mb-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Topic</label>
-                  <input
-                    type="text"
-                    className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={dailyQuestions[currentQuestionIndex]?.topic || 'Loading...'}
-                    readOnly
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Difficulty</label>
-                  <input
-                    type="text"
-                    className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={dailyQuestions[currentQuestionIndex]?.difficulty || 'Loading...'}
-                    readOnly
-                  />
-                </div>
-              </div>
-              <button
-                onClick={flipToNextQuestion}
-                className="w-full py-2 px-4 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            <div className='flex flex-row w-full space-x-4 p-2'> {/* Use space-x-4 for spacing between cards */}
+              <motion.div
+                key={currentQuestionIndex}
+                initial={{ opacity: 0, rotateY: 90 }}
+                animate={{ opacity: 1, rotateY: 0 }}
+                exit={{ opacity: 0, rotateY: -90 }}
+                transition={{ duration: 0.5 }}
+                className="flex-1 mb-6 p-6 bg-white shadow-lg rounded-md" // Use flex-1 to make the question card larger
               >
-                Next Question
-              </button>
-            </motion.div>
-            
-            <div className="mb-6 p-4 bg-white shadow-lg rounded-md flex-none w-1/4"> {/* Adjusted size for progress card */}
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Progress Tracker</h2>
-              <div className="grid grid-cols-1 gap-4 mb-4"> {/* Single column layout */}
-                <Doughnut data={doughnutData} />
+                <h2 className="text-xl font-semibold text-gray-800 mb-2">Today's Question</h2>
+                <div className="mb-3">
+                  <label className="block text-sm font-medium text-gray-700">Question</label>
+                  <input
+                    className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={dailyQuestions[currentQuestionIndex]?.problem || 'Loading...'}
+                    readOnly
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4 mb-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Topic</label>
+                    <input
+                      type="text"
+                      className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={dailyQuestions[currentQuestionIndex]?.topic || 'Loading...'}
+                      readOnly
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Difficulty</label>
+                    <input
+                      type="text"
+                      className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={dailyQuestions[currentQuestionIndex]?.difficulty || 'Loading...'}
+                      readOnly
+                    />
+                  </div>
+                </div>
+                <button
+                  onClick={flipToNextQuestion}
+                  className="w-full py-2 px-4 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  Next Question
+                </button>
+              </motion.div>
+
+              <div className="mb-6 p-4 bg-white shadow-lg rounded-md flex-none w-1/4"> {/* Adjusted size for progress card */}
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">Progress Tracker</h2>
+                <div className="grid grid-cols-1 gap-4 mb-4"> {/* Single column layout */}
+                  <Doughnut data={doughnutData} />
+                </div>
               </div>
             </div>
-          </div>
 
             <ResizableCard>
               <div className="mb-6 p-6 bg-white shadow-lg rounded-md">
@@ -280,7 +285,7 @@ const DSAPlayground: React.FC = () => {
                   <h3 className="font-semibold text-gray-800">Suggested Solution:</h3>
                   <div
                     className="whitespace-pre-wrap overflow-hidden break-words" // Added break-words to prevent overflow
-                    dangerouslySetInnerHTML={{ __html: aiSolution || 'AI solution will appear here...' }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(aiSolution || 'AI solution will appear here...') }}
                   />
                 </div>
                 <div className="m-4">
@@ -316,24 +321,24 @@ const DSAPlayground: React.FC = () => {
 
             <div className="p-6 bg-white shadow-lg rounded-md">
               <h3 className="text-2xl font-semibold text-gray-800 mb-4">Recently Solved</h3>
-              
+
               {recentlySolved.length > 0 ? (
-  
-<div className='h-64 scrollabler overflow-y-auto overflow-x-hidden'>
-    {recentlySolved.map((q) => (
-      <div key={q._id} className="border-b py-2">
-        <p className="text-gray-700">
-          <strong>Problem:</strong> {q.problem}
-        </p>
-        <p className="text-gray-600">
-          <strong>Topic:</strong> {q.topic}
-        </p>
-      </div>
-    ))}
-  </div>
-) : (
-  <p className="text-gray-600">No recently solved questions.</p>
-)}
+
+                <div className='h-64 scrollabler overflow-y-auto overflow-x-hidden'>
+                  {recentlySolved.map((q) => (
+                    <div key={q._id} className="border-b py-2">
+                      <p className="text-gray-700">
+                        <strong>Problem:</strong> {q.problem}
+                      </p>
+                      <p className="text-gray-600">
+                        <strong>Topic:</strong> {q.topic}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-600">No recently solved questions.</p>
+              )}
               <button
                 onClick={fetchMoreSolvedQuestions}
                 disabled={loadingMore}

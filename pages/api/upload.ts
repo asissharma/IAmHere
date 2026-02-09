@@ -124,11 +124,11 @@ const refreshTokenFunction = async (refreshToken: string) => {
 const getNewToken = async () => {
   try {
     const authCode = process.env.DROPBOX_AUTH_CODE!;
-    console.log('Using auth code:', authCode);
-    console.log('Using auth code:', process.env.DROPBOX_APP_KEY);
-    console.log('Using auth code:', process.env.DROPBOX_APP_SECRET);
-    console.log('Using auth code:', process.env.DROPBOX_REDIRECT_URI);
-    
+    // console.log('Using auth code:', authCode); // REMOVED FOR SECURITY
+    // console.log('Using auth code:', process.env.DROPBOX_APP_KEY); // REMOVED FOR SECURITY
+    // console.log('Using auth code:', process.env.DROPBOX_APP_SECRET); // REMOVED FOR SECURITY
+    // console.log('Using auth code:', process.env.DROPBOX_REDIRECT_URI); // REMOVED FOR SECURITY
+
     const newTokenResponse = await fetch('https://api.dropboxapi.com/oauth2/token', {
       method: 'POST',
       headers: {

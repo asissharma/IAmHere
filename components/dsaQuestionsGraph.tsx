@@ -116,7 +116,7 @@ const ContributionGraph: React.FC<{ solvedProblems: SolvedProblem[] }> = ({ solv
     return "bg-green-700";
   };
 
-  const generateDayLabels = (): JSX.Element[] => {
+  const generateDayLabels = (): React.JSX.Element[] => {
     const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     return days.map((day) => (
       <div key={day} className="text-xs text-gray-500 text-center">
@@ -125,7 +125,7 @@ const ContributionGraph: React.FC<{ solvedProblems: SolvedProblem[] }> = ({ solv
     ));
   };
 
-  const generateMonthLabels = (): JSX.Element[] => {
+  const generateMonthLabels = (): React.JSX.Element[] => {
     return new Array(12).fill(0).map((_, monthIndex) => (
       <div key={monthIndex} className="text-xs text-gray-500">
         {new Date(2025, monthIndex).toLocaleString("default", { month: "short" })}
@@ -141,9 +141,8 @@ const ContributionGraph: React.FC<{ solvedProblems: SolvedProblem[] }> = ({ solv
           <button
             key={v}
             onClick={() => setView(v as "weekly" | "monthly" | "yearly")}
-            className={`px-4 py-2 rounded text-sm font-semibold ${
-              view === v ? "bg-blue-500 text-white" : "bg-gray-200 hover:bg-gray-300"
-            }`}
+            className={`px-4 py-2 rounded text-sm font-semibold ${view === v ? "bg-blue-500 text-white" : "bg-gray-200 hover:bg-gray-300"
+              }`}
           >
             {v.charAt(0).toUpperCase() + v.slice(1)}
           </button>

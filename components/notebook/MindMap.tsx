@@ -15,6 +15,7 @@ import "reactflow/dist/style.css";
 import { fetchMindMap, fetchGlobalMindMap, fetchNodes } from "@/pages/api/utils";
 import { AiFillCloseCircle, AiOutlineGlobal, AiOutlineCluster } from "react-icons/ai";
 import { FaTags, FaProjectDiagram, FaExpand, FaCompress } from "react-icons/fa";
+import DOMPurify from "dompurify";
 
 type TreeNode = {
     nodeId: string;
@@ -329,7 +330,7 @@ const MindMap: React.FC<MindMapProps> = ({ parentId, onClose, onNavigate }) => {
 
                     <div className="text-sm text-gray-600 dark:text-gray-300 max-h-60 overflow-y-auto custom-scrollbar">
                         {selectedNodeData.content ? (
-                            <div dangerouslySetInnerHTML={{ __html: selectedNodeData.content }} />
+                            <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedNodeData.content) }} />
                         ) : (
                             <p className="italic text-gray-400">Double click to expand if folder.</p>
                         )}

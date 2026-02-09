@@ -8,6 +8,7 @@ import { AiOutlineSave, AiOutlineSwap, AiOutlineThunderbolt } from "react-icons/
 import { FaMagic, FaSave, FaCode, FaAlignLeft, FaCheckCircle, FaTimes, FaCopy, FaPlus, FaExpand, FaCompress, FaEye, FaMarkdown, FaClock, FaCog, FaTrash, FaLink, FaBook } from "react-icons/fa";
 import { toast } from "react-toastify"; // Added toast import
 import { AnimatePresence, motion } from "framer-motion";
+import DOMPurify from "dompurify";
 
 import FileAnalysis from "./fileRipper";
 import ProEditorWrapper from "../editor/Editor";
@@ -514,21 +515,21 @@ const NodeEditor: React.FC<{
           <button
             onClick={() => {
               if (!node || !onUpdateProgress) return;
-              const newProgress = ((node as any).progress || 0) >= 100 ? 0 : 100;
+              const newProgress = (node?.progress || 0) >= 100 ? 0 : 100;
               onUpdateProgress(node.nodeId, newProgress);
             }}
-            className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border transition-all ${((node as any).progress || 0) >= 100
+            className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border transition-all ${(node?.progress || 0) >= 100
               ? "bg-green-50 border-green-200 text-green-600 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400"
               : "bg-gray-50 border-gray-200 text-gray-400 hover:border-gray-300 dark:bg-gray-800 dark:border-gray-700"
               }`}
-            title={((node as any).progress || 0) >= 100 ? "Mark as Incomplete" : "Mark as Complete"}
+            title={(node?.progress || 0) >= 100 ? "Mark as Incomplete" : "Mark as Complete"}
           >
-            <div className={`w-3 h-3 rounded-full border flex items-center justify-center ${((node as any).progress || 0) >= 100 ? "bg-green-500 border-green-500" : "border-gray-300"
+            <div className={`w-3 h-3 rounded-full border flex items-center justify-center ${(node?.progress || 0) >= 100 ? "bg-green-500 border-green-500" : "border-gray-300"
               }`}>
-              {((node as any).progress || 0) >= 100 && <FaCheckCircle size={8} className="text-white" />}
+              {(node?.progress || 0) >= 100 && <FaCheckCircle size={8} className="text-white" />}
             </div>
             <span className="text-[10px] font-medium">
-              {((node as any).progress || 0) >= 100 ? "Completed" : "Mark Complete"}
+              {(node?.progress || 0) >= 100 ? "Completed" : "Mark Complete"}
             </span>
           </button>
 
@@ -595,7 +596,7 @@ const NodeEditor: React.FC<{
                   ) : smartActionResult ? (
                     <div
                       className="prose prose-sm dark:prose-invert prose-p:text-gray-600 dark:prose-p:text-gray-300 prose-headings:text-gray-700 dark:prose-headings:text-gray-200 prose-strong:text-gray-800 dark:prose-strong:text-gray-100 prose-ul:text-gray-600 dark:prose-ul:text-gray-300 prose-ol:text-gray-600 dark:prose-ol:text-gray-300 text-xs max-w-none"
-                      dangerouslySetInnerHTML={{ __html: smartActionResult }}
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(smartActionResult) }}
                     />
                   ) : (
                     <div className="text-center text-gray-400 text-xs py-10">
