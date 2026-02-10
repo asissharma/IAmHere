@@ -13,15 +13,7 @@ import { Bar, Doughnut } from "react-chartjs-2";
 import { FaBook, FaCheckCircle, FaClock, FaFire, FaTrophy, FaLightbulb, FaRocket, FaChartLine, FaStar } from "react-icons/fa";
 import { motion } from "framer-motion";
 
-ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    BarElement,
-    Title,
-    Tooltip,
-    Legend,
-    ArcElement
-);
+
 
 type Node = {
     id: string;

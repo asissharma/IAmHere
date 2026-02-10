@@ -1,21 +1,21 @@
-import "react-quill/dist/quill.snow.css";
+
 import "react-toastify/dist/ReactToastify.css";
 import dynamic from "next/dynamic";
 import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import TurndownService from "turndown";
 import MonacoEditor from "@monaco-editor/react";
-import { AiOutlineSave, AiOutlineSwap, AiOutlineThunderbolt } from "react-icons/ai";
-import { FaMagic, FaSave, FaCode, FaAlignLeft, FaCheckCircle, FaTimes, FaCopy, FaPlus, FaExpand, FaCompress, FaEye, FaMarkdown, FaClock, FaCog, FaTrash, FaLink, FaBook } from "react-icons/fa";
+import { AiOutlineSave } from "react-icons/ai";
+import { FaMagic, FaCode, FaAlignLeft, FaCheckCircle, FaTimes, FaCopy, FaPlus, FaCog, FaTrash, FaBook } from "react-icons/fa";
 import { toast } from "react-toastify"; // Added toast import
 import { AnimatePresence, motion } from "framer-motion";
 import DOMPurify from "dompurify";
 
 import FileAnalysis from "./fileRipper";
 import ProEditorWrapper from "../editor/Editor";
-import { logActivity, performSmartAction, updateNode } from "../../pages/api/utils";
+import { updateNode } from "../../pages/api/utils";
 import { Node } from "../../types/types";
 
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+
 
 
 
@@ -25,7 +25,7 @@ const NodeEditor: React.FC<{
   onSaveContent: (nodeId: string, content: string, resourceType: string) => void;
   onUpdateProgress?: (nodeId: string, progress: number) => void;
 }> = ({ node, allNodes = [], onSaveContent, onUpdateProgress }) => {
-  const turndownService = new TurndownService();
+  const turndownService = useMemo(() => new TurndownService(), []);
 
   // Helper to determine mode synchronously
   const getInitialMode = (n: Node | null): "quill" | "monaco" | "fileAnalysis" => {
@@ -148,11 +148,7 @@ const NodeEditor: React.FC<{
   const [customPromptInput, setCustomPromptInput] = useState("");
   const [showCustomPrompt, setShowCustomPrompt] = useState(false);
 
-  // Clean raw AI response
-  const cleanAIResponse = (text: string) => {
-    // Remove "AI Insight:" headers if present to avoid redundancy
-    return text.replace(/^> \*\*AI Insight.*\*\*:\n>/, '').trim();
-  };
+
 
 
   const performAutoLink = () => {
@@ -262,6 +258,7 @@ const NodeEditor: React.FC<{
         })
       });
 
+      if (!response.ok) throw new Error("Failed to fetch");
       const data = await response.json();
       if (data.result) {
         setSmartActionResult(data.result);
@@ -339,7 +336,7 @@ const NodeEditor: React.FC<{
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleSave]);
 
-  const toggleMode = () => {
+  const toggleMode = async () => {
     if (editorMode === "quill") {
       // To Monaco
       // If content works, great. If plain text, turndown might wrap it.
@@ -348,9 +345,19 @@ const NodeEditor: React.FC<{
       setEditorMode("monaco");
     } else {
       // To Quill
-      // Assuming markdownContent is simple text or actual markdown
+      // Convert Markdown to HTML using marked for better fidelity
+      if (editorMode === "monaco") {
+        try {
+          const { marked } = await import("marked");
+          const html = await marked.parse(markdownContent || "");
+          setHtmlContent(html);
+        } catch (e) {
+          console.error("Failed to convert Markdown to HTML", e);
+          // Fallback if marked fails (unlikely)
+          setHtmlContent(markdownContent);
+        }
+      }
       setEditorMode("quill");
-      // Note: We don't verify MD->HTML here, relying on Quill to handle text or previous HTML
     }
   };
 

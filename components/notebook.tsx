@@ -88,7 +88,7 @@ const NotebookPage: React.FC = () => {
       }
     };
 
-
+    fetchData();
     // Mobile Check
     const handleResize = () => {
       if (window.innerWidth < 768) {

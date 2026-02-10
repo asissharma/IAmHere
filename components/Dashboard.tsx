@@ -15,24 +15,13 @@ import {
   ArcElement,
 } from 'chart.js';
 
-import TaskCard from './taskManager'; 
-import DumpYourThought from './DumpYourThought'; 
-import DsaQuestionsGraph from './dsaQuestionsGraph'; 
+import TaskCard from './taskManager';
+import DumpYourThought from './DumpYourThought';
+import DsaQuestionsGraph from './dsaQuestionsGraph';
 import dynamic from 'next/dynamic';
 const PdfToAudioClient = dynamic(() => import('./AudioBook'), { ssr: false });
- 
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement
-);
+
+
 
 interface Metric {
   title: string;
@@ -55,7 +44,7 @@ const Dashboard: NextPage = () => {
     insights: Insight[];
     notifications: Notification[];
   } | null>(null);
-const [solvedProblemGraph, setSolvedProblemGraph] = useState<any[]>([]);
+  const [solvedProblemGraph, setSolvedProblemGraph] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -118,7 +107,7 @@ const [solvedProblemGraph, setSolvedProblemGraph] = useState<any[]>([]);
       exit={{ opacity: 0 }}
     >
       <h1 className="text-3xl font-semibold text-gray-800">Dashboard</h1>
-      <PdfToAudioClient/>
+      <PdfToAudioClient />
       {/* Main Section */}
 
       <div className="flex flex-col md:flex-row md:space-x-6 w-full">
@@ -126,7 +115,7 @@ const [solvedProblemGraph, setSolvedProblemGraph] = useState<any[]>([]);
         {/* Middle Section */}
         <div className="flex flex-col space-y-6 md:w-1/2 w-full">
           {/* Weekly Progress Line Chart */}
-          <DsaQuestionsGraph solvedProblems={solvedProblemGraph}/>
+          <DsaQuestionsGraph solvedProblems={solvedProblemGraph} />
           <div className="p-6 bg-white rounded-lg shadow-lg border-t-4 border-indigo-500">
           </div>
           <div className="p-6 bg-white rounded-lg shadow-lg border-t-4 border-indigo-500">
@@ -187,14 +176,14 @@ const [solvedProblemGraph, setSolvedProblemGraph] = useState<any[]>([]);
             </ul>
           </div>
           <motion.div
-        className="flex flex-col p-6 space-y-6 bg-gray-100 w-full"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-      >
-          
-        <DumpYourThought />
-      </motion.div>
+            className="flex flex-col p-6 space-y-6 bg-gray-100 w-full"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+
+            <DumpYourThought />
+          </motion.div>
         </div>
       </div>
 

@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import 'react-quill/dist/quill.snow.css'; // Add the default theme for ReactQuill
 import dynamic from 'next/dynamic';
-
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 import DOMPurify from 'dompurify';
+import Editor from './editor/Editor'; // Import the new Editor component
+
 interface Thought {
   _id: string;
   topicId: string;
@@ -87,15 +86,20 @@ const DumpYourThought = () => {
     <div className="max-w-lg mx-auto w-full h-full bg-gradient-to-t from-blue-500 to-indigo-600 rounded-xl shadow-2xl p-2">
       <h2 className="text-3xl font-semibold text-white text-center mb-2">Dump Your Thoughts</h2>
 
-      <form onSubmit={handleSubmit} className="bg-white p-1 rounded-xl shadow-lg">
-        <ReactQuill
-          value={content}
-          onChange={setContent}
-          placeholder="Write your thoughts here..."
-          className="w-full p-1 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none transition-all duration-300"
-        />
+      <div className="bg-white p-1 rounded-xl shadow-lg">
+        {/* Replaced ReactQuill with Editor */}
+        <div className="border-2 border-gray-300 rounded-lg overflow-hidden min-h-[150px]">
+          <Editor
+            value={content}
+            onChange={setContent}
+            isLoading={false}
+            initialContent={""}
+            className="prose max-w-none p-2 focus:outline-none"
+          />
+        </div>
+
         <motion.button
-          type="submit"
+          onClick={(e) => handleSubmit(e as any)}
           disabled={loading}
           className="w-full mt-2 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none transition-all duration-300"
           whileHover={{ scale: 1.05 }}
@@ -103,7 +107,7 @@ const DumpYourThought = () => {
         >
           {loading ? 'Saving...' : 'Save Thought'}
         </motion.button>
-      </form>
+      </div>
 
       {error && <p className="text-red-500 text-center mt-4">{error}</p>}
       {success && <p className="text-green-500 text-center mt-4">Thought saved successfully!</p>}
