@@ -5,7 +5,7 @@ import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import TurndownService from "turndown";
 import MonacoEditor from "@monaco-editor/react";
 import { AiOutlineSave } from "react-icons/ai";
-import { FaMagic, FaCode, FaAlignLeft, FaCheckCircle, FaTimes, FaCopy, FaPlus, FaCog, FaTrash, FaBook } from "react-icons/fa";
+import { FaMagic, FaCode, FaAlignLeft, FaCheckCircle, FaTimes, FaCopy, FaPlus, FaCog, FaTrash, FaBook, FaDownload } from "react-icons/fa";
 import { toast } from "react-toastify"; // Added toast import
 import { AnimatePresence, motion } from "framer-motion";
 import DOMPurify from "dompurify";
@@ -14,6 +14,7 @@ import FileAnalysis from "./fileRipper";
 import ProEditorWrapper from "../editor/Editor";
 import { updateNode } from "../../pages/api/utils";
 import { Node } from "../../types/types";
+import { DSAQuestion } from "../../types/dsa";
 
 
 
@@ -86,13 +87,33 @@ const NodeEditor: React.FC<{
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [nodeTags, setNodeTags] = useState<string[]>(node?.tags || []);
   const [nodePrereqs, setNodePrereqs] = useState<string[]>(node?.prerequisites || []);
+  const [linkedResources, setLinkedResources] = useState<{ type: string; id: string; title: string }[]>(node?.linkedResources || []);
+
+  // DSA specific state for search (could be generalized later)
+  const [allDsaQuestions, setAllDsaQuestions] = useState<DSAQuestion[]>([]);
+  const [dsaSearchQuery, setDsaSearchQuery] = useState("");
+
+  // Fetch DSA Questions when settings open
+  useEffect(() => {
+    if (isSettingsOpen && allDsaQuestions.length === 0) {
+      fetch('/api/getDsaQuestion?numQuestions=1000')
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            setAllDsaQuestions(data);
+          }
+        })
+        .catch(err => console.error("Failed to fetch DSA questions", err));
+    }
+  }, [isSettingsOpen, allDsaQuestions.length]);
 
   const handleUpdateNodeMeta = async () => {
     if (!node) return;
     try {
       await updateNode(node.nodeId, {
         tags: nodeTags,
-        prerequisites: nodePrereqs
+        prerequisites: nodePrereqs,
+        linkedResources: linkedResources
       });
       toast.success("Node settings updated!");
       setIsSettingsOpen(false);
@@ -106,6 +127,7 @@ const NodeEditor: React.FC<{
     if (node) {
       setNodeTags(node.tags || []);
       setNodePrereqs(node.prerequisites || []);
+      setLinkedResources(node.linkedResources || []);
     }
   }, [node]);
 
@@ -378,6 +400,42 @@ const NodeEditor: React.FC<{
           <button onClick={() => setIsSettingsOpen(true)} className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded transition-colors" title="Node Settings">
             <FaCog size={12} />
           </button>
+
+          {/* Export Options */}
+          <div className="relative group/export">
+            <button className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded transition-colors" title="Export Note">
+              <FaDownload size={12} />
+            </button>
+            <div className="absolute left-0 top-full mt-1 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 py-1 z-50 hidden group-hover/export:block">
+              <button
+                onClick={() => {
+                  const content = editorMode === "monaco" ? markdownContent : turndownService.turndown(htmlContent);
+                  navigator.clipboard.writeText(content);
+                  toast.success("Copied to clipboard!");
+                }}
+                className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+              >
+                <FaCopy size={10} /> Copy MD
+              </button>
+              <button
+                onClick={() => {
+                  const content = editorMode === "monaco" ? markdownContent : turndownService.turndown(htmlContent);
+                  const blob = new Blob([content], { type: 'text/markdown' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `${node?.title || 'note'}.md`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  toast.success("Downloaded .md");
+                }}
+                className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+              >
+                <FaDownload size={10} /> Download MD
+              </button>
+            </div>
+          </div>
+
           <h1 className="text-sm font-semibold text-gray-700 dark:text-gray-300 truncate flex items-center gap-2" title={node.title}>
             {node.title}
           </h1>
@@ -448,6 +506,57 @@ const NodeEditor: React.FC<{
                         <option key={n.id} value={n.id}>{n.title}</option>
                       ))}
                   </select>
+                </div>
+
+                {/* Linked Resources */}
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Linked Resources</label>
+
+                  {/* List Linked */}
+                  <div className="space-y-1 mb-2">
+                    {linkedResources.map((res, idx) => (
+                      <div key={`${res.type}-${res.id}-${idx}`} className="flex justify-between items-center text-sm bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-900/30 p-2 rounded">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <span className="text-[10px] font-bold uppercase bg-white dark:bg-gray-800 px-1 rounded text-purple-500">{res.type}</span>
+                          <span className="truncate text-purple-800 dark:text-purple-200">{res.title || res.id}</span>
+                        </div>
+                        <button onClick={() => setLinkedResources(linkedResources.filter((_, i) => i !== idx))} className="text-red-500 hover:text-red-700 p-1"><FaTrash size={12} /></button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Search & Add (Currently optimized for DSA, can be expanded) */}
+                  <div className="relative">
+                    <input
+                      className="w-full text-sm border rounded px-2 py-1 dark:bg-gray-800 dark:border-gray-700 mb-1"
+                      placeholder="Search DSA Questions..."
+                      value={dsaSearchQuery}
+                      onChange={e => setDsaSearchQuery(e.target.value)}
+                    />
+                    {dsaSearchQuery && (
+                      <div className="absolute top-full left-0 right-0 max-h-40 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg z-10">
+                        {allDsaQuestions
+                          .filter(q => q.problem.toLowerCase().includes(dsaSearchQuery.toLowerCase()) && !linkedResources.some(r => r.id === q._id))
+                          .slice(0, 10)
+                          .map(q => (
+                            <button
+                              key={q._id}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 truncate"
+                              onClick={() => {
+                                setLinkedResources([...linkedResources, { type: 'dsa', id: q._id, title: q.problem }]);
+                                setDsaSearchQuery("");
+                              }}
+                            >
+                              <span className={`inline-block w-2 h-2 rounded-full mr-2 ${q.difficulty === 'Easy' ? 'bg-green-500' : q.difficulty === 'Medium' ? 'bg-yellow-500' : 'bg-red-500'}`}></span>
+                              {q.problem}
+                            </button>
+                          ))}
+                        {allDsaQuestions.filter(q => q.problem.toLowerCase().includes(dsaSearchQuery.toLowerCase())).length === 0 && (
+                          <div className="px-3 py-2 text-xs text-gray-500">No matches found</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">

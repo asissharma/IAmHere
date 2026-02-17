@@ -14,4 +14,5 @@ export type Node = {
     lastStudied?: number;
     prerequisites?: string[]; // Array of Node IDs
     related?: string[];       // Array of Node IDs
+    linkedResources?: { type: string; id: string; title: string }[]; // Generic linked resources
 };

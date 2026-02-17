@@ -11,14 +11,13 @@
 
 ## 2. What Is This?
 
-Two things. Not three. Not seven. Two.
 
 ```
 Homepage (Portfolio) → already exists, already good
          ↓
 ┌──────────────────────────────────────┐
-│  DSA Playground — Coding Dojo       │  ← HERO
 │  Notebook — Knowledge Vault         │  ← CORE
+│  DSA Playground — Coding Dojo       │  ← HERO
 └──────────────────────────────────────┘
 ```
 
@@ -58,6 +57,49 @@ IAmHere fixes all of that.
 
 ## 5. Features
 
+### 📓 Notebook (Core Feature)
+
+Your knowledge vault. Not "notes" — a second brain for DSA and development.
+
+#### Folders + Tags
+
+- Nested folders (unlimited depth)
+- Multi-tag notes
+- Smart folders (auto-collect by tag)
+- Drag-drop reordering
+
+#### Search
+
+- Full-text fuzzy search (Fuse.js)
+- Filter by tag, folder, date
+- `Ctrl+K` to search from anywhere
+- Highlighted match previews
+
+#### DSA ↔ Notebook Integration
+
+This is the glue. This is what makes IAmHere unique.
+
+- **From Playground**: "Create Note" → pre-filled with question, code, approach
+- **From Notebook**: `[[DSA: Two Sum]]` → click to jump to DSA question
+- **In Playground sidebar**: see all linked notes for current question
+- **On revisit**: your notes appear alongside the question automatically
+
+#### Templates
+
+| Template | Pre-filled Structure |
+|----------|---------------------|
+| DSA Approach | Pattern, Intuition, Steps, Complexity, Code |
+| Topic Summary | Key Concepts, Common Patterns, Common Mistakes |
+| Interview Prep | Company, Role, Topics to Cover, Questions |
+| Debug Log | Problem, What I Tried, What Worked, Lesson |
+
+#### Export
+
+- Single note → `.md` file
+- Folder → `.zip` of markdown files
+- Copy as markdown to clipboard
+
+
 ### 🔥 DSA Playground (Hero Feature)
 
 Not a LeetCode clone. A personal coding dojo.
@@ -94,7 +136,7 @@ Mastery **decays**. If you haven't revisited a "Mastered" question in 60 days, i
 │  Problem statement   │  Your solution        │
 │  Examples            │                       │
 │  Constraints         │  Language: JS ▾       │
-│  ───────────         │  Version: v3 ◀ ▶      │
+│  ───────────         │  Version: v3 ◀ ▶     │
 │  Pattern tags        │  Time: 23 min         │
 │  Mastery: 🔵         │  Complexity: O(n)     │
 │  ───────────         │  ─────────────        │
@@ -160,47 +202,6 @@ Not a separate dashboard. Embedded in the playground itself.
 
 ---
 
-### 📓 Notebook (Core Feature)
-
-Your knowledge vault. Not "notes" — a second brain for DSA and development.
-
-#### Folders + Tags
-
-- Nested folders (unlimited depth)
-- Multi-tag notes
-- Smart folders (auto-collect by tag)
-- Drag-drop reordering
-
-#### Search
-
-- Full-text fuzzy search (Fuse.js)
-- Filter by tag, folder, date
-- `Ctrl+K` to search from anywhere
-- Highlighted match previews
-
-#### DSA ↔ Notebook Integration
-
-This is the glue. This is what makes IAmHere unique.
-
-- **From Playground**: "Create Note" → pre-filled with question, code, approach
-- **From Notebook**: `[[DSA: Two Sum]]` → click to jump to DSA question
-- **In Playground sidebar**: see all linked notes for current question
-- **On revisit**: your notes appear alongside the question automatically
-
-#### Templates
-
-| Template | Pre-filled Structure |
-|----------|---------------------|
-| DSA Approach | Pattern, Intuition, Steps, Complexity, Code |
-| Topic Summary | Key Concepts, Common Patterns, Common Mistakes |
-| Interview Prep | Company, Role, Topics to Cover, Questions |
-| Debug Log | Problem, What I Tried, What Worked, Lesson |
-
-#### Export
-
-- Single note → `.md` file
-- Folder → `.zip` of markdown files
-- Copy as markdown to clipboard
 
 ---
 
@@ -210,21 +211,18 @@ Exists. Works. No changes needed. It's the portfolio landing page and entry poin
 
 ---
 
-## 6. Removed Features
-
-| Feature | Status | Reason |
-|---------|--------|--------|
-| Dashboard | ❌ CUT | Homepage is the overview |
-| Learning Paths | ❌ CUT | Notebook folders do this better |
-| Task Manager | ❌ CUT | Use Todoist |
-| Pomodoro Timer | ❌ CUT | Use any timer app |
-| Text Editor | ❌ CUT | Merged into Notebook |
-| Audio Books | ❌ CUT | Out of scope |
-| Stealth Mode | ❌ CUT | Maybe v3 |
-
----
 
 ## 7. Future Features (After Core Is Exceptional)
+
+### For Notebook
+
+| Feature | Value | Effort |
+|---------|-------|--------|
+| Graph View | Visualize note connections | High |
+| Backlinks Panel | See all notes linking to current | Medium |
+| Daily Note | Auto-create dated note | Low |
+| Revision History | Past versions of any note | Medium |
+| Code Execution | Run code blocks in notes | High |
 
 ### For Playground
 
@@ -238,15 +236,6 @@ Exists. Works. No changes needed. It's the portfolio landing page and entry poin
 | Solution Sharing | Export as clean markdown/image | Low |
 | Test Case Runner | Validate solutions locally | High |
 
-### For Notebook
-
-| Feature | Value | Effort |
-|---------|-------|--------|
-| Graph View | Visualize note connections | High |
-| Backlinks Panel | See all notes linking to current | Medium |
-| Daily Note | Auto-create dated note | Low |
-| Revision History | Past versions of any note | Medium |
-| Code Execution | Run code blocks in notes | High |
 
 ### For Platform
 

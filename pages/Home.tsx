@@ -1,29 +1,19 @@
 import { NextPage } from "next";
 import { AnimatePresence, motion, Variants } from "framer-motion";
 import {
-  FiFileText,
   FiCode,
   FiUpload,
   FiBook,
-  FiThumbsUp,
-  FiMic,
-  FiGithub,
   FiFastForward,
 } from "react-icons/fi";
-import { FaIceCream } from "react-icons/fa";
+
 import { useState, useEffect } from "react";
-import PomodoroTimer from "../components/PomodoroTimer";
-import FileUpload from "../components/upload";
 import TextEditor from "../components/TextEditor";
-import Dashboard from "../components/Dashboard";
 import DSAPlayground from "../components/DsaPrac";
 import Trial from "../components/homePage/trial";
 import Auth from "../components/auth"; // Import Auth component
-// import DumpYourThought from "../components/DumpYourThought";
-import LearningPathsAndGoals from "../components/LearningPathsAndGoals";
 import Notebook from "../components/notebook";
-import Learning from "../components/learning";
-// import Books from "../components/books";
+import FileUpload from "../components/upload";
 
 
 
@@ -47,25 +37,18 @@ const itemVariants: Variants = {
 
 const Home: NextPage = () => {
   const menuOrder: SectionKeys[] = [
-    "dashboard",
     "playground",
-    "learningpathsandgoals",
+    "notebook",
     "upload",
     "editor",
     "trial",
-    "notebook",
   ];
   const sections = {
-    dashboard: <Dashboard />,
     playground: <DSAPlayground />,
     notebook: <Notebook />,
-    // dumpYourThought: <DumpYourThought />,
-    learningpathsandgoals: <LearningPathsAndGoals />,
-    // learning: <Learning />,
     upload: <FileUpload />,
     editor: <TextEditor />,
     trial: <Trial onNavigate={(section) => handleNavigation(section as SectionKeys)} onUnlock={() => { setIsMenuUnlocked(true); setIsAuthenticated(true); }} />,
-    // books: <Books />,
   };
 
   type SectionKeys = keyof typeof sections;
@@ -154,14 +137,12 @@ const Home: NextPage = () => {
     }
   };
   const iconForKey = (key: string) => {
-    if (key === "dashboard") return <FiFileText className="w-5 h-5" />;
     if (key === "playground") return <FiCode className="w-5 h-5" />;
-    if (key === "learningpathsandgoals") return <FaIceCream className="w-5 h-5" />;
     if (key === "upload") return <FiUpload className="w-5 h-5" />;
     if (key === "editor") return <FiCode className="w-5 h-5" />;
-    if (key === "notebook") return <FiGithub className="w-5 h-5" />;
+    if (key === "notebook") return <FiBook className="w-5 h-5" />;
     if (key === "trial") return <FiFastForward className="w-5 h-5" />;
-    return <FiFileText className="w-5 h-5" />;
+    return <FiCode className="w-5 h-5" />;
   };
 
   return (
@@ -177,7 +158,7 @@ const Home: NextPage = () => {
           <h1 className="text-xl font-bold flex items-center justify-center pt-4">Hello Sweetie</h1>
 
           <div>
-            <PomodoroTimer />
+
           </div>
 
           <div className="flex items-center gap-2">

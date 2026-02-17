@@ -11,7 +11,7 @@ import { fetchNodes, addNode, deleteNode, saveContent, fetchDescendants, updateN
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import { FaPlus, FaSearch, FaBars, FaTimes, FaLayerGroup } from "react-icons/fa";
+import { FaPlus, FaSearch, FaBars, FaTimes, FaLayerGroup, FaTag } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import EmptyState from "./notebook/EmptyState";
 import QuickCreateFAB from "./notebook/QuickCreateFAB";
@@ -20,7 +20,10 @@ import { Node } from "../types/types";
 // Define the Node type
 
 
+import { useRouter } from "next/router";
+
 const NotebookPage: React.FC = () => {
+  const router = useRouter();
   const [nodes, setNodes] = useState<Node[]>([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [fetched, setFetched] = useState<Record<string, boolean>>({});
@@ -108,6 +111,21 @@ const NotebookPage: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Handle URL Query for Node Navigation
+  useEffect(() => {
+    if (nodes.length > 0 && router.query.nodeId) {
+      const targetId = router.query.nodeId as string;
+      const target = nodes.find(n => n.nodeId === targetId);
+      if (target) {
+        // If it's a deep node, we might need to ensure its parents are expanded (fetched)
+        // But for flat list search or deep link, we just select it.
+        // If sidebar is tree, we might not see it if collapsed, but content will render.
+        setSelectedNode(target);
+        // Clear query param to avoid sticking? Or keep it? keeping is fine for reload.
+      }
+    }
+  }, [nodes, router.query.nodeId]);
+
   const setShowMindMap = (nodeId: string) => {
     setMindMapNodeId(nodeId);
     setShowMindMapState(true);
@@ -139,7 +157,7 @@ const NotebookPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleCreateNode = async (title: string, type: "syllabus" | "folder" | "file", tags: string[], pinned: boolean) => {
+  const handleCreateNode = async (title: string, type: "syllabus" | "folder" | "file", tags: string[], pinned: boolean, initialContent?: string) => {
     try {
       const resourceType = (window as any).tempResourceType || "text";
       const newNode: any = await addNode(title, type, modalProps.parentId, tags, pinned);
@@ -149,6 +167,9 @@ const NotebookPage: React.FC = () => {
       if (resourceType === "fileAnalysis") {
         await saveContent(newNode.nodeId, "", "fileAnalysis");
         newNode.resourceType = "fileAnalysis";
+      } else if (initialContent) {
+        await saveContent(newNode.nodeId, initialContent, "text");
+        newNode.content = initialContent;
       }
 
       const nodeWithId = { ...newNode, id: newNode.nodeId, children: [] };
@@ -279,18 +300,51 @@ const NotebookPage: React.FC = () => {
         </div>
 
         {/* Center: Search (Compact) */}
-        <div className="flex-1 max-w-md mx-4">
+        <div className="flex-1 max-w-md mx-4 flex items-center gap-2">
           <div className="relative group w-full">
             <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
               <FaSearch className="text-gray-300 group-focus-within:text-blue-500 text-xs" />
             </div>
             <input
               type="text"
-              placeholder="Search..."
+              placeholder={searchQuery.startsWith("tag:") ? "Filtering by tag..." : "Search..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1 bg-gray-50 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 text-xs focus:bg-white dark:focus:bg-gray-900 focus:border-blue-500 outline-none transition-all focus:w-full"
+              className={`w-full pl-8 pr-3 py-1 bg-gray-50 dark:bg-gray-800 rounded-md border text-xs focus:bg-white dark:focus:bg-gray-900 outline-none transition-all focus:w-full ${searchQuery.startsWith("tag:") ? "border-blue-500 text-blue-600 font-medium" : "border-gray-200 dark:border-gray-700 focus:border-blue-500"}`}
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute inset-y-0 right-0 pr-2 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                <FaTimes size={10} />
+              </button>
+            )}
+          </div>
+
+          {/* Tag Filter Dropdown */}
+          <div className="relative group/tags">
+            <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded text-gray-500 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all">
+              <FaTag size={12} />
+            </button>
+            <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-2 hidden group-hover/tags:block z-50">
+              <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2 mb-2">Filter by Tag</div>
+              <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-1">
+                {Array.from(new Set(nodes.flatMap(n => n.tags || []))).map(tag => (
+                  <button
+                    key={tag}
+                    onClick={() => setSearchQuery(`tag:${tag}`)}
+                    className="w-full text-left px-2 py-1.5 text-xs text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 rounded flex items-center gap-2"
+                  >
+                    <FaTag size={8} className="opacity-50" />
+                    {tag}
+                  </button>
+                ))}
+                {Array.from(new Set(nodes.flatMap(n => n.tags || []))).length === 0 && (
+                  <div className="text-xs text-gray-400 px-2 italic">No tags found</div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 

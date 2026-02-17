@@ -22,6 +22,7 @@ interface INotebook extends Document {
   // Import Metadata
   sourceFile?: string;
   importedAt?: Date;
+  linkedResources?: { type: string; id: string; title: string }[]; // Generic linked resources
   externalLinks?: { type: string; url: string; label?: string }[];
   metadata?: {
     author?: string;
@@ -57,8 +58,15 @@ const NotebookSchema: Schema = new Schema(
     aiSummary: { type: String },
 
     // Import Metadata
+    // Import Metadata
     sourceFile: { type: String },
     importedAt: { type: Date },
+    linkedResources: [{
+      type: { type: String, required: true },
+      id: { type: String, required: true },
+      title: { type: String, default: '' }
+    }],
+
     externalLinks: [{
       type: { type: String }, // e.g., 'youtube', 'article'
       url: { type: String },

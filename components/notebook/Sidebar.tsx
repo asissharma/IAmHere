@@ -67,11 +67,18 @@ const Sidebar: React.FC<{
     };
 
     const allNodes = flatten(tree);
-    return allNodes.filter(n =>
-      n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      n.tags?.some(t => t.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (n.content && n.content.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
+    return allNodes.filter(n => {
+      if (searchQuery.startsWith("tag:")) {
+        const tagToMatch = searchQuery.replace("tag:", "").toLowerCase();
+        return n.tags?.some(t => t.toLowerCase() === tagToMatch);
+      }
+
+      return (
+        n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        n.tags?.some(t => t.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (n.content && n.content.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+    });
   }, [tree, searchQuery, isSearching]);
 
   const renderTree = useCallback(

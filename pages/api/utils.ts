@@ -91,7 +91,7 @@ export const saveContent = async (nodeId: string, content: string, resourceType:
   }
 };
 
-export const updateNode = async (nodeId: string, updates: { title?: string, tags?: string[], pinned?: boolean, aiSummary?: string, prerequisites?: string[] }) => {
+export const updateNode = async (nodeId: string, updates: { title?: string, tags?: string[], pinned?: boolean, aiSummary?: string, prerequisites?: string[], linkedResources?: { type: string; id: string; title: string }[] }) => {
   const identifier = "saveContent";
   try {
     return await apiRequest("/api/notes", "PUT", { nodeId, identifier, ...updates });

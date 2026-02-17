@@ -1,14 +1,33 @@
 import React, { useState } from "react";
-import { FaBook, FaFolder, FaFile, FaTimes, FaTag, FaThumbtack } from "react-icons/fa";
+import { FaBook, FaFolder, FaFile, FaTimes, FaTag, FaThumbtack, FaMagic } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface CreateNodeModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (title: string, type: "syllabus" | "folder" | "file", tags: string[], pinned: boolean) => void;
+    onSubmit: (title: string, type: "syllabus" | "folder" | "file", tags: string[], pinned: boolean, initialContent?: string) => void;
     parentId: string | null;
     initialType?: "syllabus" | "folder" | "file";
 }
+
+const TEMPLATES = {
+    "dsa_approach": {
+        label: "DSA Approach",
+        content: `# Problem Name\n\n## 🧠 Intuition\n\n## 🛠 Approach\n\n## 📝 Complexity\n- Time complexity:\n- Space complexity:\n\n## 💻 Code\n\`\`\`javascript\n\n\`\`\``
+    },
+    "topic_summary": {
+        label: "Topic Summary",
+        content: `# Topic Name\n\n## 🔑 Key Concepts\n- \n\n## 💡 Examples\n\n## ⚠️ Common Pitfalls\n\n## 📚 Resources`
+    },
+    "interview_prep": {
+        label: "Interview Prep",
+        content: `# Company - Role\n\n## 📅 Date:\n\n## ❓ Questions Asked\n1. \n\n## 🗣 Behavioral Answers\n- Situation:\n- Task:\n- Action:\n- Result:`
+    },
+    "debug_log": {
+        label: "Debug Log",
+        content: `# Bug Description\n\n## 🚨 Issue\n\n## 👣 Steps to Reproduce\n1. \n\n## 🕵️‍♂️ Investigation\n\n## ✅ Solution`
+    }
+};
 
 const CreateNodeModal: React.FC<CreateNodeModalProps> = ({ isOpen, onClose, onSubmit, parentId, initialType = "file" }) => {
     const [title, setTitle] = useState("");
@@ -16,11 +35,13 @@ const CreateNodeModal: React.FC<CreateNodeModalProps> = ({ isOpen, onClose, onSu
     const [tagInput, setTagInput] = useState("");
     const [tags, setTags] = useState<string[]>([]);
     const [pinned, setPinned] = useState(false);
+    const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!title.trim()) return;
-        onSubmit(title, type, tags, pinned);
+        const widthContent = selectedTemplate ? TEMPLATES[selectedTemplate as keyof typeof TEMPLATES].content : undefined;
+        onSubmit(title, type, tags, pinned, widthContent);
         resetForm();
     };
 
@@ -29,6 +50,7 @@ const CreateNodeModal: React.FC<CreateNodeModalProps> = ({ isOpen, onClose, onSu
         setTags([]);
         setTagInput("");
         setPinned(false);
+        setSelectedTemplate(null);
         onClose();
     };
 
@@ -55,7 +77,7 @@ const CreateNodeModal: React.FC<CreateNodeModalProps> = ({ isOpen, onClose, onSu
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-6 overflow-hidden"
+                    className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-6 overflow-hidden max-h-[90vh] overflow-y-auto custom-scrollbar"
                 >
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-xl font-bold text-gray-800 dark:text-white">Create New Item</h2>
@@ -88,8 +110,8 @@ const CreateNodeModal: React.FC<CreateNodeModalProps> = ({ isOpen, onClose, onSu
                                         type="button"
                                         onClick={() => setType(t)}
                                         className={`flex flex-col items-center justify-center p-3 rounded-lg border transition-all ${type === t
-                                                ? "bg-blue-50 border-blue-500 text-blue-600 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-300"
-                                                : "border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700 dark:text-gray-400"
+                                            ? "bg-blue-50 border-blue-500 text-blue-600 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-300"
+                                            : "border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700 dark:text-gray-400"
                                             }`}
                                     >
                                         {t === "syllabus" && <FaBook className="mb-1" />}
@@ -100,6 +122,25 @@ const CreateNodeModal: React.FC<CreateNodeModalProps> = ({ isOpen, onClose, onSu
                                 ))}
                             </div>
                         </div>
+
+                        {/* Template Selector (Only for File) */}
+                        {type === 'file' && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+                                    <FaMagic className="text-purple-500" size={12} /> Use Template
+                                </label>
+                                <select
+                                    className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
+                                    value={selectedTemplate || ""}
+                                    onChange={(e) => setSelectedTemplate(e.target.value || null)}
+                                >
+                                    <option value="">No Template (Blank)</option>
+                                    {Object.entries(TEMPLATES).map(([key, tpl]) => (
+                                        <option key={key} value={key}>{tpl.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
 
                         {/* Tags Input */}
                         <div>
@@ -133,8 +174,8 @@ const CreateNodeModal: React.FC<CreateNodeModalProps> = ({ isOpen, onClose, onSu
                                 type="button"
                                 onClick={() => setPinned(!pinned)}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${pinned
-                                        ? "bg-yellow-100 text-yellow-700 border border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300"
-                                        : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
+                                    ? "bg-yellow-100 text-yellow-700 border border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300"
+                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
                                     }`}
                             >
                                 <FaThumbtack className={pinned ? "transform rotate-45" : ""} />

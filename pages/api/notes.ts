@@ -97,6 +97,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           if (tags !== undefined) updateData.tags = tags;
           if (pinned !== undefined) updateData.pinned = pinned;
           if (aiSummary !== undefined) updateData.aiSummary = aiSummary;
+          if (req.body.linkedResources !== undefined) updateData.linkedResources = req.body.linkedResources;
           updateData.lastViewed = new Date();
 
           const updatedNode = await Notebook.findOneAndUpdate(
